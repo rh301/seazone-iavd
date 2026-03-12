@@ -90,6 +90,13 @@ export function canManageQuestions(currentUser: User): boolean {
 }
 
 /**
+ * Verifica se o usuário pode calibrar avaliações
+ */
+export function canCalibrate(currentUser: User): boolean {
+  return ["c_level", "rh"].includes(currentUser.role);
+}
+
+/**
  * Retorna estatísticas de avaliação da equipe para dashboards de gestão
  */
 export function getTeamStats(currentUser: User) {

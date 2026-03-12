@@ -68,6 +68,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               >
                 Histórico
               </a>
+              {["c_level", "rh"].includes(user.role) && (
+                <a
+                  href="/calibracao"
+                  className="text-white/80 hover:text-white transition text-sm font-medium"
+                >
+                  Calibração
+                </a>
+              )}
 
               <div className="h-6 w-px bg-white/20" />
 

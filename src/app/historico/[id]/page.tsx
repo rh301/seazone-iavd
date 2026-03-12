@@ -9,6 +9,7 @@ import { canViewEvaluation } from "@/lib/permissions";
 import { users as allUsers } from "@/data/users";
 import { roleLabels } from "@/lib/auth-types";
 import AppShell from "@/components/app-shell";
+import { formatChatContent } from "@/lib/format-chat";
 import {
   ChevronLeft,
   Bot,
@@ -273,13 +274,7 @@ export default function DetalhesAvaliacao({
                                     : "bg-primary/10 text-gray-800"
                                 }`}
                                 dangerouslySetInnerHTML={{
-                                  __html: msg.content
-                                    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-                                    .replace(
-                                      /^> (.+)$/gm,
-                                      '<span class="italic text-gray-500">$1</span>'
-                                    )
-                                    .replace(/^• /gm, "· "),
+                                  __html: formatChatContent(msg.content),
                                 }}
                               />
                             </div>

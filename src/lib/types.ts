@@ -37,6 +37,14 @@ export interface Answer {
   aiValidated: boolean;
 }
 
+export interface CalibrationEntry {
+  originalScore: number;
+  calibratedScore: number;
+  comment: string;
+  calibratedBy: string;
+  calibratedAt: string;
+}
+
 export interface Evaluation {
   id: string;
   employeeId: string;
@@ -44,4 +52,9 @@ export interface Evaluation {
   date: string;
   status: "em_andamento" | "concluida" | "calibrada";
   answers: Answer[];
+  calibration?: {
+    entries: Record<string, CalibrationEntry>; // questionId -> entry
+    calibratedBy: string;
+    calibratedAt: string;
+  };
 }

@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { roleLabels } from "@/lib/auth-types";
 import { users as allUsers } from "@/data/users";
 import AppShell from "@/components/app-shell";
+import { formatChatContent } from "@/lib/format-chat";
 import {
   ChevronLeft,
   ChevronRight,
@@ -398,10 +399,7 @@ export default function AvaliacaoPage({
                           : "bg-primary text-white"
                       }`}
                       dangerouslySetInnerHTML={{
-                        __html: msg.content
-                          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-                          .replace(/^> (.+)$/gm, '<span class="italic text-gray-500">$1</span>')
-                          .replace(/^• /gm, "· "),
+                        __html: formatChatContent(msg.content),
                       }}
                     />
                   </div>
