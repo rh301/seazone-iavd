@@ -52,6 +52,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   Perguntas
                 </a>
               )}
+              {["c_level", "rh", "diretor"].includes(user.role) && (
+                <a
+                  href="/admin/interpretacoes"
+                  className="text-white/80 hover:text-white transition text-sm font-medium"
+                >
+                  Interpretações
+                </a>
+              )}
               {["c_level", "rh", "diretor", "coordenador"].includes(
                 user.role
               ) && (

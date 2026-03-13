@@ -1,12 +1,13 @@
 "use client";
 
-import { Question, Evaluation, Answer, ChatMessage } from "./types";
+import { Question, Evaluation, Answer, ChatMessage, DirectorInsight } from "./types";
 import { defaultQuestions } from "@/data/questions";
 
 // Simple client-side store using localStorage
 const STORAGE_KEYS = {
   questions: "avd_questions",
   evaluations: "avd_evaluations",
+  directorInsights: "avd_director_insights",
 };
 
 export function getQuestions(): Question[] {
@@ -64,4 +65,28 @@ export function createEmptyAnswers(questions: Question[]): Answer[] {
     chatHistory: [],
     aiValidated: false,
   }));
+}
+
+// Director Insights (interpretações da diretoria por critério)
+export function getDirectorInsights(): DirectorInsight[] {
+  if (typeof window === "undefined") return [];
+  const stored = localStorage.getItem(STORAGE_KEYS.directorInsights);
+  return stored ? JSON.parse(stored) : [];
+}
+
+export function saveDirectorInsight(insight: DirectorInsight) {
+  const insights = getDirectorInsights();
+  const index = insights.findIndex(
+    (i) => i.questionId === insight.questionId && i.userId === insight.userId
+  );
+  if (index >= 0) {
+    insights[index] = insight;
+  } else {
+    insights.push(insight);
+  }
+  localStorage.setItem(STORAGE_KEYS.directorInsights, JSON.stringify(insights));
+}
+
+export function getInsightsForQuestion(questionId: string): DirectorInsight[] {
+  return getDirectorInsights().filter((i) => i.questionId === questionId);
 }

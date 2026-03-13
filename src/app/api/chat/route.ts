@@ -23,6 +23,7 @@ interface ChatRequest {
   employeeName: string;
   justification: string;
   chatHistory: ChatMessage[];
+  directorInsights?: string[];
 }
 
 const SYSTEM_PROMPT = `Você é o Assistente de Calibragem da Seazone, integrado à plataforma AVD Insight (Avaliação de Desempenho).
@@ -39,12 +40,13 @@ Regras de comportamento:
 - Use negrito (**texto**) para destacar notas e labels
 - Use citações (> texto) para referenciar descrições da escala
 - Responda sempre em português (pt-BR)
+- Para notas 1, 2, 4 e 5: questione a justificativa do gestor com base nas interpretações da diretoria. Pergunte se os exemplos são recorrentes e recentes o suficiente para justificar a nota
 - Limite suas respostas a no máximo 200 palavras`;
 
 function buildMessages(body: ChatRequest) {
-  const { question, score, scaleLevel, employeeName, chatHistory } = body;
+  const { question, score, scaleLevel, employeeName, justification, chatHistory, directorInsights } = body;
 
-  const context = `CONTEXTO DA AVALIAÇÃO:
+  let context = `CONTEXTO DA AVALIAÇÃO:
 - Colaborador avaliado: ${employeeName}
 - Critério: "${question.title}" — ${question.description}
 - Nota atribuída pelo gestor: ${score} (${scaleLevel.label})
@@ -54,6 +56,18 @@ ${scaleLevel.examples.map((e) => `  • ${e}`).join("\n")}
 
 ESCALA COMPLETA (interpretação da diretoria):
 ${question.scale.map((s) => `  Nota ${s.score} (${s.label}): ${s.description}`).join("\n")}`;
+
+  if (directorInsights && directorInsights.length > 0) {
+    context += `\n\nINTERPRETAÇÕES PERSONALIZADAS DA DIRETORIA PARA ESTE CRITÉRIO:\n${directorInsights.map((i, idx) => `  ${idx + 1}. ${i}`).join("\n")}`;
+  }
+
+  if (justification) {
+    context += `\n\nJUSTIFICATIVA DO GESTOR: "${justification}"`;
+  }
+
+  if (score !== 3) {
+    context += `\n\nIMPORTANTE: A nota ${score} é diferente de 3 (esperado). Você DEVE questionar a justificativa do gestor, verificando se os exemplos dados são consistentes com o nível ${score} segundo a visão da diretoria. Peça mais detalhes se a justificativa for vaga.`;
+  }
 
   const messages: { role: "user" | "assistant"; content: string }[] = [
     { role: "user", content: context },
@@ -111,7 +125,7 @@ export async function POST(req: NextRequest) {
 
 // Respostas rule-based como fallback
 function fallbackResponse(body: ChatRequest) {
-  const { question, score, scaleLevel, employeeName, chatHistory } = body;
+  const { question, score, scaleLevel, employeeName, justification, chatHistory, directorInsights } = body;
 
   const userMessages = chatHistory.filter((m) => m.role === "user");
   const lastUserMsg = userMessages[userMessages.length - 1]?.content?.toLowerCase() || "";
@@ -120,7 +134,57 @@ function fallbackResponse(body: ChatRequest) {
   const lower = question.scale.find((s) => s.score === score - 1);
   const higher = question.scale.find((s) => s.score === score + 1);
 
+  const hasJustification = lastUserMsg.includes("minha justificativa");
+  const insightsText = directorInsights && directorInsights.length > 0
+    ? `\n\nAlém disso, a diretoria destacou sobre este critério:\n${directorInsights.map((i) => `• ${i}`).join("\n")}`
+    : "";
+
   let response = "";
+
+  // Quando o gestor envia a justificativa para análise
+  if (hasJustification && score !== 3) {
+    const justText = justification || lastUserMsg.replace(/minha justificativa para a nota \d+: "/i, "").replace(/"$/, "");
+    const isShort = justText.length < 30;
+    const isVague = !/exemplo|situação|caso|vez que|quando|projeto|entrega|reunião/i.test(justText);
+
+    if (isShort || isVague) {
+      response =
+        `A justificativa para nota **${score} (${scaleLevel.label})** precisa de mais detalhes.\n\n` +
+        `Você escreveu:\n> "${justText}"\n\n` +
+        `Para a diretoria, nota ${score} significa:\n` +
+        `> "${scaleLevel.description}"\n\n` +
+        `Poderia citar **situações concretas e recentes** que sustentem essa nota? ` +
+        `A diretoria espera exemplos como:\n` +
+        scaleLevel.examples.map((e) => `• ${e}`).join("\n") +
+        insightsText;
+    } else if (score <= 2) {
+      response =
+        `Obrigado pela justificativa. Vou analisar com base na visão da diretoria.\n\n` +
+        `Você escreveu:\n> "${justText}"\n\n` +
+        `Para nota **${score} (${scaleLevel.label})**, a diretoria espera:\n` +
+        `> "${scaleLevel.description}"\n\n` +
+        `Algumas reflexões:\n` +
+        `• Esse comportamento é **recorrente** ou foi um caso isolado?\n` +
+        `• ${employeeName} recebeu **feedback** sobre isso?\n` +
+        `• Existe algum **contexto atenuante** (mudança de projeto, falta de treinamento)?\n\n` +
+        (higher ? `Se houver sinais de melhoria, considere nota **${higher.score} (${higher.label})**.` : "") +
+        insightsText;
+    } else {
+      response =
+        `Obrigado pela justificativa. Vou analisar com base na visão da diretoria.\n\n` +
+        `Você escreveu:\n> "${justText}"\n\n` +
+        `Para nota **${score} (${scaleLevel.label})**, a diretoria espera:\n` +
+        `> "${scaleLevel.description}"\n\n` +
+        `Algumas reflexões:\n` +
+        `• Os exemplos citados são **consistentes e frequentes** o suficiente para nota ${score}?\n` +
+        `• Outros colegas no mesmo nível alcançariam essa nota?\n` +
+        `• Os resultados tiveram **impacto mensurável** na área/empresa?\n\n` +
+        (lower ? `Se os exemplos forem pontuais, nota **${lower.score} (${lower.label})** pode ser mais precisa.` : "") +
+        insightsText;
+    }
+
+    return NextResponse.json({ content: response });
+  }
 
   if (userMsgCount <= 1) {
     if (score >= 4) {

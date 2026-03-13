@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, use } from "react";
 import { useRouter } from "next/navigation";
 import { Question, Evaluation, ChatMessage, Answer } from "@/lib/types";
-import { getQuestions, getEvaluation, saveEvaluation } from "@/lib/store";
+import { getQuestions, getEvaluation, saveEvaluation, getInsightsForQuestion } from "@/lib/store";
 import { useAuth } from "@/lib/auth-context";
 import { roleLabels } from "@/lib/auth-types";
 import { users as allUsers } from "@/data/users";
@@ -64,17 +64,20 @@ export default function AvaliacaoPage({
   if (!question || !answer) return null;
 
   function updateAnswer(updates: Partial<Answer>) {
-    if (!evaluation) return;
-    const newAnswers = [...evaluation.answers];
-    newAnswers[currentIndex] = { ...newAnswers[currentIndex], ...updates };
-    const updated = { ...evaluation, answers: newAnswers };
-    setEvaluation(updated);
-    saveEvaluation(updated);
+    setEvaluation((prev) => {
+      if (!prev) return prev;
+      const newAnswers = [...prev.answers];
+      newAnswers[currentIndex] = { ...newAnswers[currentIndex], ...updates };
+      const updated = { ...prev, answers: newAnswers };
+      saveEvaluation(updated);
+      return updated;
+    });
   }
 
-  async function fetchAIResponse(history: ChatMessage[], score: number) {
+  async function fetchAIResponse(history: ChatMessage[], score: number, justificationOverride?: string) {
     setIsAiTyping(true);
     const scaleLevel = question.scale.find((s) => s.score === score);
+    const directorInsights = getInsightsForQuestion(question.id);
 
     try {
       const res = await fetch("/api/chat", {
@@ -85,8 +88,9 @@ export default function AvaliacaoPage({
           score,
           scaleLevel,
           employeeName: employee?.name || "",
-          justification: answer.justification,
+          justification: justificationOverride ?? answer.justification,
           chatHistory: history,
+          directorInsights: directorInsights.map((i) => i.interpretation),
         }),
       });
 
@@ -113,7 +117,6 @@ export default function AvaliacaoPage({
   }
 
   function handleScoreSelect(score: number) {
-    updateAnswer({ score });
     setShowChat(true);
 
     const initialUserMsg: ChatMessage = {
@@ -124,7 +127,7 @@ export default function AvaliacaoPage({
     };
 
     const history = [initialUserMsg];
-    updateAnswer({ chatHistory: history });
+    updateAnswer({ score, chatHistory: history });
     fetchAIResponse(history, score);
   }
 
@@ -144,11 +147,57 @@ export default function AvaliacaoPage({
     fetchAIResponse(newHistory, answer.score!);
   }
 
+  function handleValidateJustification() {
+    if (!answer.score || answer.score === 3 || !answer.justification.trim()) return;
+
+    const validationMsg: ChatMessage = {
+      id: `msg_${Date.now()}`,
+      role: "user",
+      content: `Minha justificativa para a nota ${answer.score}: "${answer.justification}"`,
+      timestamp: new Date(),
+    };
+
+    const newHistory = [...(answer.chatHistory || []), validationMsg];
+    updateAnswer({ chatHistory: newHistory });
+    setShowChat(true);
+    fetchAIResponse(newHistory, answer.score, answer.justification);
+  }
+
+  function needsValidation(a: Answer): boolean {
+    if (!a.score || a.score === 3) return false;
+    if (!a.justification.trim()) return true;
+    // Precisa ter pelo menos uma resposta da IA após a justificativa
+    const lastAiMsg = [...a.chatHistory].reverse().find((m) => m.role === "assistant");
+    const lastUserJustification = [...a.chatHistory].reverse().find(
+      (m) => m.role === "user" && m.content.includes("Minha justificativa")
+    );
+    if (!lastUserJustification) return true;
+    if (!lastAiMsg) return true;
+    // Verifica se a IA respondeu depois da justificativa
+    const justIdx = a.chatHistory.indexOf(lastUserJustification);
+    const aiIdx = a.chatHistory.indexOf(lastAiMsg);
+    return aiIdx < justIdx;
+  }
+
   function handleFinalize() {
     if (!evaluation) return;
     const allAnswered = evaluation.answers.every((a) => a.score !== null);
     if (!allAnswered) {
       alert("Responda todas as perguntas antes de finalizar.");
+      return;
+    }
+    const pendingValidation = evaluation.answers.filter((a) => needsValidation(a));
+    if (pendingValidation.length > 0) {
+      const pendingQuestions = pendingValidation
+        .map((a) => {
+          const q = questions.find((q) => q.id === a.questionId);
+          return q ? `• ${q.title} (nota ${a.score})` : "";
+        })
+        .filter(Boolean)
+        .join("\n");
+      alert(
+        `As seguintes perguntas com notas diferentes de 3 precisam ter a justificativa analisada pela IA antes de finalizar:\n\n${pendingQuestions}\n\nEscreva a justificativa e clique em "Enviar justificativa para análise da IA".`
+      );
       return;
     }
     const updated = { ...evaluation, status: "concluida" as const };
@@ -290,6 +339,11 @@ export default function AvaliacaoPage({
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <h3 className="text-sm font-semibold text-gray-700 mb-2">
               Justificativa
+              {answer.score !== null && answer.score !== 3 && (
+                <span className="text-xs font-normal text-secondary ml-2">
+                  (a IA vai analisar antes de avançar)
+                </span>
+              )}
             </h3>
             <textarea
               value={answer.justification}
@@ -298,6 +352,16 @@ export default function AvaliacaoPage({
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               placeholder="Descreva exemplos concretos que justificam essa nota..."
             />
+            {answer.score !== null && answer.score !== 3 && answer.justification.trim().length > 10 && (
+              <button
+                onClick={() => handleValidateJustification()}
+                disabled={isAiTyping}
+                className="mt-2 flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary-dark transition disabled:opacity-30"
+              >
+                <Bot className="w-3.5 h-3.5" />
+                Enviar justificativa para análise da IA
+              </button>
+            )}
           </div>
 
           {/* Navigation */}

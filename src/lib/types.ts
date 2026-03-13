@@ -37,6 +37,13 @@ export interface Answer {
   aiValidated: boolean;
 }
 
+export interface DirectorInsight {
+  questionId: string;
+  userId: string;
+  interpretation: string;
+  updatedAt: string;
+}
+
 export interface CalibrationEntry {
   originalScore: number;
   calibratedScore: number;
