@@ -17,9 +17,12 @@ import {
   User,
   CheckCircle2,
   AlertCircle,
-  MessageSquare,
+  Lock,
   Save,
 } from "lucide-react";
+
+// Palavras que indicam que o gestor confirmou/entendeu a análise da IA
+const CONFIRM_PATTERNS = /\b(entendi|entendo|ok|certo|combinado|concordo|confirmo|pode ser|tá bom|está bom|beleza|perfeito|sim|quero continuar|vamos|próxima|seguir|de acordo|compreendi|fechado)\b/i;
 
 export default function AvaliacaoPage({
   params,
@@ -34,7 +37,6 @@ export default function AvaliacaoPage({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [chatInput, setChatInput] = useState("");
   const [isAiTyping, setIsAiTyping] = useState(false);
-  const [showChat, setShowChat] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -63,6 +65,12 @@ export default function AvaliacaoPage({
 
   if (!question || !answer) return null;
 
+  // === Estado derivado ===
+  const isNonStandard = answer.score !== null && answer.score !== 3;
+  const hasChat = answer.chatHistory && answer.chatHistory.length > 0;
+  const isApproved = isAnswerApproved(answer);
+  const canAdvance = answer.score === null || answer.score === 3 || isApproved;
+
   function updateAnswer(updates: Partial<Answer>) {
     setEvaluation((prev) => {
       if (!prev) return prev;
@@ -74,7 +82,30 @@ export default function AvaliacaoPage({
     });
   }
 
-  async function fetchAIResponse(history: ChatMessage[], score: number, justificationOverride?: string) {
+  // Verifica se a resposta foi aprovada pela IA (gestor confirmou após análise)
+  function isAnswerApproved(a: Answer): boolean {
+    if (!a.score || a.score === 3) return true;
+    if (!a.chatHistory || a.chatHistory.length < 2) return false;
+
+    // Precisa ter: justificativa enviada → IA respondeu → gestor confirmou
+    const hasAiAnalysis = a.chatHistory.some((m) => m.role === "assistant");
+    if (!hasAiAnalysis) return false;
+
+    // Verifica se a última mensagem do gestor (após a IA) é uma confirmação
+    const lastUserIdx = a.chatHistory.map((m, i) => ({ ...m, idx: i }))
+      .filter((m) => m.role === "user")
+      .pop();
+    const lastAiIdx = a.chatHistory.map((m, i) => ({ ...m, idx: i }))
+      .filter((m) => m.role === "assistant")
+      .pop();
+
+    if (!lastUserIdx || !lastAiIdx) return false;
+    if (lastUserIdx.idx < lastAiIdx.idx) return false; // IA falou por último, gestor ainda não respondeu
+
+    return CONFIRM_PATTERNS.test(lastUserIdx.content);
+  }
+
+  async function fetchAIResponse(history: ChatMessage[], score: number, justification: string) {
     setIsAiTyping(true);
     const scaleLevel = question.scale.find((s) => s.score === score);
     const directorInsights = getInsightsForQuestion(question.id);
@@ -88,7 +119,7 @@ export default function AvaliacaoPage({
           score,
           scaleLevel,
           employeeName: employee?.name || "",
-          justification: justificationOverride ?? answer.justification,
+          justification,
           chatHistory: history,
           directorInsights: directorInsights.map((i) => i.interpretation),
         }),
@@ -116,23 +147,30 @@ export default function AvaliacaoPage({
     }
   }
 
+  // Seleciona nota — só salva, sem disparar IA
   function handleScoreSelect(score: number) {
-    setShowChat(true);
+    updateAnswer({ score, chatHistory: [], aiValidated: false });
+  }
 
-    const initialUserMsg: ChatMessage = {
+  // Envia justificativa para análise da IA
+  function handleSubmitJustification() {
+    if (!answer.score || !answer.justification.trim()) return;
+
+    const userMsg: ChatMessage = {
       id: `msg_${Date.now()}`,
       role: "user",
-      content: `Estou avaliando ${employee?.name} no critério "${question.title}" e atribuí nota ${score}.`,
+      content: `Minha justificativa para nota ${answer.score} em "${question.title}": "${answer.justification}"`,
       timestamp: new Date(),
     };
 
-    const history = [initialUserMsg];
-    updateAnswer({ score, chatHistory: history });
-    fetchAIResponse(history, score);
+    const history = [userMsg];
+    updateAnswer({ chatHistory: history });
+    fetchAIResponse(history, answer.score, answer.justification);
   }
 
+  // Envia mensagem no chat (resposta à IA)
   async function handleSendMessage() {
-    if (!chatInput.trim() || isAiTyping) return;
+    if (!chatInput.trim() || isAiTyping || !answer.score) return;
 
     const userMessage: ChatMessage = {
       id: `msg_${Date.now()}`,
@@ -144,39 +182,27 @@ export default function AvaliacaoPage({
     const newHistory = [...(answer.chatHistory || []), userMessage];
     updateAnswer({ chatHistory: newHistory });
     setChatInput("");
-    fetchAIResponse(newHistory, answer.score!);
-  }
 
-  function handleValidateJustification() {
-    if (!answer.score || answer.score === 3 || !answer.justification.trim()) return;
+    // Se o gestor confirmou, não precisa chamar a IA de novo
+    if (CONFIRM_PATTERNS.test(chatInput)) {
+      updateAnswer({ chatHistory: newHistory, aiValidated: true });
+      return;
+    }
 
-    const validationMsg: ChatMessage = {
-      id: `msg_${Date.now()}`,
-      role: "user",
-      content: `Minha justificativa para a nota ${answer.score}: "${answer.justification}"`,
-      timestamp: new Date(),
-    };
-
-    const newHistory = [...(answer.chatHistory || []), validationMsg];
-    updateAnswer({ chatHistory: newHistory });
-    setShowChat(true);
     fetchAIResponse(newHistory, answer.score, answer.justification);
   }
 
-  function needsValidation(a: Answer): boolean {
-    if (!a.score || a.score === 3) return false;
-    if (!a.justification.trim()) return true;
-    // Precisa ter pelo menos uma resposta da IA após a justificativa
-    const lastAiMsg = [...a.chatHistory].reverse().find((m) => m.role === "assistant");
-    const lastUserJustification = [...a.chatHistory].reverse().find(
-      (m) => m.role === "user" && m.content.includes("Minha justificativa")
-    );
-    if (!lastUserJustification) return true;
-    if (!lastAiMsg) return true;
-    // Verifica se a IA respondeu depois da justificativa
-    const justIdx = a.chatHistory.indexOf(lastUserJustification);
-    const aiIdx = a.chatHistory.indexOf(lastAiMsg);
-    return aiIdx < justIdx;
+  function handleNavigate(direction: "prev" | "next") {
+    const targetIdx = direction === "prev" ? currentIndex - 1 : currentIndex + 1;
+    if (targetIdx < 0 || targetIdx >= questions.length) return;
+
+    // Bloqueia avançar se a resposta atual não foi aprovada
+    if (direction === "next" && !canAdvance) {
+      alert("Você precisa confirmar no chat com a IA antes de avançar. Responda algo como \"entendi\" ou \"ok\" após a análise.");
+      return;
+    }
+
+    setCurrentIndex(targetIdx);
   }
 
   function handleFinalize() {
@@ -186,9 +212,9 @@ export default function AvaliacaoPage({
       alert("Responda todas as perguntas antes de finalizar.");
       return;
     }
-    const pendingValidation = evaluation.answers.filter((a) => needsValidation(a));
-    if (pendingValidation.length > 0) {
-      const pendingQuestions = pendingValidation
+    const pending = evaluation.answers.filter((a) => !isAnswerApproved(a));
+    if (pending.length > 0) {
+      const names = pending
         .map((a) => {
           const q = questions.find((q) => q.id === a.questionId);
           return q ? `• ${q.title} (nota ${a.score})` : "";
@@ -196,7 +222,7 @@ export default function AvaliacaoPage({
         .filter(Boolean)
         .join("\n");
       alert(
-        `As seguintes perguntas com notas diferentes de 3 precisam ter a justificativa analisada pela IA antes de finalizar:\n\n${pendingQuestions}\n\nEscreva a justificativa e clique em "Enviar justificativa para análise da IA".`
+        `As seguintes perguntas precisam da validação da IA antes de finalizar:\n\n${names}\n\nEnvie a justificativa, leia a análise da IA e confirme com "entendi" ou "ok".`
       );
       return;
     }
@@ -207,6 +233,14 @@ export default function AvaliacaoPage({
 
   const progress =
     evaluation.answers.filter((a) => a.score !== null).length / questions.length;
+
+  // Estado visual do chat panel
+  const chatState = (() => {
+    if (!answer.score) return "empty";
+    if (answer.score === 3) return "score3";
+    if (!hasChat) return "waiting_justification";
+    return "chat_active";
+  })();
 
   return (
     <AppShell>
@@ -257,24 +291,27 @@ export default function AvaliacaoPage({
           const a = evaluation.answers[i];
           const isActive = i === currentIndex;
           const isAnswered = a?.score !== null;
+          const approved = isAnswerApproved(a);
           return (
             <button
               key={q.id}
-              onClick={() => {
-                setCurrentIndex(i);
-                setShowChat(!!a?.chatHistory?.length);
-              }}
+              onClick={() => setCurrentIndex(i)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
                 isActive
                   ? "bg-primary text-white"
-                  : isAnswered
+                  : approved && isAnswered
                   ? "bg-accent/10 text-accent border border-accent/20"
+                  : isAnswered
+                  ? "bg-secondary/10 text-secondary border border-secondary/20"
                   : "bg-gray-100 text-gray-500"
               }`}
             >
               {i + 1}. {q.title.length > 20 ? q.title.slice(0, 20) + "…" : q.title}
-              {isAnswered && !isActive && (
+              {approved && isAnswered && !isActive && (
                 <CheckCircle2 className="w-3 h-3 inline ml-1" />
+              )}
+              {isAnswered && !approved && !isActive && (
+                <Lock className="w-3 h-3 inline ml-1" />
               )}
             </button>
           );
@@ -282,7 +319,7 @@ export default function AvaliacaoPage({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left: Question & Score */}
+        {/* Left: Question & Score & Justification */}
         <div className="space-y-6">
           {/* Question card */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
@@ -298,7 +335,7 @@ export default function AvaliacaoPage({
           {/* Score selection */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <h3 className="text-sm font-semibold text-gray-700 mb-4">
-              Selecione a nota
+              1. Selecione a nota
             </h3>
             <div className="space-y-3">
               {question.scale.map((level) => (
@@ -336,44 +373,52 @@ export default function AvaliacaoPage({
           </div>
 
           {/* Justification */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">
-              Justificativa
-              {answer.score !== null && answer.score !== 3 && (
-                <span className="text-xs font-normal text-secondary ml-2">
-                  (a IA vai analisar antes de avançar)
-                </span>
+          {answer.score !== null && (
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                2. Escreva a justificativa
+                {isNonStandard && !isApproved && (
+                  <span className="text-xs font-normal text-secondary ml-2">
+                    (obrigatória para nota {answer.score})
+                  </span>
+                )}
+              </h3>
+              <textarea
+                value={answer.justification}
+                onChange={(e) => updateAnswer({ justification: e.target.value })}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                placeholder="Descreva exemplos concretos que justificam essa nota..."
+              />
+              {isNonStandard && answer.justification.trim().length > 10 && !hasChat && (
+                <button
+                  onClick={handleSubmitJustification}
+                  disabled={isAiTyping}
+                  className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-dark transition text-sm font-medium disabled:opacity-30"
+                >
+                  <Bot className="w-4 h-4" />
+                  Enviar para análise da IA
+                </button>
               )}
-            </h3>
-            <textarea
-              value={answer.justification}
-              onChange={(e) => updateAnswer({ justification: e.target.value })}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-              placeholder="Descreva exemplos concretos que justificam essa nota..."
-            />
-            {answer.score !== null && answer.score !== 3 && answer.justification.trim().length > 10 && (
-              <button
-                onClick={() => handleValidateJustification()}
-                disabled={isAiTyping}
-                className="mt-2 flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary-dark transition disabled:opacity-30"
-              >
-                <Bot className="w-3.5 h-3.5" />
-                Enviar justificativa para análise da IA
-              </button>
-            )}
-          </div>
+              {isNonStandard && hasChat && !isApproved && (
+                <p className="mt-2 text-xs text-secondary flex items-center gap-1.5">
+                  <Lock className="w-3 h-3" />
+                  Confirme no chat ao lado para poder avançar
+                </p>
+              )}
+              {isApproved && isNonStandard && (
+                <p className="mt-2 text-xs text-accent flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Validado pela IA — pode avançar
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Navigation */}
           <div className="flex justify-between">
             <button
-              onClick={() => {
-                if (currentIndex > 0) {
-                  setCurrentIndex(currentIndex - 1);
-                  const prevAnswer = evaluation.answers[currentIndex - 1];
-                  setShowChat(!!prevAnswer?.chatHistory?.length);
-                }
-              }}
+              onClick={() => handleNavigate("prev")}
               disabled={currentIndex === 0}
               className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition disabled:opacity-30"
             >
@@ -381,15 +426,13 @@ export default function AvaliacaoPage({
               Anterior
             </button>
             <button
-              onClick={() => {
-                if (currentIndex < questions.length - 1) {
-                  setCurrentIndex(currentIndex + 1);
-                  const nextAnswer = evaluation.answers[currentIndex + 1];
-                  setShowChat(!!nextAnswer?.chatHistory?.length);
-                }
-              }}
+              onClick={() => handleNavigate("next")}
               disabled={currentIndex === questions.length - 1}
-              className="flex items-center gap-2 px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark transition disabled:opacity-30"
+              className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition disabled:opacity-30 ${
+                canAdvance
+                  ? "bg-primary text-white hover:bg-primary-dark"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
             >
               Próxima
               <ChevronRight className="w-4 h-4" />
@@ -399,7 +442,7 @@ export default function AvaliacaoPage({
 
         {/* Right: AI Chat */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-[calc(100vh-220px)] sticky top-24">
-          <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+          <div className="p-4 border-b border-gray-100">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
                 <Bot className="w-4 h-4 text-primary" />
@@ -413,27 +456,50 @@ export default function AvaliacaoPage({
                 </p>
               </div>
             </div>
-            {!showChat && answer.score !== null && (
-              <button
-                onClick={() => setShowChat(true)}
-                className="flex items-center gap-1.5 text-xs text-primary font-medium"
-              >
-                <MessageSquare className="w-3.5 h-3.5" />
-                Ver conversa
-              </button>
-            )}
           </div>
 
-          {!answer.score ? (
+          {chatState === "empty" && (
             <div className="flex-1 flex items-center justify-center p-8">
               <div className="text-center">
                 <AlertCircle className="w-12 h-12 text-gray-200 mx-auto mb-3" />
                 <p className="text-sm text-gray-400">
-                  Selecione uma nota para iniciar a conversa com a IA
+                  Selecione uma nota para começar
                 </p>
               </div>
             </div>
-          ) : (
+          )}
+
+          {chatState === "score3" && (
+            <div className="flex-1 flex items-center justify-center p-8">
+              <div className="text-center">
+                <CheckCircle2 className="w-12 h-12 text-accent/30 mx-auto mb-3" />
+                <p className="text-sm text-gray-500 font-medium">
+                  Nota 3 — Dentro do esperado
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Não é necessária validação da IA para nota 3.
+                  <br />Preencha a justificativa e avance.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {chatState === "waiting_justification" && (
+            <div className="flex-1 flex items-center justify-center p-8">
+              <div className="text-center">
+                <Bot className="w-12 h-12 text-primary/20 mx-auto mb-3" />
+                <p className="text-sm text-gray-500 font-medium">
+                  Nota {answer.score} selecionada
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Escreva a justificativa e clique em
+                  <br />&quot;Enviar para análise da IA&quot;
+                </p>
+              </div>
+            </div>
+          )}
+
+          {chatState === "chat_active" && (
             <>
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {(answer.chatHistory || []).map((msg) => (
@@ -482,10 +548,26 @@ export default function AvaliacaoPage({
                     </div>
                   </div>
                 )}
+
+                {/* Feedback visual quando aprovado */}
+                {isApproved && (
+                  <div className="flex justify-center">
+                    <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-accent bg-accent/10">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Validado — pode avançar
+                    </span>
+                  </div>
+                )}
+
                 <div ref={chatEndRef} />
               </div>
 
               <div className="p-4 border-t border-gray-100">
+                {!isApproved && (
+                  <p className="text-xs text-gray-400 mb-2">
+                    Após ler a análise, responda &quot;entendi&quot;, &quot;ok&quot; ou similar para confirmar
+                  </p>
+                )}
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -497,7 +579,7 @@ export default function AvaliacaoPage({
                         handleSendMessage();
                       }
                     }}
-                    placeholder="Responda à IA ou adicione contexto..."
+                    placeholder={isApproved ? "Enviar mensagem adicional..." : "Responda à IA para confirmar..."}
                     className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     disabled={isAiTyping}
                   />
