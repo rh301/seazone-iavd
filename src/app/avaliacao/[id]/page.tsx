@@ -82,27 +82,38 @@ export default function AvaliacaoPage({
     });
   }
 
-  // Verifica se a resposta foi aprovada pela IA (gestor confirmou após análise)
+  // Verifica se a resposta foi aprovada pela IA (gestor discutiu e depois confirmou)
   function isAnswerApproved(a: Answer): boolean {
     if (!a.score || a.score === 3) return true;
-    if (!a.chatHistory || a.chatHistory.length < 2) return false;
+    if (!a.chatHistory || a.chatHistory.length < 4) return false;
 
-    // Precisa ter: justificativa enviada → IA respondeu → gestor confirmou
-    const hasAiAnalysis = a.chatHistory.some((m) => m.role === "assistant");
-    if (!hasAiAnalysis) return false;
+    // Fluxo mínimo exigido:
+    // 1. Gestor envia justificativa (user msg)
+    // 2. IA analisa e questiona (assistant msg)
+    // 3. Gestor responde substancialmente (user msg — NÃO pode ser só "ok")
+    // 4. IA reage à resposta (assistant msg)
+    // 5. Gestor confirma ("ok", "entendi", etc.) (user msg)
 
-    // Verifica se a última mensagem do gestor (após a IA) é uma confirmação
-    const lastUserIdx = a.chatHistory.map((m, i) => ({ ...m, idx: i }))
-      .filter((m) => m.role === "user")
-      .pop();
-    const lastAiIdx = a.chatHistory.map((m, i) => ({ ...m, idx: i }))
-      .filter((m) => m.role === "assistant")
-      .pop();
+    const aiMessages = a.chatHistory.filter((m) => m.role === "assistant");
+    const userMessages = a.chatHistory.filter((m) => m.role === "user");
 
-    if (!lastUserIdx || !lastAiIdx) return false;
-    if (lastUserIdx.idx < lastAiIdx.idx) return false; // IA falou por último, gestor ainda não respondeu
+    // Precisa de pelo menos 2 respostas da IA (análise inicial + reação à resposta)
+    if (aiMessages.length < 2) return false;
+    // Precisa de pelo menos 3 mensagens do gestor (justificativa + resposta + confirmação)
+    if (userMessages.length < 3) return false;
 
-    return CONFIRM_PATTERNS.test(lastUserIdx.content);
+    // A última mensagem do gestor deve ser uma confirmação
+    const lastUserMsg = a.chatHistory.filter((m) => m.role === "user").pop();
+    const lastAiMsg = a.chatHistory.filter((m) => m.role === "assistant").pop();
+
+    if (!lastUserMsg || !lastAiMsg) return false;
+
+    // O gestor deve ter falado por último
+    const lastUserIdx = a.chatHistory.lastIndexOf(lastUserMsg);
+    const lastAiIdx = a.chatHistory.lastIndexOf(lastAiMsg);
+    if (lastUserIdx < lastAiIdx) return false;
+
+    return CONFIRM_PATTERNS.test(lastUserMsg.content);
   }
 
   async function fetchAIResponse(history: ChatMessage[], score: number, justification: string) {
@@ -172,6 +183,30 @@ export default function AvaliacaoPage({
   async function handleSendMessage() {
     if (!chatInput.trim() || isAiTyping || !answer.score) return;
 
+    const aiMessages = (answer.chatHistory || []).filter((m) => m.role === "assistant");
+    const userMessages = (answer.chatHistory || []).filter((m) => m.role === "user");
+    const isEarlyConfirm = CONFIRM_PATTERNS.test(chatInput) && (aiMessages.length < 2 || userMessages.length < 2);
+
+    // Se tentou confirmar cedo demais, a IA pede mais detalhes
+    if (isEarlyConfirm) {
+      const userMessage: ChatMessage = {
+        id: `msg_${Date.now()}`,
+        role: "user",
+        content: chatInput,
+        timestamp: new Date(),
+      };
+      const aiReply: ChatMessage = {
+        id: `msg_${Date.now() + 1}`,
+        role: "assistant",
+        content: `Antes de confirmar, preciso que você responda às questões que levantei sobre a nota **${answer.score}**. Traga **exemplos concretos e recentes** que sustentem sua avaliação. Isso é necessário para alinhar com a visão da diretoria.`,
+        timestamp: new Date(),
+      };
+      const newHistory = [...(answer.chatHistory || []), userMessage, aiReply];
+      updateAnswer({ chatHistory: newHistory });
+      setChatInput("");
+      return;
+    }
+
     const userMessage: ChatMessage = {
       id: `msg_${Date.now()}`,
       role: "user",
@@ -183,7 +218,7 @@ export default function AvaliacaoPage({
     updateAnswer({ chatHistory: newHistory });
     setChatInput("");
 
-    // Se o gestor confirmou, não precisa chamar a IA de novo
+    // Se o gestor confirmou E já teve discussão suficiente, valida
     if (CONFIRM_PATTERNS.test(chatInput)) {
       updateAnswer({ chatHistory: newHistory, aiValidated: true });
       return;
