@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useRef, use } from "react";
 import { useRouter } from "next/navigation";
-import { Question, Evaluation, ChatMessage, Answer } from "@/lib/types";
-import { getQuestions, getEvaluation, saveEvaluation, getInsightsForQuestion } from "@/lib/store";
+import { Question, Evaluation, ChatMessage, Answer, EvaluationType, evaluationTypeLabels, evaluationTypeColors } from "@/lib/types";
+import { getQuestions } from "@/lib/store";
+import { fetchEvaluation, upsertEvaluation, fetchInsightsForQuestion } from "@/lib/db";
 import { useAuth } from "@/lib/auth-context";
-import { roleLabels } from "@/lib/auth-types";
-import { users as allUsers } from "@/data/users";
+import { findUser } from "@/lib/org-tree";
 import AppShell from "@/components/app-shell";
 import { formatChatContent } from "@/lib/format-chat";
 import {
@@ -17,12 +17,25 @@ import {
   User,
   CheckCircle2,
   AlertCircle,
-  Lock,
   Save,
+  Star,
+  MessageSquareWarning,
+  Scale,
 } from "lucide-react";
 
-// Palavras que indicam que o gestor confirmou/entendeu a análise da IA
-const CONFIRM_PATTERNS = /\b(entendi|entendo|ok|certo|combinado|concordo|confirmo|pode ser|tá bom|está bom|beleza|perfeito|sim|quero continuar|vamos|próxima|seguir|de acordo|compreendi|fechado)\b/i;
+// Regex para extrair nota do formato "**Nota: X — Label**"
+const SCORE_REGEX = /\*\*Nota:\s*(\d)\s*[—–-]\s*(.+?)\*\*/;
+
+function extractScore(content: string): { score: number; label: string } | null {
+  const match = content.match(SCORE_REGEX);
+  if (match) {
+    const score = parseInt(match[1], 10);
+    if (score >= 1 && score <= 5) {
+      return { score, label: match[2].trim() };
+    }
+  }
+  return null;
+}
 
 export default function AvaliacaoPage({
   params,
@@ -37,20 +50,24 @@ export default function AvaliacaoPage({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [chatInput, setChatInput] = useState("");
   const [isAiTyping, setIsAiTyping] = useState(false);
+  const [isContesting, setIsContesting] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const eval_ = getEvaluation(id);
-    if (!eval_) {
-      router.push("/avaliacao");
-      return;
+    async function load() {
+      const eval_ = await fetchEvaluation(id);
+      if (!eval_) {
+        router.push("/avaliacao");
+        return;
+      }
+      if (currentUser && eval_.evaluatorId !== currentUser.id) {
+        router.push("/");
+        return;
+      }
+      setEvaluation(eval_);
+      setQuestions(getQuestions());
     }
-    if (currentUser && eval_.evaluatorId !== currentUser.id) {
-      router.push("/");
-      return;
-    }
-    setEvaluation(eval_);
-    setQuestions(getQuestions());
+    load();
   }, [id, router, currentUser]);
 
   useEffect(() => {
@@ -59,17 +76,25 @@ export default function AvaliacaoPage({
 
   if (!evaluation || !currentUser) return null;
 
-  const employee = allUsers.find((e) => e.id === evaluation.employeeId);
+  const employee = findUser(evaluation.employeeId);
+  const evaluationType: EvaluationType = evaluation.evaluationType || "gestor";
   const question = questions[currentIndex];
   const answer = evaluation.answers[currentIndex];
 
   if (!question || !answer) return null;
 
   // === Estado derivado ===
-  const isNonStandard = answer.score !== null && answer.score !== 3;
+  const hasJustification = answer.justification.trim().length > 10;
   const hasChat = answer.chatHistory && answer.chatHistory.length > 0;
-  const isApproved = isAnswerApproved(answer);
-  const canAdvance = answer.score === null || answer.score === 3 || isApproved;
+  const hasScore = answer.score !== null;
+  const isComplete = hasScore && answer.aiValidated;
+
+  // Agrupar perguntas por valor
+  const valueGroups = questions.reduce<Record<string, number[]>>((acc, q, i) => {
+    if (!acc[q.category]) acc[q.category] = [];
+    acc[q.category].push(i);
+    return acc;
+  }, {});
 
   function updateAnswer(updates: Partial<Answer>) {
     setEvaluation((prev) => {
@@ -77,49 +102,31 @@ export default function AvaliacaoPage({
       const newAnswers = [...prev.answers];
       newAnswers[currentIndex] = { ...newAnswers[currentIndex], ...updates };
       const updated = { ...prev, answers: newAnswers };
-      saveEvaluation(updated);
+      upsertEvaluation(updated);
       return updated;
     });
   }
 
-  // Verifica se a resposta foi aprovada pela IA (gestor discutiu e depois confirmou)
-  function isAnswerApproved(a: Answer): boolean {
-    if (!a.score || a.score === 3) return true;
-    if (!a.chatHistory || a.chatHistory.length < 4) return false;
-
-    // Fluxo mínimo exigido:
-    // 1. Gestor envia justificativa (user msg)
-    // 2. IA analisa e questiona (assistant msg)
-    // 3. Gestor responde substancialmente (user msg — NÃO pode ser só "ok")
-    // 4. IA reage à resposta (assistant msg)
-    // 5. Gestor confirma ("ok", "entendi", etc.) (user msg)
-
-    const aiMessages = a.chatHistory.filter((m) => m.role === "assistant");
-    const userMessages = a.chatHistory.filter((m) => m.role === "user");
-
-    // Precisa de pelo menos 2 respostas da IA (análise inicial + reação à resposta)
-    if (aiMessages.length < 2) return false;
-    // Precisa de pelo menos 3 mensagens do gestor (justificativa + resposta + confirmação)
-    if (userMessages.length < 3) return false;
-
-    // A última mensagem do gestor deve ser uma confirmação
-    const lastUserMsg = a.chatHistory.filter((m) => m.role === "user").pop();
-    const lastAiMsg = a.chatHistory.filter((m) => m.role === "assistant").pop();
-
-    if (!lastUserMsg || !lastAiMsg) return false;
-
-    // O gestor deve ter falado por último
-    const lastUserIdx = a.chatHistory.lastIndexOf(lastUserMsg);
-    const lastAiIdx = a.chatHistory.lastIndexOf(lastAiMsg);
-    if (lastUserIdx < lastAiIdx) return false;
-
-    return CONFIRM_PATTERNS.test(lastUserMsg.content);
-  }
-
-  async function fetchAIResponse(history: ChatMessage[], score: number, justification: string) {
+  async function fetchAIResponse(
+    history: ChatMessage[],
+    mode: "discuss" | "score" | "contest"
+  ) {
     setIsAiTyping(true);
-    const scaleLevel = question.scale.find((s) => s.score === score);
-    const directorInsights = getInsightsForQuestion(question.id);
+    const directorInsights = await fetchInsightsForQuestion(question.id);
+
+    // Construir contexto das respostas anteriores
+    const previousAnswers = evaluation!.answers
+      .filter((a, i) => i !== currentIndex && a.justification.trim().length > 0)
+      .map((a, i) => {
+        const q = questions.find((q) => q.id === a.questionId);
+        return {
+          questionTitle: q?.title || "",
+          category: q?.category || "",
+          justification: a.justification,
+          score: a.score,
+          aiReasoning: a.aiReasoning,
+        };
+      });
 
     try {
       const res = await fetch("/api/chat", {
@@ -127,12 +134,16 @@ export default function AvaliacaoPage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question,
-          score,
-          scaleLevel,
           employeeName: employee?.name || "",
-          justification,
+          justification: answer.justification,
           chatHistory: history,
           directorInsights: directorInsights.map((i) => i.interpretation),
+          previousAnswers,
+          mode,
+          evaluationType,
+          evaluatorSector: currentUser?.sector || "",
+          evaluateeSector: employee?.sector || "",
+          evaluateeCargo: employee?.cargo || "",
         }),
       });
 
@@ -144,12 +155,30 @@ export default function AvaliacaoPage({
         content: data.content,
         timestamp: new Date(),
       };
-      updateAnswer({ chatHistory: [...history, aiMessage] });
+
+      const newHistory = [...history, aiMessage];
+      const updates: Partial<Answer> = { chatHistory: newHistory };
+
+      // Se a IA deu nota (mode score ou contest), extrair
+      if (mode === "score" || mode === "contest") {
+        const extracted = extractScore(data.content);
+        if (extracted) {
+          updates.score = extracted.score;
+          updates.aiValidated = true;
+          updates.aiReasoning = data.content;
+        }
+      }
+
+      updateAnswer(updates);
+
+      if (mode === "contest") {
+        setIsContesting(false);
+      }
     } catch {
       const aiMessage: ChatMessage = {
         id: `msg_${Date.now()}`,
         role: "assistant",
-        content: `Nota ${score} (${scaleLevel?.label}) selecionada para "${question.title}". Compartilhe exemplos concretos que justifiquem essa nota.`,
+        content: "Desculpe, houve um erro ao processar. Tente novamente.",
         timestamp: new Date(),
       };
       updateAnswer({ chatHistory: [...history, aiMessage] });
@@ -158,54 +187,25 @@ export default function AvaliacaoPage({
     }
   }
 
-  // Seleciona nota — só salva, sem disparar IA
-  function handleScoreSelect(score: number) {
-    updateAnswer({ score, chatHistory: [], aiValidated: false });
-  }
-
-  // Envia justificativa para análise da IA
-  function handleSubmitJustification() {
-    if (!answer.score || !answer.justification.trim()) return;
+  // Gestor envia resposta à pergunta — inicia discussão com IA
+  function handleSubmitAnswer() {
+    if (!hasJustification) return;
 
     const userMsg: ChatMessage = {
       id: `msg_${Date.now()}`,
       role: "user",
-      content: `Minha justificativa para nota ${answer.score} em "${question.title}": "${answer.justification}"`,
+      content: answer.justification,
       timestamp: new Date(),
     };
 
     const history = [userMsg];
     updateAnswer({ chatHistory: history });
-    fetchAIResponse(history, answer.score, answer.justification);
+    fetchAIResponse(history, "discuss");
   }
 
-  // Envia mensagem no chat (resposta à IA)
+  // Envia mensagem no chat (resposta à IA durante discussão)
   async function handleSendMessage() {
-    if (!chatInput.trim() || isAiTyping || !answer.score) return;
-
-    const aiMessages = (answer.chatHistory || []).filter((m) => m.role === "assistant");
-    const userMessages = (answer.chatHistory || []).filter((m) => m.role === "user");
-    const isEarlyConfirm = CONFIRM_PATTERNS.test(chatInput) && (aiMessages.length < 2 || userMessages.length < 2);
-
-    // Se tentou confirmar cedo demais, a IA pede mais detalhes
-    if (isEarlyConfirm) {
-      const userMessage: ChatMessage = {
-        id: `msg_${Date.now()}`,
-        role: "user",
-        content: chatInput,
-        timestamp: new Date(),
-      };
-      const aiReply: ChatMessage = {
-        id: `msg_${Date.now() + 1}`,
-        role: "assistant",
-        content: `Antes de confirmar, preciso que você responda às questões que levantei sobre a nota **${answer.score}**. Traga **exemplos concretos e recentes** que sustentem sua avaliação. Isso é necessário para alinhar com a visão da diretoria.`,
-        timestamp: new Date(),
-      };
-      const newHistory = [...(answer.chatHistory || []), userMessage, aiReply];
-      updateAnswer({ chatHistory: newHistory });
-      setChatInput("");
-      return;
-    }
+    if (!chatInput.trim() || isAiTyping) return;
 
     const userMessage: ChatMessage = {
       id: `msg_${Date.now()}`,
@@ -218,64 +218,85 @@ export default function AvaliacaoPage({
     updateAnswer({ chatHistory: newHistory });
     setChatInput("");
 
-    // Se o gestor confirmou E já teve discussão suficiente, valida
-    if (CONFIRM_PATTERNS.test(chatInput)) {
-      updateAnswer({ chatHistory: newHistory, aiValidated: true });
+    // Se está contestando, usa mode contest
+    if (isContesting) {
+      fetchAIResponse(newHistory, "contest");
       return;
     }
 
-    fetchAIResponse(newHistory, answer.score, answer.justification);
+    fetchAIResponse(newHistory, "discuss");
+  }
+
+  // Pede para IA dar a nota
+  function handleRequestScore() {
+    const history = answer.chatHistory || [];
+
+    const userMsg: ChatMessage = {
+      id: `msg_${Date.now()}`,
+      role: "user",
+      content: "Por favor, dê sua nota agora com base em tudo que discutimos.",
+      timestamp: new Date(),
+    };
+
+    const newHistory = [...history, userMsg];
+    updateAnswer({ chatHistory: newHistory });
+    fetchAIResponse(newHistory, "score");
+  }
+
+  // Inicia contestação
+  function handleStartContest() {
+    setIsContesting(true);
+    setChatInput("");
+  }
+
+  // Aceita a nota da IA
+  function handleAcceptScore() {
+    updateAnswer({ aiValidated: true });
   }
 
   function handleNavigate(direction: "prev" | "next") {
     const targetIdx = direction === "prev" ? currentIndex - 1 : currentIndex + 1;
     if (targetIdx < 0 || targetIdx >= questions.length) return;
-
-    // Bloqueia avançar se a resposta atual não foi aprovada
-    if (direction === "next" && !canAdvance) {
-      alert("Você precisa confirmar no chat com a IA antes de avançar. Responda algo como \"entendi\" ou \"ok\" após a análise.");
-      return;
-    }
-
     setCurrentIndex(targetIdx);
+    setIsContesting(false);
   }
 
-  function handleFinalize() {
+  async function handleFinalize() {
     if (!evaluation) return;
-    const allAnswered = evaluation.answers.every((a) => a.score !== null);
-    if (!allAnswered) {
-      alert("Responda todas as perguntas antes de finalizar.");
-      return;
-    }
-    const pending = evaluation.answers.filter((a) => !isAnswerApproved(a));
-    if (pending.length > 0) {
-      const names = pending
-        .map((a) => {
-          const q = questions.find((q) => q.id === a.questionId);
-          return q ? `• ${q.title} (nota ${a.score})` : "";
-        })
-        .filter(Boolean)
-        .join("\n");
+    const allScored = evaluation.answers.every((a) => a.score !== null && a.aiValidated);
+    if (!allScored) {
+      const pending = evaluation.answers
+        .map((a, i) => (!a.score || !a.aiValidated ? questions[i] : null))
+        .filter(Boolean);
+      const names = pending.map((q) => `• ${q!.title}`).join("\n");
       alert(
-        `As seguintes perguntas precisam da validação da IA antes de finalizar:\n\n${names}\n\nEnvie a justificativa, leia a análise da IA e confirme com "entendi" ou "ok".`
+        `As seguintes perguntas ainda não receberam nota da IA:\n\n${names}\n\nDiscuta com a IA e peça a nota para cada uma.`
       );
       return;
     }
     const updated = { ...evaluation, status: "concluida" as const };
-    saveEvaluation(updated);
+    await upsertEvaluation(updated);
     router.push("/historico");
   }
 
   const progress =
-    evaluation.answers.filter((a) => a.score !== null).length / questions.length;
+    evaluation.answers.filter((a) => a.score !== null && a.aiValidated).length /
+    questions.length;
 
-  // Estado visual do chat panel
+  // Estado do chat
   const chatState = (() => {
-    if (!answer.score) return "empty";
-    if (answer.score === 3) return "score3";
-    if (!hasChat) return "waiting_justification";
-    return "chat_active";
+    if (!hasJustification && !hasChat) return "waiting_answer";
+    if (hasJustification && !hasChat) return "ready_to_send";
+    if (hasChat && !hasScore) return "discussing";
+    if (hasScore && isContesting) return "contesting";
+    if (hasScore) return "scored";
+    return "discussing";
   })();
+
+  // Mínimo de trocas antes de poder pedir nota
+  const userMsgCount = (answer.chatHistory || []).filter((m) => m.role === "user").length;
+  const aiMsgCount = (answer.chatHistory || []).filter((m) => m.role === "assistant").length;
+  const canRequestScore = userMsgCount >= 2 && aiMsgCount >= 1 && !hasScore;
 
   return (
     <AppShell>
@@ -289,12 +310,24 @@ export default function AvaliacaoPage({
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
+          {employee?.photoUrl ? (
+            <img src={employee.photoUrl} alt={employee.name} className="w-10 h-10 rounded-full object-cover" />
+          ) : (
+            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-sm font-semibold text-primary">
+              {employee?.name.split(" ").map((n) => n[0]).slice(0, 2).join("")}
+            </div>
+          )}
           <div>
-            <h1 className="text-xl font-bold text-gray-900">
-              Avaliação — {employee?.name}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-gray-900">
+                {employee?.name}
+              </h1>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${evaluationTypeColors[evaluationType]}`}>
+                {evaluationTypeLabels[evaluationType]}
+              </span>
+            </div>
             <p className="text-sm text-gray-500">
-              {employee ? roleLabels[employee.role] : ""} · {employee?.department}
+              {employee?.cargo} · {employee?.sector}
             </p>
           </div>
         </div>
@@ -320,41 +353,48 @@ export default function AvaliacaoPage({
         />
       </div>
 
-      {/* Question navigation pills */}
-      <div className="flex gap-2 mb-6 flex-wrap">
-        {questions.map((q, i) => {
-          const a = evaluation.answers[i];
-          const isActive = i === currentIndex;
-          const isAnswered = a?.score !== null;
-          const approved = isAnswerApproved(a);
-          return (
-            <button
-              key={q.id}
-              onClick={() => setCurrentIndex(i)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-                isActive
-                  ? "bg-primary text-white"
-                  : approved && isAnswered
-                  ? "bg-accent/10 text-accent border border-accent/20"
-                  : isAnswered
-                  ? "bg-secondary/10 text-secondary border border-secondary/20"
-                  : "bg-gray-100 text-gray-500"
-              }`}
-            >
-              {i + 1}. {q.title.length > 20 ? q.title.slice(0, 20) + "…" : q.title}
-              {approved && isAnswered && !isActive && (
-                <CheckCircle2 className="w-3 h-3 inline ml-1" />
-              )}
-              {isAnswered && !approved && !isActive && (
-                <Lock className="w-3 h-3 inline ml-1" />
-              )}
-            </button>
-          );
-        })}
+      {/* Value navigation — grouped by valor */}
+      <div className="space-y-2 mb-6">
+        {Object.entries(valueGroups).map(([category, indices]) => (
+          <div key={category} className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-gray-400 w-36 truncate">
+              {category}
+            </span>
+            <div className="flex gap-1.5">
+              {indices.map((i) => {
+                const a = evaluation.answers[i];
+                const isActive = i === currentIndex;
+                const scored = a?.score !== null && a?.aiValidated;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => { setCurrentIndex(i); setIsContesting(false); }}
+                    className={`w-8 h-8 rounded-lg text-xs font-bold transition flex items-center justify-center ${
+                      isActive
+                        ? "bg-primary text-white"
+                        : scored
+                        ? "bg-accent/10 text-accent border border-accent/20"
+                        : a?.chatHistory?.length > 0
+                        ? "bg-secondary/10 text-secondary border border-secondary/20"
+                        : "bg-gray-100 text-gray-400"
+                    }`}
+                    title={questions[i]?.title}
+                  >
+                    {scored ? (
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    ) : (
+                      `P${(indices.indexOf(i) + 1)}`
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left: Question & Score & Justification */}
+        {/* Left: Question & Answer */}
         <div className="space-y-6">
           {/* Question card */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
@@ -364,87 +404,101 @@ export default function AvaliacaoPage({
             <h2 className="text-lg font-semibold text-gray-900 mt-3">
               {question.title}
             </h2>
-            <p className="text-sm text-gray-500 mt-1">{question.description}</p>
+            <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+              {question.description}
+            </p>
           </div>
 
-          {/* Score selection */}
+          {/* Answer textarea */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-700 mb-4">
-              1. Selecione a nota
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">
+              Sua resposta
             </h3>
-            <div className="space-y-3">
-              {question.scale.map((level) => (
-                <button
-                  key={level.score}
-                  onClick={() => handleScoreSelect(level.score)}
-                  className={`w-full text-left p-4 rounded-lg border-2 transition ${
-                    answer.score === level.score
-                      ? `score-${level.score}-light border-2`
-                      : "border-gray-100 hover:border-gray-200"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                        answer.score === level.score
-                          ? `score-${level.score}`
-                          : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {level.score}
-                    </span>
-                    <div>
-                      <span className="font-medium text-gray-800 text-sm">
-                        {level.label}
-                      </span>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {level.description}
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
+            <p className="text-xs text-gray-400 mb-3">
+              {evaluationType === "auto"
+                ? "Descreva com exemplos concretos como você se comportou nos últimos 6 meses."
+                : evaluationType === "par"
+                ? "Descreva com exemplos como esse colega colabora e contribui no dia a dia."
+                : evaluationType === "liderado"
+                ? "Descreva com exemplos como seu gestor lidera, apoia e direciona a equipe."
+                : "Descreva com exemplos concretos e recentes. A IA vai discutir com você e depois dar a nota."}
+            </p>
+            <textarea
+              value={answer.justification}
+              onChange={(e) => updateAnswer({ justification: e.target.value })}
+              rows={4}
+              disabled={hasChat}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:bg-gray-50 disabled:text-gray-500"
+              placeholder={
+                evaluationType === "auto"
+                  ? "Ex: Quando enfrentei o desafio X, eu tomei a iniciativa de..."
+                  : evaluationType === "par"
+                  ? "Ex: No projeto compartilhado X, esse colega contribuiu com..."
+                  : evaluationType === "liderado"
+                  ? "Ex: Quando tive dificuldade com X, meu gestor me ajudou..."
+                  : "Ex: No projeto X, quando tivemos o problema Y, o colaborador fez Z..."
+              }
+            />
+            {hasJustification && !hasChat && (
+              <button
+                onClick={handleSubmitAnswer}
+                disabled={isAiTyping}
+                className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-dark transition text-sm font-medium disabled:opacity-30"
+              >
+                <Bot className="w-4 h-4" />
+                Iniciar discussão com IA
+              </button>
+            )}
           </div>
 
-          {/* Justification */}
-          {answer.score !== null && (
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                2. Escreva a justificativa
-                {isNonStandard && !isApproved && (
-                  <span className="text-xs font-normal text-secondary ml-2">
-                    (obrigatória para nota {answer.score})
-                  </span>
-                )}
-              </h3>
-              <textarea
-                value={answer.justification}
-                onChange={(e) => updateAnswer({ justification: e.target.value })}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                placeholder="Descreva exemplos concretos que justificam essa nota..."
-              />
-              {isNonStandard && answer.justification.trim().length > 10 && !hasChat && (
-                <button
-                  onClick={handleSubmitJustification}
-                  disabled={isAiTyping}
-                  className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-dark transition text-sm font-medium disabled:opacity-30"
-                >
-                  <Bot className="w-4 h-4" />
-                  Enviar para análise da IA
-                </button>
+          {/* Score display (when AI has scored) */}
+          {hasScore && (
+            <div className={`bg-white rounded-xl p-6 shadow-sm border-2 ${
+              isComplete ? "border-accent/30" : "border-secondary/30"
+            }`}>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <Star className="w-4 h-4 text-secondary" />
+                  Nota da IA
+                </h3>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold score-${answer.score}`}>
+                  {answer.score}
+                </div>
+              </div>
+              <p className="text-xs text-gray-500">
+                {question.scale.find((s) => s.score === answer.score)?.label} — {question.scale.find((s) => s.score === answer.score)?.description}
+              </p>
+
+              {!isContesting && (
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={handleAcceptScore}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition text-sm font-medium"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    Aceitar nota
+                  </button>
+                  <button
+                    onClick={handleStartContest}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border-2 border-secondary/30 text-secondary rounded-lg hover:bg-secondary/5 transition text-sm font-medium"
+                  >
+                    <MessageSquareWarning className="w-4 h-4" />
+                    Contestar
+                  </button>
+                </div>
               )}
-              {isNonStandard && hasChat && !isApproved && (
-                <p className="mt-2 text-xs text-secondary flex items-center gap-1.5">
-                  <Lock className="w-3 h-3" />
-                  Confirme no chat ao lado para poder avançar
+
+              {isContesting && (
+                <p className="text-xs text-secondary mt-3 flex items-center gap-1.5">
+                  <Scale className="w-3 h-3" />
+                  Traga fatos e dados no chat para contestar a nota
                 </p>
               )}
-              {isApproved && isNonStandard && (
-                <p className="mt-2 text-xs text-accent flex items-center gap-1.5">
+
+              {isComplete && !isContesting && (
+                <p className="mt-3 text-xs text-accent flex items-center gap-1.5">
                   <CheckCircle2 className="w-3 h-3" />
-                  Validado pela IA — pode avançar
+                  Nota aceita — pode avançar
                 </p>
               )}
             </div>
@@ -463,11 +517,7 @@ export default function AvaliacaoPage({
             <button
               onClick={() => handleNavigate("next")}
               disabled={currentIndex === questions.length - 1}
-              className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition disabled:opacity-30 ${
-                canAdvance
-                  ? "bg-primary text-white hover:bg-primary-dark"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
+              className="flex items-center gap-2 px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark transition disabled:opacity-30"
             >
               Próxima
               <ChevronRight className="w-4 h-4" />
@@ -484,57 +534,41 @@ export default function AvaliacaoPage({
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-gray-900">
-                  Assistente de Calibragem
+                  Avaliador IA
                 </h3>
                 <p className="text-xs text-gray-400">
-                  IA alinhada com a visão da diretoria
+                  Discute, avalia e dá a nota com base nos valores Seazone
                 </p>
               </div>
             </div>
           </div>
 
-          {chatState === "empty" && (
+          {chatState === "waiting_answer" && (
             <div className="flex-1 flex items-center justify-center p-8">
               <div className="text-center">
                 <AlertCircle className="w-12 h-12 text-gray-200 mx-auto mb-3" />
                 <p className="text-sm text-gray-400">
-                  Selecione uma nota para começar
+                  Responda a pergunta ao lado para iniciar
                 </p>
               </div>
             </div>
           )}
 
-          {chatState === "score3" && (
-            <div className="flex-1 flex items-center justify-center p-8">
-              <div className="text-center">
-                <CheckCircle2 className="w-12 h-12 text-accent/30 mx-auto mb-3" />
-                <p className="text-sm text-gray-500 font-medium">
-                  Nota 3 — Dentro do esperado
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Não é necessária validação da IA para nota 3.
-                  <br />Preencha a justificativa e avance.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {chatState === "waiting_justification" && (
+          {chatState === "ready_to_send" && (
             <div className="flex-1 flex items-center justify-center p-8">
               <div className="text-center">
                 <Bot className="w-12 h-12 text-primary/20 mx-auto mb-3" />
                 <p className="text-sm text-gray-500 font-medium">
-                  Nota {answer.score} selecionada
+                  Resposta preenchida
                 </p>
                 <p className="text-xs text-gray-400 mt-1">
-                  Escreva a justificativa e clique em
-                  <br />&quot;Enviar para análise da IA&quot;
+                  Clique em &quot;Iniciar discussão com IA&quot;
                 </p>
               </div>
             </div>
           )}
 
-          {chatState === "chat_active" && (
+          {(chatState === "discussing" || chatState === "scored" || chatState === "contesting") && (
             <>
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {(answer.chatHistory || []).map((msg) => (
@@ -569,6 +603,7 @@ export default function AvaliacaoPage({
                     />
                   </div>
                 ))}
+
                 {isAiTyping && (
                   <div className="flex gap-3">
                     <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -584,12 +619,11 @@ export default function AvaliacaoPage({
                   </div>
                 )}
 
-                {/* Feedback visual quando aprovado */}
-                {isApproved && (
+                {isComplete && !isContesting && (
                   <div className="flex justify-center">
                     <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-accent bg-accent/10">
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      Validado — pode avançar
+                      Nota aceita — pode avançar
                     </span>
                   </div>
                 )}
@@ -597,35 +631,49 @@ export default function AvaliacaoPage({
                 <div ref={chatEndRef} />
               </div>
 
-              <div className="p-4 border-t border-gray-100">
-                {!isApproved && (
-                  <p className="text-xs text-gray-400 mb-2">
-                    Após ler a análise, responda &quot;entendi&quot;, &quot;ok&quot; ou similar para confirmar
-                  </p>
-                )}
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage();
-                      }
-                    }}
-                    placeholder={isApproved ? "Enviar mensagem adicional..." : "Responda à IA para confirmar..."}
-                    className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    disabled={isAiTyping}
-                  />
+              <div className="p-4 border-t border-gray-100 space-y-2">
+                {/* Botão para pedir nota */}
+                {canRequestScore && (
                   <button
-                    onClick={handleSendMessage}
-                    disabled={!chatInput.trim() || isAiTyping}
-                    className="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-dark transition disabled:opacity-30"
+                    onClick={handleRequestScore}
+                    disabled={isAiTyping}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-secondary text-white rounded-xl hover:bg-secondary/90 transition text-sm font-medium disabled:opacity-30"
                   >
-                    <Send className="w-4 h-4" />
+                    <Star className="w-4 h-4" />
+                    Receber nota da IA
                   </button>
-                </div>
+                )}
+
+                {/* Input de chat (discussão ou contestação) */}
+                {(!hasScore || isContesting) && (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
+                      placeholder={
+                        isContesting
+                          ? "Traga fatos e dados para contestar..."
+                          : "Responda à IA..."
+                      }
+                      className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      disabled={isAiTyping}
+                    />
+                    <button
+                      onClick={handleSendMessage}
+                      disabled={!chatInput.trim() || isAiTyping}
+                      className="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-dark transition disabled:opacity-30"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             </>
           )}

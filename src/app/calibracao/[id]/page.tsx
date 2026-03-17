@@ -3,10 +3,11 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { Evaluation, Question, CalibrationEntry } from "@/lib/types";
-import { getEvaluation, getQuestions, saveEvaluation } from "@/lib/store";
+import { getQuestions } from "@/lib/store";
+import { fetchEvaluation, upsertEvaluation } from "@/lib/db";
 import { useAuth } from "@/lib/auth-context";
 import { canCalibrate } from "@/lib/permissions";
-import { users as allUsers } from "@/data/users";
+import { findUser } from "@/lib/org-tree";
 import { roleLabels } from "@/lib/auth-types";
 import { formatChatContent } from "@/lib/format-chat";
 import AppShell from "@/components/app-shell";
@@ -40,18 +41,21 @@ export default function CalibracaoDetalhe({
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const eval_ = getEvaluation(id);
-    if (!eval_ || (eval_.status !== "concluida" && eval_.status !== "calibrada")) {
-      router.push("/calibracao");
-      return;
-    }
-    setEvaluation(eval_);
-    setQuestions(getQuestions());
+    async function load() {
+      const eval_ = await fetchEvaluation(id);
+      if (!eval_ || (eval_.status !== "concluida" && eval_.status !== "calibrada")) {
+        router.push("/calibracao");
+        return;
+      }
+      setEvaluation(eval_);
+      setQuestions(getQuestions());
 
-    // Carregar calibrações existentes
-    if (eval_.calibration?.entries) {
-      setCalibrations(eval_.calibration.entries);
+      // Carregar calibrações existentes
+      if (eval_.calibration?.entries) {
+        setCalibrations(eval_.calibration.entries);
+      }
     }
+    load();
   }, [id, router]);
 
   if (!evaluation || !currentUser) return null;
@@ -61,8 +65,8 @@ export default function CalibracaoDetalhe({
     return null;
   }
 
-  const employee = allUsers.find((u) => u.id === evaluation.employeeId);
-  const evaluator = allUsers.find((u) => u.id === evaluation.evaluatorId);
+  const employee = findUser(evaluation.employeeId);
+  const evaluator = findUser(evaluation.evaluatorId);
 
   const scores = evaluation.answers
     .map((a) => a.score)
@@ -120,7 +124,7 @@ export default function CalibracaoDetalhe({
     setSaved(false);
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!evaluation) return;
 
     const updated: Evaluation = {
@@ -132,7 +136,7 @@ export default function CalibracaoDetalhe({
         calibratedAt: new Date().toISOString(),
       },
     };
-    saveEvaluation(updated);
+    await upsertEvaluation(updated);
     setEvaluation(updated);
     setSaved(true);
   }

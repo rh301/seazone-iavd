@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { getQuestions, getDirectorInsights, saveDirectorInsight } from "@/lib/store";
+import { getQuestions } from "@/lib/store";
+import { fetchDirectorInsights, upsertDirectorInsight } from "@/lib/db";
 import { Question, DirectorInsight } from "@/lib/types";
 import AppShell from "@/components/app-shell";
 import {
@@ -24,14 +25,17 @@ export default function InterpretacoesPage() {
     setQuestions(qs);
 
     if (user) {
-      const existing = getDirectorInsights();
-      const mapped: Record<string, string> = {};
-      for (const insight of existing) {
-        if (insight.userId === user.id) {
-          mapped[insight.questionId] = insight.interpretation;
+      async function loadInsights() {
+        const existing = await fetchDirectorInsights();
+        const mapped: Record<string, string> = {};
+        for (const insight of existing) {
+          if (insight.userId === user!.id) {
+            mapped[insight.questionId] = insight.interpretation;
+          }
         }
+        setInsights(mapped);
       }
-      setInsights(mapped);
+      loadInsights();
     }
   }, [user]);
 
@@ -53,12 +57,12 @@ export default function InterpretacoesPage() {
     );
   }
 
-  function handleSave(questionId: string) {
+  async function handleSave(questionId: string) {
     if (!user) return;
     const text = insights[questionId]?.trim();
     if (!text) return;
 
-    saveDirectorInsight({
+    await upsertDirectorInsight({
       questionId,
       userId: user.id,
       interpretation: text,
@@ -75,12 +79,12 @@ export default function InterpretacoesPage() {
     }, 2000);
   }
 
-  function handleSaveAll() {
+  async function handleSaveAll() {
     if (!user) return;
     for (const q of questions) {
       const text = insights[q.id]?.trim();
       if (text) {
-        saveDirectorInsight({
+        await upsertDirectorInsight({
           questionId: q.id,
           userId: user.id,
           interpretation: text,

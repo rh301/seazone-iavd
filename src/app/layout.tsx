@@ -3,7 +3,7 @@ import "./globals.css";
 import Providers from "@/components/providers";
 
 export const metadata: Metadata = {
-  title: "Seazone AVD Insight",
+  title: "Seazone IAVD",
   description: "Plataforma de avaliação de desempenho com IA",
 };
 

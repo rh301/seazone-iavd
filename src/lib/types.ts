@@ -18,8 +18,11 @@ export interface Employee {
   name: string;
   role: string;
   department: string;
+  sector: string;
+  cargo: string;
   manager: string;
   avatarUrl?: string;
+  photoUrl?: string | null;
 }
 
 export interface ChatMessage {
@@ -31,10 +34,12 @@ export interface ChatMessage {
 
 export interface Answer {
   questionId: string;
-  score: number | null;
-  justification: string;
+  score: number | null;          // nota dada pela IA (não pelo gestor)
+  justification: string;         // resposta do gestor à pergunta
   chatHistory: ChatMessage[];
-  aiValidated: boolean;
+  aiValidated: boolean;          // IA já deu a nota final
+  contestation?: string;         // contestação do gestor (se houver)
+  aiReasoning?: string;          // justificativa da IA para a nota
 }
 
 export interface DirectorInsight {
@@ -52,10 +57,27 @@ export interface CalibrationEntry {
   calibratedAt: string;
 }
 
+export type EvaluationType = "auto" | "gestor" | "par" | "liderado";
+
+export const evaluationTypeLabels: Record<EvaluationType, string> = {
+  auto: "Autoavaliação",
+  gestor: "Avaliar Liderado",
+  par: "Avaliação de Par",
+  liderado: "Avaliar meu Gestor",
+};
+
+export const evaluationTypeColors: Record<EvaluationType, string> = {
+  auto: "bg-blue-100 text-blue-700",
+  gestor: "bg-amber-100 text-amber-700",
+  par: "bg-emerald-100 text-emerald-700",
+  liderado: "bg-purple-100 text-purple-700",
+};
+
 export interface Evaluation {
   id: string;
   employeeId: string;
   evaluatorId: string;
+  evaluationType: EvaluationType;
   date: string;
   status: "em_andamento" | "concluida" | "calibrada";
   answers: Answer[];

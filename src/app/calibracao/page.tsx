@@ -1,33 +1,44 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Evaluation } from "@/lib/types";
-import { getEvaluations, getQuestions } from "@/lib/store";
+import { Evaluation, EvaluationType, evaluationTypeLabels } from "@/lib/types";
+import { getQuestions } from "@/lib/store";
+import { fetchEvaluations, upsertEvaluation, fetchNotesReleased, updateNotesReleased } from "@/lib/db";
 import { useAuth } from "@/lib/auth-context";
-import { canCalibrate } from "@/lib/permissions";
-import { users as allUsers } from "@/data/users";
-import { roleLabels } from "@/lib/auth-types";
+import { canCalibrate, canReleaseNotes } from "@/lib/permissions";
+import { findUser, getAllUsers } from "@/lib/org-tree";
+import { medals } from "@/data/medals";
 import {
   Scale,
   CheckCircle2,
-  ArrowRight,
   ShieldAlert,
-  Filter,
-  BarChart3,
-  Users,
+  Search,
+  Lock,
+  Unlock,
+  Award,
+  ChevronDown,
+  Save,
 } from "lucide-react";
 import AppShell from "@/components/app-shell";
-
-type DeptFilter = string;
 
 export default function CalibracaoPage() {
   const { user } = useAuth();
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
-
-  const [deptFilter, setDeptFilter] = useState<DeptFilter>("todas");
+  const [nameFilter, setNameFilter] = useState("");
+  const [notesReleased, setNotesReleasedState] = useState(false);
+  const [expandedPerson, setExpandedPerson] = useState<string | null>(null);
+  const [calibrationEdits, setCalibrationEdits] = useState<
+    Record<string, Record<string, { score: number; comment: string }>>
+  >({});
 
   useEffect(() => {
-    setEvaluations(getEvaluations());
+    async function load() {
+      const evals = await fetchEvaluations();
+      setEvaluations(evals);
+      const rel = await fetchNotesReleased();
+      setNotesReleasedState(rel);
+    }
+    load();
   }, []);
 
   if (!user) return null;
@@ -37,12 +48,8 @@ export default function CalibracaoPage() {
       <AppShell>
         <div className="text-center py-16">
           <ShieldAlert className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-          <h2 className="text-lg font-semibold text-gray-900">
-            Sem permissão
-          </h2>
-          <p className="text-gray-500 mt-1">
-            Apenas C-Level e RH podem acessar a calibração.
-          </p>
+          <h2 className="text-lg font-semibold text-gray-900">Sem permissão</h2>
+          <p className="text-gray-500 mt-1">Apenas RH e C-Levels podem acessar a calibração.</p>
         </div>
       </AppShell>
     );
@@ -50,295 +57,315 @@ export default function CalibracaoPage() {
 
   const questions = getQuestions();
 
-  // Apenas avaliações concluídas ou já calibradas
-  const eligible = evaluations.filter(
-    (e) => e.status === "concluida" || e.status === "calibrada"
-  );
+  // All evaluations grouped by employee
+  const byEmployee = new Map<string, Evaluation[]>();
+  for (const e of evaluations) {
+    const list = byEmployee.get(e.employeeId) || [];
+    list.push(e);
+    byEmployee.set(e.employeeId, list);
+  }
 
-  // Departamentos únicos
-  const departments = [
-    ...new Set(
-      eligible
-        .map((e) => allUsers.find((u) => u.id === e.employeeId)?.department)
-        .filter(Boolean)
-    ),
-  ] as string[];
+  // List ALL people, not just those with evaluations
+  const allPeople = getAllUsers();
 
-  // Filtrar por departamento
-  const filtered =
-    deptFilter === "todas"
-      ? eligible
-      : eligible.filter((e) => {
-          const emp = allUsers.find((u) => u.id === e.employeeId);
-          return emp?.department === deptFilter;
-        });
-
-  // Estatísticas
-  const totalConcluidas = filtered.filter(
-    (e) => e.status === "concluida"
-  ).length;
-  const totalCalibradas = filtered.filter(
-    (e) => e.status === "calibrada"
-  ).length;
-
-  // Distribuição geral de notas
-  const allScores = filtered.flatMap((e) =>
-    e.answers.map((a) => a.score).filter((s): s is number => s !== null)
-  );
-  const scoreDist = [1, 2, 3, 4, 5].map(
-    (s) => allScores.filter((sc) => sc === s).length
-  );
-  const maxCount = Math.max(...scoreDist, 1);
-
-  // Média por critério
-  const avgByQuestion = questions.map((q) => {
-    const scores = filtered.flatMap((e) => {
-      const answer = e.answers.find((a) => a.questionId === q.id);
-      return answer?.score ? [answer.score] : [];
-    });
-    const avg =
-      scores.length > 0
-        ? scores.reduce((a, b) => a + b, 0) / scores.length
-        : 0;
-    return { question: q, avg, count: scores.length };
+  // Filter by name
+  const filteredEmployees = allPeople.filter((emp) => {
+    if (emp.id === user.id) return false; // don't show self
+    if (!nameFilter.trim()) return true;
+    const q = nameFilter.toLowerCase();
+    return (
+      emp.name.toLowerCase().includes(q) ||
+      emp.sector.toLowerCase().includes(q) ||
+      emp.cargo.toLowerCase().includes(q)
+    );
   });
+
+  function getAvgForEval(ev: Evaluation): number | null {
+    const scores = ev.answers.map((a) => a.score).filter((s): s is number => s !== null);
+    return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+  }
+
+  function getEvalByType(evals: Evaluation[], type: EvaluationType): Evaluation | undefined {
+    return evals.find((e) => e.evaluationType === type);
+  }
+
+  async function handleToggleRelease() {
+    const newState = !notesReleased;
+    const msg = newState
+      ? "Liberar as notas para todos os colaboradores?"
+      : "Bloquear as notas?";
+    if (!confirm(msg)) return;
+    await updateNotesReleased(newState);
+    setNotesReleasedState(newState);
+  }
+
+  function handleCalibrationChange(evalId: string, questionId: string, score: number) {
+    setCalibrationEdits((prev) => ({
+      ...prev,
+      [evalId]: {
+        ...(prev[evalId] || {}),
+        [questionId]: { score, comment: prev[evalId]?.[questionId]?.comment || "" },
+      },
+    }));
+  }
+
+  async function handleSaveCalibration(ev: Evaluation) {
+    const edits = calibrationEdits[ev.id];
+    if (!edits) return;
+
+    const entries: Record<string, { originalScore: number; calibratedScore: number; comment: string; calibratedBy: string; calibratedAt: string }> = {};
+    for (const [qId, edit] of Object.entries(edits)) {
+      const original = ev.answers.find((a) => a.questionId === qId)?.score || 0;
+      entries[qId] = {
+        originalScore: original,
+        calibratedScore: edit.score,
+        comment: edit.comment,
+        calibratedBy: user!.id,
+        calibratedAt: new Date().toISOString(),
+      };
+    }
+
+    const updated: Evaluation = {
+      ...ev,
+      status: "calibrada",
+      calibration: {
+        entries,
+        calibratedBy: user!.id,
+        calibratedAt: new Date().toISOString(),
+      },
+    };
+    await upsertEvaluation(updated);
+    const freshEvals = await fetchEvaluations();
+    setEvaluations(freshEvals);
+    alert("Calibração salva!");
+  }
+
+  // Priority order for display
+  const typeOrder: EvaluationType[] = ["gestor", "auto", "par"];
 
   return (
     <AppShell>
       <div>
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-            <Scale className="w-7 h-7 text-primary" />
-            Calibração
-          </h1>
-          <p className="text-gray-500 mt-1">
-            Revise e calibre as avaliações concluídas para garantir justiça
-            entre áreas
-          </p>
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+              <Scale className="w-7 h-7 text-primary" />
+              Calibração
+            </h1>
+            <p className="text-gray-500 mt-1">
+              Revise notas do gestor, autoavaliação e pares. Ajuste se necessário.
+            </p>
+          </div>
+          {canReleaseNotes(user) && (
+            <button
+              onClick={handleToggleRelease}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition shrink-0 ${
+                notesReleased
+                  ? "bg-accent text-white hover:bg-accent/90"
+                  : "bg-secondary text-white hover:bg-secondary/90"
+              }`}
+            >
+              {notesReleased ? (
+                <><Unlock className="w-4 h-4" /> Notas liberadas</>
+              ) : (
+                <><Lock className="w-4 h-4" /> Liberar notas</>
+              )}
+            </button>
+          )}
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-secondary/10 rounded-lg flex items-center justify-center">
-                <Users className="w-5 h-5 text-secondary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {totalConcluidas}
-                </p>
-                <p className="text-sm text-gray-500">Aguardando calibração</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5 text-accent" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {totalCalibradas}
-                </p>
-                <p className="text-sm text-gray-500">Já calibradas</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {allScores.length > 0
-                    ? (
-                        allScores.reduce((a, b) => a + b, 0) /
-                        allScores.length
-                      ).toFixed(1)
-                    : "—"}
-                </p>
-                <p className="text-sm text-gray-500">Nota média geral</p>
-              </div>
-            </div>
-          </div>
+        {/* Search */}
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            value={nameFilter}
+            onChange={(e) => setNameFilter(e.target.value)}
+            placeholder="Buscar por nome, setor ou cargo..."
+            className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+          />
         </div>
 
-        {/* Filtro */}
-        <div className="flex items-center gap-3 mb-6">
-          <Filter className="w-4 h-4 text-gray-400" />
-          <select
-            value={deptFilter}
-            onChange={(e) => setDeptFilter(e.target.value)}
-            className="text-sm px-3 py-1.5 border border-gray-200 rounded-lg bg-white"
-          >
-            <option value="todas">Todas as áreas</option>
-            {departments.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
-        </div>
+        {filteredEmployees.length === 0 ? (
+          <div className="text-center py-16 text-gray-400">
+            Nenhuma pessoa encontrada.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredEmployees.map((emp) => {
+              const empId = emp.id;
+              const evals = byEmployee.get(empId) || [];
+              const completedEvals = evals.filter(e => e.status === "concluida" || e.status === "calibrada");
 
-        {/* Distribuição geral de notas */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">
-            Distribuição geral de notas
-          </h2>
-          <div className="flex items-end gap-3 h-32">
-            {[1, 2, 3, 4, 5].map((score, i) => {
-              const count = scoreDist[i];
-              const height = maxCount > 0 ? (count / maxCount) * 100 : 0;
+              const isExpanded = expandedPerson === empId;
+              const gestorEval = getEvalByType(completedEvals, "gestor");
+              const autoEval = getEvalByType(completedEvals, "auto");
+              const parEvals = completedEvals.filter((e) => e.evaluationType === "par");
+              const gestorAvg = gestorEval ? getAvgForEval(gestorEval) : null;
+
+              // Medals for this person (match by id or email prefix)
+              const personMedals = medals.filter(
+                (m) => m.employeeId === empId ||
+                  m.employeeEmail.toLowerCase().startsWith(emp.name.toLowerCase().split(" ")[0])
+              );
+
               return (
-                <div key={score} className="flex-1 flex flex-col items-center">
-                  <span className="text-xs font-medium text-gray-600 mb-1">
-                    {count}
-                  </span>
-                  <div
-                    className={`w-full rounded-t-lg score-${score} transition-all`}
-                    style={{ height: `${Math.max(height, 4)}%` }}
-                  />
-                  <span className="text-xs text-gray-500 mt-2">
-                    Nota {score}
-                  </span>
+                <div key={empId} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                  {/* Summary row */}
+                  <button
+                    onClick={() => setExpandedPerson(isExpanded ? null : empId)}
+                    className="w-full p-5 flex items-center justify-between text-left hover:bg-gray-50 transition"
+                  >
+                    <div className="flex items-center gap-3">
+                      {emp.photoUrl ? (
+                        <img src={emp.photoUrl} alt={emp.name} className="w-10 h-10 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-sm">
+                          {emp.name.split(" ").map((n) => n[0]).slice(0, 2).join("")}
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{emp.name}</h3>
+                        <p className="text-xs text-gray-500">{emp.cargo} · {emp.sector}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      {/* Quick scores */}
+                      {gestorAvg !== null && (
+                        <div className="text-center">
+                          <p className="text-xs text-gray-400">Gestor</p>
+                          <p className="text-lg font-bold text-primary">{gestorAvg.toFixed(1)}</p>
+                        </div>
+                      )}
+                      {autoEval && getAvgForEval(autoEval) !== null && (
+                        <div className="text-center">
+                          <p className="text-xs text-gray-400">Auto</p>
+                          <p className="text-lg font-bold text-gray-700">{getAvgForEval(autoEval)!.toFixed(1)}</p>
+                        </div>
+                      )}
+                      {parEvals.length > 0 && (
+                        <div className="text-center">
+                          <p className="text-xs text-gray-400">Pares</p>
+                          <p className="text-lg font-bold text-gray-700">
+                            {(() => {
+                              const scores = parEvals.flatMap(e => e.answers.map(a => a.score).filter((s): s is number => s !== null));
+                              return scores.length > 0 ? (scores.reduce((a,b) => a+b, 0) / scores.length).toFixed(1) : "—";
+                            })()}
+                          </p>
+                        </div>
+                      )}
+                      {personMedals.length > 0 && (
+                        <div className="flex items-center gap-1 text-secondary">
+                          <Award className="w-4 h-4" />
+                          <span className="text-sm font-bold">{personMedals.length}</span>
+                        </div>
+                      )}
+                      {completedEvals.some(e => e.status === "calibrada") && (
+                        <CheckCircle2 className="w-5 h-5 text-accent" />
+                      )}
+                      <ChevronDown className={`w-4 h-4 text-gray-400 transition ${isExpanded ? "rotate-180" : ""}`} />
+                    </div>
+                  </button>
+
+                  {/* Expanded detail */}
+                  {isExpanded && (
+                    <div className="border-t border-gray-100 p-5 space-y-6">
+                      {/* Medals */}
+                      {personMedals.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                            <Award className="w-4 h-4 text-secondary" />
+                            Medalhas ({personMedals.length})
+                          </h4>
+                          <div className="space-y-2">
+                            {personMedals.map((medal, idx) => (
+                              <div key={idx} className="bg-secondary/5 border border-secondary/10 rounded-lg p-3">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-xs font-semibold text-secondary">{medal.habilidade}</span>
+                                  <span className="text-xs text-gray-400">{medal.data} · {medal.quemEnviou}</span>
+                                </div>
+                                <p className="text-xs text-gray-600">{medal.justificativa}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Evaluations by type (Gestor first, then Auto, then Pares) */}
+                      {completedEvals.length === 0 && (
+                        <p className="text-sm text-gray-400 italic">Nenhuma avaliação concluída ainda.</p>
+                      )}
+                      {typeOrder.map((type) => {
+                        const typeEvals = completedEvals.filter((e) => e.evaluationType === type);
+                        if (typeEvals.length === 0) return null;
+
+                        return (
+                          <div key={type}>
+                            <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                              {evaluationTypeLabels[type]}
+                              {type === "gestor" && <span className="text-xs text-primary ml-2">(nota principal)</span>}
+                              {type === "par" && <span className="text-xs text-gray-400 ml-2">({typeEvals.length} avaliação(ões))</span>}
+                            </h4>
+
+                            {typeEvals.map((ev) => (
+                              <div key={ev.id} className="mb-4">
+                                <div className="space-y-2">
+                                  {ev.answers.map((answer) => {
+                                    const q = questions.find((q) => q.id === answer.questionId);
+                                    if (!q || answer.score === null) return null;
+
+                                    const calibrated = calibrationEdits[ev.id]?.[answer.questionId];
+                                    const currentScore = calibrated?.score ?? answer.score;
+
+                                    return (
+                                      <div key={answer.questionId} className="flex items-center gap-3 py-1.5">
+                                        <span className="text-xs text-gray-600 w-40 truncate" title={q.title}>{q.title}</span>
+                                        <div className="flex gap-1">
+                                          {[1, 2, 3, 4, 5].map((s) => (
+                                            <button
+                                              key={s}
+                                              onClick={() => handleCalibrationChange(ev.id, answer.questionId, s)}
+                                              className={`w-7 h-7 rounded text-xs font-bold transition ${
+                                                currentScore === s
+                                                  ? `score-${s}`
+                                                  : "bg-gray-100 text-gray-400 hover:bg-gray-200"
+                                              }`}
+                                            >
+                                              {s}
+                                            </button>
+                                          ))}
+                                        </div>
+                                        {answer.score !== currentScore && (
+                                          <span className="text-xs text-secondary">
+                                            era {answer.score}
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+
+                                {/* Save button for this eval */}
+                                {calibrationEdits[ev.id] && Object.keys(calibrationEdits[ev.id]).length > 0 && (
+                                  <button
+                                    onClick={() => handleSaveCalibration(ev)}
+                                    className="mt-3 flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary-dark transition"
+                                  >
+                                    <Save className="w-3.5 h-3.5" />
+                                    Salvar calibração — {evaluationTypeLabels[type]}
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
-          </div>
-        </div>
-
-        {/* Média por critério */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">
-            Média por critério
-          </h2>
-          <div className="space-y-3">
-            {avgByQuestion.map(({ question: q, avg, count }) => (
-              <div
-                key={q.id}
-                className="flex items-center gap-4"
-              >
-                <div className="w-40 text-sm text-gray-700 truncate">
-                  {q.title}
-                </div>
-                <div className="flex-1 bg-gray-100 rounded-full h-3 relative">
-                  <div
-                    className="h-3 rounded-full bg-primary transition-all"
-                    style={{ width: `${avg > 0 ? (avg / 5) * 100 : 0}%` }}
-                  />
-                </div>
-                <div className="w-16 text-right">
-                  <span className="text-sm font-bold text-gray-900">
-                    {avg > 0 ? avg.toFixed(1) : "—"}
-                  </span>
-                  <span className="text-xs text-gray-400 ml-1">
-                    ({count})
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Lista de avaliações */}
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Avaliações para calibrar
-        </h2>
-        {filtered.length === 0 ? (
-          <div className="bg-white rounded-xl p-12 shadow-sm border border-gray-100 text-center">
-            <Scale className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-            <p className="text-gray-400">
-              Nenhuma avaliação concluída para calibrar.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filtered
-              .sort((a, b) => {
-                // Concluídas primeiro (aguardando calibração)
-                if (a.status === "concluida" && b.status === "calibrada")
-                  return -1;
-                if (a.status === "calibrada" && b.status === "concluida")
-                  return 1;
-                return 0;
-              })
-              .map((eval_) => {
-                const emp = allUsers.find((u) => u.id === eval_.employeeId);
-                const evaluator = allUsers.find(
-                  (u) => u.id === eval_.evaluatorId
-                );
-                const scores = eval_.answers
-                  .map((a) => a.score)
-                  .filter((s): s is number => s !== null);
-                const avg =
-                  scores.length > 0
-                    ? (
-                        scores.reduce((a, b) => a + b, 0) / scores.length
-                      ).toFixed(1)
-                    : "—";
-                const isCalibrated = eval_.status === "calibrada";
-
-                return (
-                  <a
-                    key={eval_.id}
-                    href={`/calibracao/${eval_.id}`}
-                    className={`group block bg-white rounded-xl p-5 shadow-sm border transition ${
-                      isCalibrated
-                        ? "border-accent/20 bg-accent/5"
-                        : "border-gray-100 hover:shadow-md hover:border-primary/20"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-sm">
-                          {emp?.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .slice(0, 2)}
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">
-                            {emp?.name}
-                          </h3>
-                          <p className="text-xs text-gray-500">
-                            {emp ? roleLabels[emp.role] : ""} ·{" "}
-                            {emp?.department}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-0.5">
-                            Avaliado por{" "}
-                            <span className="font-medium">
-                              {evaluator?.name}
-                            </span>
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-6">
-                        <div className="text-center">
-                          <p className="text-lg font-bold text-gray-900">
-                            {avg}
-                          </p>
-                          <p className="text-xs text-gray-400">Média</p>
-                        </div>
-                        {isCalibrated ? (
-                          <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-accent bg-accent/10">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            Calibrada
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-secondary bg-secondary/10">
-                            <Scale className="w-3.5 h-3.5" />
-                            Pendente
-                          </span>
-                        )}
-                        <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-primary transition" />
-                      </div>
-                    </div>
-                  </a>
-                );
-              })}
           </div>
         )}
       </div>

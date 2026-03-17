@@ -10,7 +10,7 @@ import {
 } from "react";
 import { useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from "next-auth/react";
 import { User } from "./auth-types";
-import { users } from "@/data/users";
+import { findUser, findUserByName, getAllUsers } from "./org-tree";
 
 interface AuthContextType {
   user: User | null;
@@ -38,10 +38,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Resolve o usuário OAuth da session
   const oauthUser: User | null = (() => {
     if (!session?.user?.email) return null;
-    const found = users.find(
-      (u) => u.email.toLowerCase() === session.user!.email!.toLowerCase()
-    );
-    return found || null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const s = session.user as any;
+    const userName = s.userName || session.user.name || "";
+
+    // Try to find by name match in the org data (exact)
+    if (userName) {
+      const found = findUserByName(userName);
+      if (found) return found;
+    }
+
+    // Try to find by userId from JWT (set in auth.ts callback)
+    if (s.userId && !s.userId.startsWith("oauth_")) {
+      const found = findUser(s.userId);
+      if (found) return found;
+    }
+
+    // Fallback: create a user from session data (domínio autorizado mas fora do organograma)
+    const fallbackId = s.userId || `oauth_${session.user.email!.split("@")[0]}`;
+    return {
+      id: fallbackId,
+      name: userName || session.user.email!.split("@")[0],
+      email: session.user.email!,
+      role: (s.role || "colaborador") as User["role"],
+      department: s.department || s.sector || "Geral",
+      sector: s.sector || s.department || "Geral",
+      cargo: "",
+      photoUrl: session.user.image || null,
+      slackUrl: null,
+      managerId: null,
+    };
   })();
 
   // O usuário ativo é OAuth primeiro, depois demo
@@ -55,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!oauthUser) {
       const stored = localStorage.getItem("avd_current_user");
       if (stored) {
-        const found = users.find((u) => u.id === stored);
+        const found = findUser(stored);
         if (found) setDemoUser(found);
       }
     }
@@ -64,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Login demo (seleção de perfil)
   const login = useCallback((userId: string) => {
-    const found = users.find((u) => u.id === userId);
+    const found = findUser(userId);
     if (found) {
       setDemoUser(found);
       localStorage.setItem("avd_current_user", userId);

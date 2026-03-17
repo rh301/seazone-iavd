@@ -3,10 +3,11 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { Evaluation, Question } from "@/lib/types";
-import { getEvaluation, getQuestions } from "@/lib/store";
+import { getQuestions } from "@/lib/store";
+import { fetchEvaluation } from "@/lib/db";
 import { useAuth } from "@/lib/auth-context";
 import { canViewEvaluation } from "@/lib/permissions";
-import { users as allUsers } from "@/data/users";
+import { findUser } from "@/lib/org-tree";
 import { roleLabels } from "@/lib/auth-types";
 import AppShell from "@/components/app-shell";
 import { formatChatContent } from "@/lib/format-chat";
@@ -33,23 +34,26 @@ export default function DetalhesAvaliacao({
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
 
   useEffect(() => {
-    const eval_ = getEvaluation(id);
-    if (!eval_) {
-      router.push("/historico");
-      return;
+    async function load() {
+      const eval_ = await fetchEvaluation(id);
+      if (!eval_) {
+        router.push("/historico");
+        return;
+      }
+      if (currentUser && !canViewEvaluation(currentUser, eval_.employeeId, eval_.evaluatorId)) {
+        router.push("/");
+        return;
+      }
+      setEvaluation(eval_);
+      setQuestions(getQuestions());
     }
-    if (currentUser && !canViewEvaluation(currentUser, eval_.employeeId, eval_.evaluatorId)) {
-      router.push("/");
-      return;
-    }
-    setEvaluation(eval_);
-    setQuestions(getQuestions());
+    load();
   }, [id, router, currentUser]);
 
   if (!evaluation || !currentUser) return null;
 
-  const employee = allUsers.find((u) => u.id === evaluation.employeeId);
-  const evaluator = allUsers.find((u) => u.id === evaluation.evaluatorId);
+  const employee = findUser(evaluation.employeeId);
+  const evaluator = findUser(evaluation.evaluatorId);
 
   const scores = evaluation.answers
     .map((a) => a.score)

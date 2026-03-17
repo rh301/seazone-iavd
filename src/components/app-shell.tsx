@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { roleLabels, roleColors } from "@/lib/auth-types";
+import { canCalibrate, isRH } from "@/lib/permissions";
 import { LogOut, Loader2 } from "lucide-react";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -35,53 +36,55 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center font-bold text-sm">
                 SZ
               </div>
-              <span className="text-lg font-semibold">AVD Insight</span>
+              <span className="text-lg font-semibold">IAVD</span>
             </a>
             <div className="flex items-center gap-6">
               <a
                 href="/"
                 className="text-white/80 hover:text-white transition text-sm font-medium"
               >
-                Dashboard
+                Home
               </a>
-              {["c_level", "rh", "diretor"].includes(user.role) && (
+              {["c_level"].includes(user.role) && (
                 <a
-                  href="/admin/perguntas"
+                  href="/admin/calibragem-ia"
                   className="text-white/80 hover:text-white transition text-sm font-medium"
                 >
-                  Perguntas
+                  Treinamento IA
                 </a>
               )}
-              {["c_level", "rh", "diretor"].includes(user.role) && (
-                <a
-                  href="/admin/interpretacoes"
-                  className="text-white/80 hover:text-white transition text-sm font-medium"
-                >
-                  Interpretações
-                </a>
-              )}
-              {["c_level", "rh", "diretor", "coordenador"].includes(
-                user.role
-              ) && (
-                <a
-                  href="/avaliacao"
-                  className="text-white/80 hover:text-white transition text-sm font-medium"
-                >
-                  Avaliar
-                </a>
-              )}
+              <a
+                href="/avaliacao"
+                className="text-white/80 hover:text-white transition text-sm font-medium"
+              >
+                Avaliar
+              </a>
+              <a
+                href="/minhas-notas"
+                className="text-white/80 hover:text-white transition text-sm font-medium"
+              >
+                Minhas Notas
+              </a>
               <a
                 href="/historico"
                 className="text-white/80 hover:text-white transition text-sm font-medium"
               >
                 Histórico
               </a>
-              {["c_level", "rh"].includes(user.role) && (
+              {canCalibrate(user) && (
                 <a
                   href="/calibracao"
                   className="text-white/80 hover:text-white transition text-sm font-medium"
                 >
                   Calibração
+                </a>
+              )}
+              {isRH(user) && (
+                <a
+                  href="/admin/gestao"
+                  className="text-white/80 hover:text-white transition text-sm font-medium"
+                >
+                  Gestão
                 </a>
               )}
 

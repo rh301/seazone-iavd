@@ -6,6 +6,10 @@ export interface User {
   email: string;
   role: Role;
   department: string;
+  sector: string;
+  cargo: string;
+  photoUrl: string | null;
+  slackUrl: string | null;
   managerId: string | null;
 }
 
