@@ -4,6 +4,44 @@ import { getAllUsers } from "@/lib/org-tree";
 
 const ALLOWED_DOMAINS = ["seazone.com.br", "seazone.com"];
 
+// Normalize string for comparison (remove accents, lowercase)
+function normalize(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+// Try to find user by multiple strategies
+function findOrgUser(allUsers: ReturnType<typeof getAllUsers>, email: string, displayName: string) {
+  const emailLower = email.toLowerCase();
+
+  // 1. Direct email match (most reliable)
+  const emailMatch = allUsers.find((u) => (u as any).email === emailLower);
+  if (emailMatch) return emailMatch;
+
+  // 2. Exact name match (normalized)
+  if (displayName) {
+    const normalizedName = normalize(displayName);
+    const exactMatch = allUsers.find((u) => normalize(u.name) === normalizedName);
+    if (exactMatch) return exactMatch;
+  }
+
+  // 3. Email parts match: all parts of email prefix must exist in user name
+  const emailPrefix = email.split("@")[0];
+  const emailParts = emailPrefix.split(/[._]/).map(normalize).filter(p => p.length > 1);
+  if (emailParts.length >= 2) {
+    const partsMatch = allUsers.find((u) => {
+      const nameParts = normalize(u.name).split(/\s+/);
+      return emailParts.every(ep => nameParts.some(np => np === ep));
+    });
+    if (partsMatch) return partsMatch;
+  }
+
+  return null;
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Google({
@@ -28,12 +66,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const allUsers = getAllUsers();
         const displayName = profile?.name || user.name || "";
 
-        // Try to match by name (Google profile name vs org data)
-        const found = displayName
-          ? allUsers.find(
-              (u) => u.name.toLowerCase() === displayName.toLowerCase()
-            )
-          : null;
+        const found = findOrgUser(allUsers, user.email, displayName);
 
         if (found) {
           token.userId = found.id;

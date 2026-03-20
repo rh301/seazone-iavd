@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { getQuestions } from "@/lib/store";
 import { fetchEvaluations, fetchNotesReleased } from "@/lib/db";
 import { findUser } from "@/lib/org-tree";
+import { toGrade, avgToGrade } from "@/lib/utils";
 import { historyRecords, currentCycleRecords, allPeriods, cicloAnterior } from "@/data/history";
 import {
   Evaluation,
@@ -44,9 +45,9 @@ export default function MinhasNotasPage() {
     if (!user) return;
     async function load() {
       const allEvals = await fetchEvaluations();
-      // Evaluations where I am the one being evaluated
+      // Only gestor evaluations (the official score that gets calibrated)
       const myEvals = allEvals.filter(
-        (e) => e.employeeId === user!.id && e.status !== "em_andamento"
+        (e) => e.employeeId === user!.id && e.evaluationType === "gestor" && e.status !== "em_andamento"
       );
       setEvaluations(myEvals);
       setQuestions(getQuestions());
@@ -58,16 +59,7 @@ export default function MinhasNotasPage() {
 
   if (!user) return null;
 
-  // Group by evaluation type
-  const typeOrder: EvaluationType[] = ["auto", "gestor", "par", "liderado"];
-  const grouped = evaluations.reduce(
-    (acc, ev) => {
-      const type = ev.evaluationType || "gestor";
-      (acc[type] = acc[type] || []).push(ev);
-      return acc;
-    },
-    {} as Record<EvaluationType, Evaluation[]>
-  );
+  // Only gestor evaluations shown (the official calibrated score)
 
   function getScore(ev: Evaluation): number | null {
     const scores = ev.answers
@@ -145,174 +137,117 @@ export default function MinhasNotasPage() {
         )}
 
         {hasData && (
-          <div className="space-y-8">
-            {typeOrder.map((type) => {
-              const typeEvals = grouped[type];
-              if (!typeEvals || typeEvals.length === 0) return null;
-
-              const Icon = typeIcons[type];
+          <div className="space-y-3">
+            <h2 className="font-semibold text-gray-900 mb-4">
+              Avaliação do seu gestor
+            </h2>
+            {evaluations.map((ev) => {
+              const avg = getScore(ev);
+              const isExpanded = expandedId === ev.id;
+              const evaluator = findUser(ev.evaluatorId);
 
               return (
-                <div key={type}>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center ${evaluationTypeColors[type]}`}
-                    >
-                      <Icon className="w-4 h-4" />
+                <div
+                  key={ev.id}
+                  className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+                >
+                  <button
+                    onClick={() =>
+                      setExpandedId(isExpanded ? null : ev.id)
+                    }
+                    disabled={!released}
+                    className="w-full p-4 flex items-center justify-between text-left disabled:cursor-default"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="text-sm">
+                        <p className="font-medium text-gray-900">
+                          {evaluator?.name || "Gestor"}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {ev.date}
+                          {ev.status === "calibrada" && (
+                            <span className="ml-2 text-accent">
+                              Calibrada
+                            </span>
+                          )}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h2 className="font-semibold text-gray-900">
-                        {evaluationTypeLabels[type]}
-                      </h2>
-                      <p className="text-xs text-gray-500">
-                        {typeEvals.length} avaliação(ões)
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="space-y-3">
-                    {typeEvals.map((ev) => {
-                      const avg = getScore(ev);
-                      const isExpanded = expandedId === ev.id;
-                      const evaluatorLabel = getEvaluatorLabel(ev);
-
-                      return (
-                        <div
-                          key={ev.id}
-                          className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
-                        >
-                          <button
-                            onClick={() =>
-                              setExpandedId(isExpanded ? null : ev.id)
-                            }
-                            disabled={!released}
-                            className="w-full p-4 flex items-center justify-between text-left disabled:cursor-default"
+                    <div className="flex items-center gap-3">
+                      {released && avg !== null ? (
+                        <>
+                          <div
+                            className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold score-${Math.round(avg)}`}
                           >
-                            <div className="flex items-center gap-3">
-                              <div className="text-sm">
-                                <p className="font-medium text-gray-900">
-                                  {evaluatorLabel}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {ev.date}
-                                  {ev.status === "calibrada" && (
-                                    <span className="ml-2 text-accent">
-                                      Calibrada
-                                    </span>
-                                  )}
-                                </p>
-                              </div>
-                            </div>
+                            {avgToGrade(avg)}
+                          </div>
+                          <ChevronDown
+                            className={`w-4 h-4 text-gray-400 transition ${isExpanded ? "rotate-180" : ""}`}
+                          />
+                        </>
+                      ) : (
+                        <div className="flex items-center gap-2 text-gray-400">
+                          <Lock className="w-4 h-4" />
+                          <span className="text-xs">Pendente</span>
+                        </div>
+                      )}
+                    </div>
+                  </button>
 
-                            <div className="flex items-center gap-3">
-                              {released && avg !== null ? (
-                                <>
-                                  <div
-                                    className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold score-${Math.round(avg)}`}
-                                  >
-                                    {avg.toFixed(1)}
-                                  </div>
-                                  <ChevronDown
-                                    className={`w-4 h-4 text-gray-400 transition ${isExpanded ? "rotate-180" : ""}`}
-                                  />
-                                </>
-                              ) : (
-                                <div className="flex items-center gap-2 text-gray-400">
-                                  <Lock className="w-4 h-4" />
-                                  <span className="text-xs">Pendente</span>
+                  {/* Expanded detail */}
+                  {released && isExpanded && (
+                    <div className="border-t border-gray-100 p-4 space-y-3">
+                      {ev.answers.map((answer) => {
+                        const q = questions.find(
+                          (q) => q.id === answer.questionId
+                        );
+                        if (!q) return null;
+
+                        const calibrated =
+                          ev.calibration?.entries[answer.questionId];
+                        const finalScore =
+                          calibrated?.calibratedScore ?? answer.score;
+                        const scaleLevel = q.scale.find(
+                          (s) => s.score === finalScore
+                        );
+
+                        return (
+                          <div
+                            key={answer.questionId}
+                            className="flex items-center justify-between py-2"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {q.title}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {q.category}
+                                {scaleLevel && (
+                                  <span className="ml-2">
+                                    — {scaleLevel.label}
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                            <div className="ml-3">
+                              {finalScore !== null ? (
+                                <div
+                                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold score-${finalScore}`}
+                                >
+                                  {toGrade(finalScore)}
                                 </div>
+                              ) : (
+                                <span className="text-xs text-gray-400">
+                                  —
+                                </span>
                               )}
                             </div>
-                          </button>
-
-                          {/* Expanded detail */}
-                          {released && isExpanded && (
-                            <div className="border-t border-gray-100 p-4 space-y-3">
-                              {ev.answers.map((answer) => {
-                                const q = questions.find(
-                                  (q) => q.id === answer.questionId
-                                );
-                                if (!q) return null;
-
-                                const calibrated =
-                                  ev.calibration?.entries[answer.questionId];
-                                const finalScore =
-                                  calibrated?.calibratedScore ?? answer.score;
-                                const scaleLevel = q.scale.find(
-                                  (s) => s.score === finalScore
-                                );
-
-                                return (
-                                  <div
-                                    key={answer.questionId}
-                                    className="flex items-center justify-between py-2"
-                                  >
-                                    <div className="min-w-0 flex-1">
-                                      <p className="text-sm font-medium text-gray-900 truncate">
-                                        {q.title}
-                                      </p>
-                                      <p className="text-xs text-gray-500">
-                                        {q.category}
-                                        {scaleLevel && (
-                                          <span className="ml-2">
-                                            — {scaleLevel.label}
-                                          </span>
-                                        )}
-                                      </p>
-                                    </div>
-                                    <div className="ml-3">
-                                      {finalScore !== null ? (
-                                        <div
-                                          className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold score-${finalScore}`}
-                                        >
-                                          {finalScore}
-                                        </div>
-                                      ) : (
-                                        <span className="text-xs text-gray-400">
-                                          —
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-
-                              {/* AI reasoning (only for auto, since it's your own) */}
-                              {type === "auto" &&
-                                ev.answers.some((a) => a.aiReasoning) && (
-                                  <div className="mt-3 pt-3 border-t border-gray-100">
-                                    <p className="text-xs font-semibold text-gray-500 mb-2">
-                                      Feedback da IA
-                                    </p>
-                                    {ev.answers
-                                      .filter((a) => a.aiReasoning)
-                                      .map((a) => {
-                                        const q = questions.find(
-                                          (q) => q.id === a.questionId
-                                        );
-                                        return (
-                                          <div
-                                            key={a.questionId}
-                                            className="mb-2"
-                                          >
-                                            <p className="text-xs font-medium text-gray-700">
-                                              {q?.title}
-                                            </p>
-                                            <p className="text-xs text-gray-500 mt-0.5 whitespace-pre-line">
-                                              {a.aiReasoning?.substring(0, 300)}
-                                              ...
-                                            </p>
-                                          </div>
-                                        );
-                                      })}
-                                  </div>
-                                )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -372,8 +307,12 @@ export default function MinhasNotasPage() {
                   </div>
                 )}
 
-                {/* Historical cycles grouped by period */}
-                {[...new Set(myHistory.map((r) => r.periodo))].sort().reverse().map((periodo) => {
+                {/* Historical cycles grouped by period (chronological: newest first) */}
+                {[...new Set(myHistory.map((r) => r.periodo))].sort((a, b) => {
+                  const pa = parseInt(a.substring(2)) * 10 + parseInt(a[0]);
+                  const pb = parseInt(b.substring(2)) * 10 + parseInt(b[0]);
+                  return pb - pa;
+                }).map((periodo) => {
                   const periodRecords = myHistory.filter((r) => r.periodo === periodo);
                   return (
                     <div key={periodo} className="space-y-3">

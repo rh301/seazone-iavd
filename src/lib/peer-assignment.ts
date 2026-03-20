@@ -40,6 +40,37 @@ function isResponsavel(userId: string): boolean {
   return (responsavelSectors.get(user.name) || []).length > 0;
 }
 
+/** Get the highest-level sector a responsável leads (least nested) */
+function getHighestSector(userId: string): typeof sectors[0] | null {
+  const user = userById.get(userId);
+  if (!user) return null;
+  const sectorNames = responsavelSectors.get(user.name) || [];
+  if (sectorNames.length === 0) return null;
+
+  // Calculate depth for each sector
+  function depth(sectorName: string): number {
+    let d = 0;
+    let current = sectorByName.get(sectorName);
+    while (current?.parentSector) {
+      d++;
+      current = sectorByName.get(current.parentSector);
+    }
+    return d;
+  }
+
+  // Return sector with minimum depth (highest in hierarchy)
+  let best = sectorByName.get(sectorNames[0])!;
+  let bestDepth = depth(sectorNames[0]);
+  for (let i = 1; i < sectorNames.length; i++) {
+    const d = depth(sectorNames[i]);
+    if (d < bestDepth) {
+      best = sectorByName.get(sectorNames[i])!;
+      bestDepth = d;
+    }
+  }
+  return best;
+}
+
 /** Deterministic shuffle */
 function seededShuffle<T>(arr: T[], seed: number): T[] {
   const result = [...arr];
@@ -78,7 +109,8 @@ export function generatePeerAssignments(seed: number = 42): PeerAssignment[] {
 
     if (isResponsavel(user.id)) {
       // Responsável: peers = other responsáveis of sibling sectors
-      const sector = sectorByName.get(user.sector);
+      // Use the highest-level sector this person leads (not their listed sector)
+      const sector = getHighestSector(user.id);
       if (!sector?.parentSector) continue;
 
       const groupKey = `resp:${sector.parentSector}`;

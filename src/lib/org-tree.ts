@@ -25,8 +25,24 @@ for (const s of sectors) {
   }
 }
 
+// Manager overrides (loaded from DB, cached in module scope)
+let managerOverrides: Record<string, string> = {};
+
+export function setManagerOverrides(overrides: Record<string, string>) {
+  managerOverrides = overrides;
+}
+
+export function getManagerOverrides(): Record<string, string> {
+  return managerOverrides;
+}
+
 /** Get the manager (Responsável) of a person's sector */
 export function getManager(userId: string): UserData | null {
+  // Check override first
+  if (managerOverrides[userId]) {
+    return userById.get(managerOverrides[userId]) || null;
+  }
+
   const user = userById.get(userId);
   if (!user) return null;
 
@@ -198,7 +214,7 @@ export function toUser(userData: UserData): User {
   return {
     id: userData.id,
     name: userData.name,
-    email: `${userData.id}@seazone.com`,
+    email: (userData as any).email || `${userData.id}@seazone.com`,
     role,
     department: sector?.parentSector || userData.sector,
     sector: userData.sector,

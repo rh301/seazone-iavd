@@ -95,7 +95,7 @@ export default function AvaliacaoPage() {
       router.push(`/avaliacao/${existing.id}`);
       return;
     }
-    if (existing && existing.status === "concluida") {
+    if (existing && (existing.status === "concluida" || existing.status === "calibrada")) {
       if (!confirm("Essa avaliação já foi concluída. Deseja criar uma nova?"))
         return;
     }
@@ -118,7 +118,10 @@ export default function AvaliacaoPage() {
   // Progress stats
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(
-    (t) => getEvalStatus(t)?.status === "concluida"
+    (t) => {
+      const s = getEvalStatus(t)?.status;
+      return s === "concluida" || s === "calibrada";
+    }
   ).length;
 
   return (
@@ -161,7 +164,10 @@ export default function AvaliacaoPage() {
 
             const Icon = typeIcons[type];
             const completedInType = typeTasks.filter(
-              (t) => getEvalStatus(t)?.status === "concluida"
+              (t) => {
+                const s = getEvalStatus(t)?.status;
+                return s === "concluida" || s === "calibrada";
+              }
             ).length;
 
             return (
@@ -186,7 +192,7 @@ export default function AvaliacaoPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {typeTasks.map((task) => {
                     const evalData = getEvalStatus(task);
-                    const isDone = evalData?.status === "concluida";
+                    const isDone = evalData?.status === "concluida" || evalData?.status === "calibrada";
                     const isInProgress = evalData?.status === "em_andamento";
 
                     return (

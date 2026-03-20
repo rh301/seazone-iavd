@@ -21,6 +21,14 @@ interface PreviousAnswer {
   aiReasoning?: string;
 }
 
+interface HolisticAnswer {
+  questionId: string;
+  questionTitle: string;
+  category: string;
+  score: number;
+  justification: string;
+}
+
 interface ChatRequest {
   question: {
     title: string;
@@ -33,11 +41,13 @@ interface ChatRequest {
   chatHistory: ChatMessage[];
   directorInsights?: string[];
   previousAnswers?: PreviousAnswer[];
-  mode: "discuss" | "score" | "contest";
+  mode: "discuss" | "score" | "contest" | "challenge" | "holistic";
+  chosenScore?: number;
   evaluationType?: EvaluationType;
   evaluatorSector?: string;
   evaluateeSector?: string;
   evaluateeCargo?: string;
+  allAnswers?: HolisticAnswer[];
 }
 
 // ── CALIBRATION RULES (shared across all types) ──
@@ -294,6 +304,101 @@ Regras:
 - Máximo 200 palavras`;
 }
 
+// ── CHALLENGE PROMPT (new flow: person picks score, AI challenges if ≠ 3) ──
+
+// Mapeamento score ↔ conceito
+const scoreToGrade: Record<number, string> = { 5: "A", 4: "B", 3: "C", 2: "D", 1: "E" };
+
+function getChallengePrompt(evaluationType: EvaluationType, chosenScore: number): string {
+  const grade = scoreToGrade[chosenScore] || "C";
+  const typeContext: Record<EvaluationType, string> = {
+    gestor: "O GESTOR escolheu este conceito para seu liderado.",
+    auto: "O colaborador escolheu este conceito na AUTOAVALIAÇÃO.",
+    par: "Um PAR escolheu este conceito para o colega.",
+    liderado: "Um LIDERADO escolheu este conceito para seu gestor.",
+  };
+
+  const direction = chosenScore > 3 ? "acima" : "abaixo";
+  const challenge = chosenScore > 3
+    ? `A pessoa deu conceito ${grade}, que é ACIMA do esperado (C). Questione com rigor: os exemplos sustentam um conceito acima de C? Conceitos A e B exigem evidências extraordinárias de proatividade, autonomia e impacto mensurável.`
+    : `A pessoa deu conceito ${grade}, que é ABAIXO do esperado (C). Verifique: os exemplos realmente demonstram desempenho abaixo? Conceito ${grade} é significativo — exige padrão claro de comportamento negativo.`;
+
+  return `Você é o Avaliador de Desempenho da Seazone, integrado à plataforma IAVD.
+
+${typeContext[evaluationType]}
+
+A pessoa escolheu conceito **${grade}** (${direction} do esperado C). Seu papel é:
+1. Analisar a justificativa apresentada
+2. Questionar se o conceito ${grade} é adequado com base nas evidências
+3. Se os exemplos NÃO sustentarem conceito ${grade}, dizer claramente que na sua análise o conceito deveria ser outro (ex: C) e explicar por quê
+4. Se os exemplos SUSTENTAREM o conceito ${grade}, reconhecer que a justificativa é consistente
+5. A DECISÃO FINAL é da pessoa — se ela insistir, o conceito será mantido
+
+${challenge}
+
+${CALIBRATION_RULES}
+
+${CROSS_CONTEXT_RULES}
+
+Regras:
+- Seja direto, firme e respeitoso
+- Faça UMA pergunta por vez
+- Se a justificativa for fraca, diga: "Na minha análise, os exemplos apontam mais para conceito C porque [razão]. Você tem certeza que quer manter conceito ${grade}?"
+- Se a justificativa for forte, diga: "Os exemplos são consistentes com conceito ${grade}. Pode confirmar."
+- NÃO aceite "eu acho" sem exemplos concretos
+- Máximo 150 palavras
+- Responda em português (pt-BR)`;
+}
+
+// ── HOLISTIC PROMPT ──
+
+function getHolisticPrompt(evaluationType: EvaluationType): string {
+  const typeContext: Record<EvaluationType, string> = {
+    gestor: "Esta é uma avaliação do GESTOR sobre seu liderado.",
+    auto: "Esta é uma AUTOAVALIAÇÃO. Autoavaliações tendem a ser infladas.",
+    par: "Esta é uma avaliação de PAR. O avaliador pode ter visibilidade parcial.",
+    liderado: "Esta é uma avaliação de LIDERADO sobre seu gestor.",
+  };
+
+  return `Você é o Avaliador de Desempenho da Seazone, integrado à plataforma IAVD.
+
+${typeContext[evaluationType]}
+
+Você recebeu TODAS as respostas de uma avaliação 360 de uma só vez. Seu papel é:
+1. VALIDAR QUALIDADE de CADA justificativa — justificativas vagas, genéricas ou subjetivas NÃO são aceitáveis
+2. Analisar CONSISTÊNCIA entre respostas — notas altas em tudo ou notas baixas em tudo são suspeitas
+3. Verificar se há INFLAÇÃO generalizada — a maioria deveria ser C (nota 3)
+4. Identificar CONTRADIÇÕES — ex: diz que a pessoa é proativa mas não dá exemplos de antecipação
+
+JUSTIFICATIVAS INACEITÁVEIS (SEMPRE questionar, independente do conceito):
+- Opiniões subjetivas sem fatos: "é legal", "é dedicado", "trabalha bem", "gosto dele"
+- Frases genéricas: "faz o trabalho", "cumpre suas funções", "é competente"
+- Justificativas com menos de 2 frases completas
+- Sem exemplos concretos de situações reais
+- Sem menção a resultados, impacto ou comportamentos observáveis
+
+JUSTIFICATIVAS ACEITÁVEIS devem ter:
+- Situações específicas: "No projeto X em janeiro...", "Quando tivemos o problema Y..."
+- Resultados concretos: "reduziu tempo em 30%", "evitou perda de R$X"
+- Comportamentos observáveis: "tomou a iniciativa de...", "organizou reunião para..."
+- Frequência: "consistentemente", "nos últimos 3 meses", "sempre"
+
+${CALIBRATION_RULES}
+
+REGRAS DE RESPOSTA:
+- Retorne APENAS JSON válido, sem markdown, sem texto antes ou depois
+- Formato: { "feedback": [{ "questionId": "v1_q1", "currentGrade": "B", "suggestedGrade": "C", "reasoning": "..." }] }
+- Inclua feedback para TODAS as perguntas com conceito diferente de C
+- Se a justificativa for vaga, genérica ou subjetiva: SEMPRE questione, MESMO que o conceito pareça adequado. Diga exatamente o que falta (ex: "A justificativa 'é legal' não descreve nenhum comportamento observável. Traga um exemplo concreto de quando essa pessoa demonstrou [competência]")
+- Se concordar E a justificativa for boa: suggestedGrade = currentGrade
+- Se discordar OU justificativa ruim: suggestedGrade = o que sugere, reasoning explica
+- Para conceito C: questione se TODAS forem C ou se a justificativa for inaceitável
+- Máximo 100 palavras por reasoning
+- Reasoning em português (pt-BR)
+- A DECISÃO FINAL é do avaliador — você apenas analisa e sugere
+- Uma pessoa pode usar o MESMO exemplo em múltiplas perguntas — isso é válido`;
+}
+
 // ── BUILD MESSAGES ──
 
 function buildMessages(body: ChatRequest) {
@@ -305,6 +410,7 @@ function buildMessages(body: ChatRequest) {
     directorInsights,
     previousAnswers,
     mode,
+    chosenScore,
     evaluationType = "gestor",
     evaluatorSector,
     evaluateeSector,
@@ -312,7 +418,9 @@ function buildMessages(body: ChatRequest) {
   } = body;
 
   let systemPrompt: string;
-  if (mode === "score") systemPrompt = getScorePrompt(evaluationType);
+  if (mode === "holistic") systemPrompt = getHolisticPrompt(evaluationType);
+  else if (mode === "challenge") systemPrompt = getChallengePrompt(evaluationType, chosenScore ?? 3);
+  else if (mode === "score") systemPrompt = getScorePrompt(evaluationType);
   else if (mode === "contest") systemPrompt = getContestPrompt(evaluationType);
   else systemPrompt = DISCUSS_PROMPTS[evaluationType];
 
@@ -322,6 +430,51 @@ function buildMessages(body: ChatRequest) {
     par: "AVALIAÇÃO DE PAR",
     liderado: "AVALIAÇÃO DE LIDERADO",
   };
+
+  // Holistic mode: build context from all answers
+  if (mode === "holistic" && body.allAnswers) {
+    const gradeMap: Record<number, string> = { 5: "A", 4: "B", 3: "C", 2: "D", 1: "E" };
+    // Group by category
+    const byCategory: Record<string, typeof body.allAnswers> = {};
+    for (const ans of body.allAnswers) {
+      if (!byCategory[ans.category]) byCategory[ans.category] = [];
+      byCategory[ans.category].push(ans);
+    }
+
+    let holisticContext = `CONTEXTO DA AVALIAÇÃO:
+- Tipo: ${typeLabels[evaluationType]}
+- Colaborador avaliado: ${employeeName}${evaluateeCargo ? ` (${evaluateeCargo})` : ""}${evaluateeSector ? ` — Setor: ${evaluateeSector}` : ""}${evaluatorSector ? `\n- Setor do avaliador: ${evaluatorSector}` : ""}
+
+TODAS AS RESPOSTAS (${body.allAnswers.length} perguntas):
+`;
+
+    for (const [cat, answers] of Object.entries(byCategory)) {
+      holisticContext += `\n[${cat}]\n`;
+      for (const ans of answers) {
+        const grade = gradeMap[ans.score] || "C";
+        holisticContext += `  - ${ans.questionId} "${ans.questionTitle}": Conceito ${grade} (nota ${ans.score})`;
+        if (ans.justification.trim()) {
+          holisticContext += `\n    Justificativa: "${ans.justification}"`;
+        }
+        holisticContext += "\n";
+      }
+    }
+
+    // Stats
+    const scores = body.allAnswers.map((a) => a.score);
+    const avg = scores.reduce((s, v) => s + v, 0) / scores.length;
+    const nonC = scores.filter((s) => s !== 3).length;
+    holisticContext += `\nESTATÍSTICAS:
+- Média: ${avg.toFixed(1)}
+- Respostas diferentes de C: ${nonC} de ${scores.length}
+- Distribuição: ${[5, 4, 3, 2, 1].map((s) => `${gradeMap[s]}=${scores.filter((v) => v === s).length}`).join(", ")}`;
+
+    const messages: { role: "user" | "assistant"; content: string }[] = [
+      { role: "user", content: holisticContext },
+    ];
+
+    return { systemPrompt, messages };
+  }
 
   let context = `CONTEXTO DA AVALIAÇÃO:
 - Tipo: ${typeLabels[evaluationType]}
@@ -384,7 +537,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 600,
+        max_tokens: body.mode === "holistic" ? 2000 : 600,
         system: systemPrompt,
         messages,
       }),
@@ -418,6 +571,105 @@ function fallbackResponse(body: ChatRequest) {
     mode,
     evaluationType = "gestor",
   } = body;
+
+  // Mode: holistic — rule-based fallback (gives feedback on ALL non-C grades + questions all-C)
+  if (mode === "holistic" && body.allAnswers) {
+    const gradeMap: Record<number, string> = { 5: "A", 4: "B", 3: "C", 2: "D", 1: "E" };
+    const feedback: { questionId: string; currentGrade: string; suggestedGrade: string; reasoning: string }[] = [];
+    const cCount = body.allAnswers.filter((a) => a.score === 3).length;
+    const allOrMostlyC = cCount >= body.allAnswers.length - 1;
+
+    // If all/most answers are C, question them
+    if (allOrMostlyC) {
+      for (const ans of body.allAnswers) {
+        if (ans.score !== 3) continue;
+        feedback.push({
+          questionId: ans.questionId,
+          currentGrade: "C",
+          suggestedGrade: "C",
+          reasoning: `Todas (ou quase todas) as respostas são C. Isso pode indicar que a avaliação foi feita sem reflexão profunda. Há alguma competência em que ${employeeName} se destaca positivamente ou precisa melhorar? Considere se realmente não há diferenças entre as competências.`,
+        });
+      }
+      return NextResponse.json({ content: JSON.stringify({ feedback }) });
+    }
+
+    for (const ans of body.allAnswers) {
+      if (ans.score === 3) continue;
+
+      const grade = gradeMap[ans.score] || "C";
+      const just = ans.justification.trim();
+      const justLen = just.length;
+      const hasExamples = /exemplo|situação|caso|vez que|quando|projeto|entrega|reunião|resultado|dados|indicador|específic|reduzi|aument|implement|organiz|propôs|criou|liderou/i.test(just);
+      const hasPattern = /sempre|consistente|padrão|frequente|repetid|constante|nunca|não consegue/i.test(just);
+      const isVague = /^(é legal|é bom|trabalha bem|é dedicad|gosto|é competente|faz o trabalho|cumpre|é esforçad|é comprometid|muito bom|excelente|ótim|tranquil)/i.test(just) ||
+        (!hasExamples && justLen < 80);
+
+      // Vague/subjective justification → always reject
+      if (isVague) {
+        feedback.push({
+          questionId: ans.questionId,
+          currentGrade: grade,
+          suggestedGrade: "C",
+          reasoning: `A justificativa "${just.substring(0, 40)}${justLen > 40 ? "..." : ""}" é vaga ou subjetiva. Uma avaliação precisa de exemplos concretos: situações reais, comportamentos observados e resultados. Descreva o que aconteceu, quando e qual foi o impacto.`,
+        });
+        continue;
+      }
+
+      // Short justification → disagree
+      if (justLen < 50) {
+        feedback.push({
+          questionId: ans.questionId,
+          currentGrade: grade,
+          suggestedGrade: "C",
+          reasoning: `A justificativa é muito curta. Conceitos diferentes de C exigem exemplos concretos e detalhados com situações reais.`,
+        });
+        continue;
+      }
+
+      // High grades without examples → disagree
+      if (ans.score >= 4 && !hasExamples) {
+        feedback.push({
+          questionId: ans.questionId,
+          currentGrade: grade,
+          suggestedGrade: "C",
+          reasoning: `Conceito ${grade} exige evidências concretas de desempenho acima do esperado. A justificativa não menciona exemplos específicos ou resultados mensuráveis.`,
+        });
+        continue;
+      }
+
+      // Low grades without pattern → disagree
+      if (ans.score <= 2 && !hasPattern) {
+        feedback.push({
+          questionId: ans.questionId,
+          currentGrade: grade,
+          suggestedGrade: "C",
+          reasoning: `Conceito ${grade} exige padrão claro de comportamento. A justificativa não indica se isso é consistente ou pontual.`,
+        });
+        continue;
+      }
+
+      // Otherwise → agree
+      feedback.push({
+        questionId: ans.questionId,
+        currentGrade: grade,
+        suggestedGrade: grade,
+        reasoning: ans.score >= 4
+          ? `A justificativa traz evidências concretas que sustentam conceito ${grade}. Os exemplos demonstram desempenho acima do esperado.`
+          : `A justificativa descreve um padrão consistente que justifica conceito ${grade}.`,
+      });
+    }
+
+    // Inflation warning
+    const nonCCount = body.allAnswers.filter((a) => a.score !== 3).length;
+    if (nonCCount >= 7) {
+      const firstAgree = feedback.find(f => f.suggestedGrade === f.currentGrade);
+      if (firstAgree) {
+        firstAgree.reasoning += ` Atenção: ${nonCCount} de ${body.allAnswers.length} respostas são diferentes de C — revise se todas são justificadas.`;
+      }
+    }
+
+    return NextResponse.json({ content: JSON.stringify({ feedback }) });
+  }
 
   const userMessages = chatHistory.filter((m) => m.role === "user");
   const userMsgCount = userMessages.length;
@@ -524,6 +776,52 @@ function fallbackResponse(body: ChatRequest) {
         `• **Evidência de autonomia**\n` +
         `• **Impacto mensurável**\n\n` +
         `Tem algum fato novo?`,
+    });
+  }
+
+  // Mode: challenge — person picked a grade ≠ C
+  if (mode === "challenge") {
+    const chosenScore = body.chosenScore ?? 3;
+    const grade = scoreToGrade[chosenScore] || "C";
+    const userMessages = chatHistory.filter((m) => m.role === "user");
+
+    if (userMessages.length <= 1) {
+      const isVague = !justification || justification.length < 30;
+      if (isVague) {
+        return NextResponse.json({
+          content: `Você deu conceito **${grade}** para **${employeeName}**. A maioria das pessoas é conceito C (dentro do esperado).\n\nPreciso de **exemplos concretos e recentes** que justifiquem esse conceito. O que aconteceu nos últimos 6 meses que levou a essa avaliação?`,
+        });
+      }
+
+      if (chosenScore > 3) {
+        return NextResponse.json({
+          content: `Entendi sua justificativa. Conceito **${grade}** exige desempenho **acima** do esperado — não basta ser bom, precisa ser excepcional.\n\nPergunto: **${employeeName}** faz isso de forma **autônoma e consistente**? Ou foi algo pontual?`,
+        });
+      } else {
+        return NextResponse.json({
+          content: `Entendi sua justificativa. Conceito **${grade}** indica desempenho **abaixo** do esperado — isso é significativo.\n\nConfirme: esse comportamento é **consistente** ou foi uma situação pontual?`,
+        });
+      }
+    }
+
+    if (userMessages.length === 2) {
+      const lastMsg = userMessages[userMessages.length - 1]?.content || "";
+      const hasExamples = /exemplo|situação|caso|vez que|quando|projeto|entrega|reunião|resultado/i.test(lastMsg);
+      const isDetailed = lastMsg.length > 60;
+
+      if (hasExamples && isDetailed) {
+        return NextResponse.json({
+          content: `Os exemplos que você trouxe são relevantes. Na minha análise, o conceito **${grade}** ${chosenScore > 3 ? "pode ser" : "é"} justificável com base nessas evidências.\n\nSe está seguro, pode **confirmar o conceito ${grade}**.`,
+        });
+      }
+
+      return NextResponse.json({
+        content: `Na minha análise, os exemplos apresentados apontam mais para **conceito C** (dentro do esperado). Para conceito ${grade}, eu esperaria evidências mais concretas de ${chosenScore > 3 ? "proatividade e impacto acima do cargo" : "um padrão claro de comportamento negativo"}.\n\n**Você tem certeza que quer manter conceito ${grade}?** Se sim, pode confirmar.`,
+      });
+    }
+
+    return NextResponse.json({
+      content: `Entendido. A decisão é sua. Se está ciente e quer manter conceito **${grade}**, pode **confirmar** agora.`,
     });
   }
 

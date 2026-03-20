@@ -10,7 +10,8 @@ import {
 } from "react";
 import { useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from "next-auth/react";
 import { User } from "./auth-types";
-import { findUser, findUserByName, getAllUsers } from "./org-tree";
+import { findUser, findUserByName, getAllUsers, setManagerOverrides } from "./org-tree";
+import { fetchManagerOverrides } from "./db";
 
 interface AuthContextType {
   user: User | null;
@@ -77,15 +78,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (status === "loading") return;
 
-    // Se não tem sessão OAuth, tenta carregar demo do localStorage
-    if (!oauthUser) {
-      const stored = localStorage.getItem("avd_current_user");
-      if (stored) {
-        const found = findUser(stored);
-        if (found) setDemoUser(found);
+    async function init() {
+      // Load manager overrides from DB into org-tree cache
+      try {
+        const overrides = await fetchManagerOverrides();
+        setManagerOverrides(overrides);
+      } catch { /* ignore */ }
+
+      // Se não tem sessão OAuth, tenta carregar demo do localStorage
+      if (!oauthUser) {
+        const stored = localStorage.getItem("avd_current_user");
+        if (stored) {
+          const found = findUser(stored);
+          if (found) setDemoUser(found);
+        }
       }
+      setIsLoading(false);
     }
-    setIsLoading(false);
+    init();
   }, [status, oauthUser]);
 
   // Login demo (seleção de perfil)

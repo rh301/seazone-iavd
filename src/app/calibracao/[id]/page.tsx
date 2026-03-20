@@ -8,6 +8,7 @@ import { fetchEvaluation, upsertEvaluation } from "@/lib/db";
 import { useAuth } from "@/lib/auth-context";
 import { canCalibrate } from "@/lib/permissions";
 import { findUser } from "@/lib/org-tree";
+import { scoreToGrade, toGrade, avgToGrade } from "@/lib/utils";
 import { roleLabels } from "@/lib/auth-types";
 import { formatChatContent } from "@/lib/format-chat";
 import AppShell from "@/components/app-shell";
@@ -185,9 +186,9 @@ export default function CalibracaoDetalhe({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 text-center">
             <p className="text-3xl font-bold text-gray-400">
-              {avgOriginal > 0 ? avgOriginal.toFixed(1) : "—"}
+              {avgOriginal > 0 ? avgToGrade(avgOriginal) : "—"}
             </p>
-            <p className="text-sm text-gray-500 mt-1">Média original</p>
+            <p className="text-sm text-gray-500 mt-1">Conceito original</p>
           </div>
           <div
             className={`rounded-xl p-5 shadow-sm border text-center ${
@@ -197,9 +198,9 @@ export default function CalibracaoDetalhe({
             }`}
           >
             <p className="text-3xl font-bold text-primary">
-              {avgCalibrated > 0 ? avgCalibrated.toFixed(1) : "—"}
+              {avgCalibrated > 0 ? avgToGrade(avgCalibrated) : "—"}
             </p>
-            <p className="text-sm text-gray-500 mt-1">Média calibrada</p>
+            <p className="text-sm text-gray-500 mt-1">Conceito calibrado</p>
           </div>
         </div>
 
@@ -245,7 +246,7 @@ export default function CalibracaoDetalhe({
                             : `score-${answer.score}`
                         }`}
                       >
-                        {answer.score}
+                        {toGrade(answer.score)}
                       </span>
                       {isModified && (
                         <>
@@ -253,7 +254,7 @@ export default function CalibracaoDetalhe({
                           <span
                             className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold score-${currentScore}`}
                           >
-                            {currentScore}
+                            {toGrade(currentScore)}
                           </span>
                         </>
                       )}
@@ -363,7 +364,7 @@ export default function CalibracaoDetalhe({
                     <div className="bg-primary/5 rounded-xl p-5 border border-primary/10">
                       <h4 className="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
                         <Scale className="w-4 h-4" />
-                        Ajustar nota
+                        Ajustar conceito
                       </h4>
                       <div className="flex gap-2 mb-3">
                         {q.scale.map((level) => (
@@ -390,7 +391,7 @@ export default function CalibracaoDetalhe({
                                   : "bg-gray-100 text-gray-600"
                               }`}
                             >
-                              {level.score}
+                              {scoreToGrade[level.score]}
                             </span>
                             <p className="text-xs text-gray-600 mt-1">
                               {level.label}

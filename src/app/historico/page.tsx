@@ -50,9 +50,10 @@ export default function Historico() {
   // All subordinates (direct + indirect)
   const mySubordinates = getAllSubordinates(user.id);
 
-  // Group evaluations by employee
+  // Group gestor evaluations by employee (only gestor notes visible to leaders)
   const evalsByEmployee = new Map<string, Evaluation[]>();
   for (const e of evaluations) {
+    if (e.evaluationType !== "gestor") continue;
     const list = evalsByEmployee.get(e.employeeId) || [];
     list.push(e);
     evalsByEmployee.set(e.employeeId, list);
@@ -61,11 +62,13 @@ export default function Historico() {
   // Visible people: self + all subordinates
   const visiblePeople = [user, ...mySubordinates.map(s => findUser(s.id)).filter(Boolean)] as NonNullable<ReturnType<typeof findUser>>[];
 
-  // Visible evaluations (for dashboard stats)
+  // Visible evaluations: only gestor evaluations (the official score)
   const visibleEvaluations = evaluations.filter((e) =>
-    e.evaluatorId === user.id ||
-    mySubordinates.some(s => s.id === e.employeeId) ||
-    canViewEvaluation(user, e.employeeId, e.evaluatorId)
+    e.evaluationType === "gestor" && (
+      e.evaluatorId === user.id ||
+      mySubordinates.some(s => s.id === e.employeeId) ||
+      canViewEvaluation(user, e.employeeId, e.evaluatorId)
+    )
   );
 
   const departments = [
@@ -196,7 +199,7 @@ export default function Historico() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `avd_historico_${new Date().toISOString().split("T")[0]}.csv`;
+    a.download = `avd_historico_gestor_${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -431,7 +434,7 @@ export default function Historico() {
               const empEvals = (evalsByEmployee.get(emp.id) || []).filter(e => e.status !== "em_andamento");
               const hasEvals = empEvals.length > 0;
               const gestorEval = empEvals.find(e => e.evaluationType === "gestor");
-              const avg = gestorEval ? getAvgScore(gestorEval) : (hasEvals ? getAvgScore(empEvals[0]) : null);
+              const avg = gestorEval ? getAvgScore(gestorEval) : null;
               const totalAnswered = hasEvals ? empEvals[0].answers.filter(a => a.score !== null).length : 0;
               const evalTypes = [...new Set(empEvals.map(e => e.evaluationType))];
 

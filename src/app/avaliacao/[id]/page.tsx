@@ -1,40 +1,56 @@
 "use client";
 
-import { useEffect, useState, useRef, use } from "react";
+import { useEffect, useState, useRef, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
-import { Question, Evaluation, ChatMessage, Answer, EvaluationType, evaluationTypeLabels, evaluationTypeColors } from "@/lib/types";
+import { Question, Evaluation, Answer, EvaluationType, evaluationTypeLabels, evaluationTypeColors } from "@/lib/types";
 import { getQuestions } from "@/lib/store";
-import { fetchEvaluation, upsertEvaluation, fetchInsightsForQuestion } from "@/lib/db";
+import { fetchEvaluation, upsertEvaluation } from "@/lib/db";
 import { useAuth } from "@/lib/auth-context";
 import { findUser } from "@/lib/org-tree";
 import AppShell from "@/components/app-shell";
-import { formatChatContent } from "@/lib/format-chat";
 import {
   ChevronLeft,
-  ChevronRight,
-  Send,
-  Bot,
-  User,
   CheckCircle2,
-  AlertCircle,
-  Save,
-  Star,
-  MessageSquareWarning,
-  Scale,
+  Bot,
+  Loader2,
+  Send,
+  RefreshCw,
 } from "lucide-react";
 
-// Regex para extrair nota do formato "**Nota: X — Label**"
-const SCORE_REGEX = /\*\*Nota:\s*(\d)\s*[—–-]\s*(.+?)\*\*/;
+// Mapeamento: nota interna 1-5 ↔ conceito A-E (A=melhor, E=pior)
+const scoreToGrade: Record<number, string> = { 5: "A", 4: "B", 3: "C", 2: "D", 1: "E" };
+const gradeToScore: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 };
+const grades = ["A", "B", "C", "D", "E"] as const;
 
-function extractScore(content: string): { score: number; label: string } | null {
-  const match = content.match(SCORE_REGEX);
-  if (match) {
-    const score = parseInt(match[1], 10);
-    if (score >= 1 && score <= 5) {
-      return { score, label: match[2].trim() };
-    }
-  }
-  return null;
+const gradeLabels: Record<string, string> = {
+  A: "Excepcional",
+  B: "Acima do esperado",
+  C: "Dentro do esperado",
+  D: "Abaixo do esperado",
+  E: "Insuficiente",
+};
+
+const gradeColors: Record<string, string> = {
+  A: "bg-primary text-white",
+  B: "bg-green-500 text-white",
+  C: "bg-yellow-500 text-white",
+  D: "bg-orange-500 text-white",
+  E: "bg-red-500 text-white",
+};
+
+const gradeColorsOutline: Record<string, string> = {
+  A: "border-primary/30 text-primary hover:bg-primary/5",
+  B: "border-green-300 text-green-600 hover:bg-green-50",
+  C: "border-yellow-300 text-yellow-600 hover:bg-yellow-50",
+  D: "border-orange-300 text-orange-600 hover:bg-orange-50",
+  E: "border-red-300 text-red-600 hover:bg-red-50",
+};
+
+interface AIFeedbackItem {
+  questionId: string;
+  currentGrade: string;
+  suggestedGrade: string;
+  reasoning: string;
 }
 
 export default function AvaliacaoPage({
@@ -47,11 +63,35 @@ export default function AvaliacaoPage({
   const { user: currentUser } = useAuth();
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [chatInput, setChatInput] = useState("");
-  const [isAiTyping, setIsAiTyping] = useState(false);
-  const [isContesting, setIsContesting] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const [aiFeedback, setAiFeedback] = useState<Record<string, AIFeedbackItem>>({});
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [hasAnalyzed, setHasAnalyzed] = useState(false);
+
+  // Debounced auto-save
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const evaluationRef = useRef<Evaluation | null>(null);
+
+  useEffect(() => {
+    evaluationRef.current = evaluation;
+  }, [evaluation]);
+
+  const debouncedSave = useCallback((updated: Evaluation) => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      upsertEvaluation(updated);
+    }, 800);
+  }, []);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      // Final save on unmount
+      if (evaluationRef.current) {
+        upsertEvaluation(evaluationRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -70,76 +110,99 @@ export default function AvaliacaoPage({
     load();
   }, [id, router, currentUser]);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [evaluation?.answers[currentIndex]?.chatHistory]);
-
   if (!evaluation || !currentUser) return null;
 
   const employee = findUser(evaluation.employeeId);
   const evaluationType: EvaluationType = evaluation.evaluationType || "gestor";
-  const question = questions[currentIndex];
-  const answer = evaluation.answers[currentIndex];
 
-  if (!question || !answer) return null;
-
-  // === Estado derivado ===
-  const hasJustification = answer.justification.trim().length > 10;
-  const hasChat = answer.chatHistory && answer.chatHistory.length > 0;
-  const hasScore = answer.score !== null;
-  const isComplete = hasScore && answer.aiValidated;
-
-  // Agrupar perguntas por valor
-  const valueGroups = questions.reduce<Record<string, number[]>>((acc, q, i) => {
+  // Group questions by category
+  const questionsByCategory = questions.reduce<Record<string, { question: Question; index: number }[]>>((acc, q, i) => {
     if (!acc[q.category]) acc[q.category] = [];
-    acc[q.category].push(i);
+    acc[q.category].push({ question: q, index: i });
     return acc;
   }, {});
 
-  function updateAnswer(updates: Partial<Answer>) {
+  // Count filled answers
+  const filledCount = evaluation.answers.filter((a) => a.score !== null).length;
+
+  // Check if form is ready for AI analysis
+  const allAnswersReady = evaluation.answers.every((a, i) => {
+    if (a.score === null) return false;
+    if (a.score !== 3 && a.justification.trim().length < 100) return false;
+    return true;
+  });
+
+  function updateAnswerAtIndex(index: number, updates: Partial<Answer>) {
     setEvaluation((prev) => {
       if (!prev) return prev;
       const newAnswers = [...prev.answers];
-      newAnswers[currentIndex] = { ...newAnswers[currentIndex], ...updates };
+      newAnswers[index] = { ...newAnswers[index], ...updates };
       const updated = { ...prev, answers: newAnswers };
-      upsertEvaluation(updated);
+      debouncedSave(updated);
       return updated;
     });
   }
 
-  async function fetchAIResponse(
-    history: ChatMessage[],
-    mode: "discuss" | "score" | "contest"
-  ) {
-    setIsAiTyping(true);
-    const directorInsights = await fetchInsightsForQuestion(question.id);
-
-    // Construir contexto das respostas anteriores
-    const previousAnswers = evaluation!.answers
-      .filter((a, i) => i !== currentIndex && a.justification.trim().length > 0)
-      .map((a, i) => {
-        const q = questions.find((q) => q.id === a.questionId);
-        return {
-          questionTitle: q?.title || "",
-          category: q?.category || "",
-          justification: a.justification,
-          score: a.score,
-          aiReasoning: a.aiReasoning,
-        };
+  function handleSelectGrade(index: number, grade: string) {
+    if (evaluation!.status === "concluida") return;
+    const score = gradeToScore[grade];
+    const currentAnswer = evaluation!.answers[index];
+    // If changing to C, clear justification; otherwise preserve existing
+    if (grade === "C") {
+      updateAnswerAtIndex(index, {
+        score,
+        justification: "",
+        aiValidated: false,
       });
+    } else {
+      updateAnswerAtIndex(index, {
+        score,
+        aiValidated: false,
+        // Keep existing justification if switching between non-C grades
+        justification: currentAnswer.score === 3 ? "" : currentAnswer.justification,
+      });
+    }
+    // Clear AI feedback for this question if grade changes after analysis
+    if (hasAnalyzed) {
+      const qId = questions[index]?.id;
+      if (qId && aiFeedback[qId]) {
+        setAiFeedback((prev) => {
+          const next = { ...prev };
+          delete next[qId];
+          return next;
+        });
+      }
+    }
+  }
+
+  function handleJustificationChange(index: number, value: string) {
+    if (evaluation!.status === "concluida") return;
+    updateAnswerAtIndex(index, { justification: value });
+  }
+
+  async function handleAnalyze() {
+    if (!allAnswersReady || isAnalyzing) return;
+    setIsAnalyzing(true);
+
+    const allAnswers = evaluation!.answers.map((a, i) => ({
+      questionId: questions[i]?.id || "",
+      questionTitle: questions[i]?.title || "",
+      category: questions[i]?.category || "",
+      score: a.score!,
+      justification: a.justification,
+    }));
 
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          question,
+          question: { title: "", description: "", category: "", scale: [] },
           employeeName: employee?.name || "",
-          justification: answer.justification,
-          chatHistory: history,
-          directorInsights: directorInsights.map((i) => i.interpretation),
-          previousAnswers,
-          mode,
+          justification: "",
+          chatHistory: [],
+          mode: "holistic",
+          allAnswers,
           evaluationType,
           evaluatorSector: currentUser?.sector || "",
           evaluateeSector: employee?.sector || "",
@@ -149,537 +212,347 @@ export default function AvaliacaoPage({
 
       const data = await res.json();
 
-      const aiMessage: ChatMessage = {
-        id: `msg_${Date.now()}`,
-        role: "assistant",
-        content: data.content,
-        timestamp: new Date(),
-      };
+      // Parse response — expect JSON with feedback array
+      let feedbackItems: AIFeedbackItem[] = [];
+      try {
+        let content = data.content;
+        // Strip markdown code fences if present
+        if (typeof content === "string") {
+          content = content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+        }
+        const parsed = typeof content === "string" ? JSON.parse(content) : content;
+        feedbackItems = parsed.feedback || [];
+      } catch {
+        console.error("Failed to parse AI feedback as JSON:", data.content);
+        // Try regex extraction as last resort
+        try {
+          const jsonMatch = data.content.match(/\{[\s\S]*"feedback"[\s\S]*\}/);
+          if (jsonMatch) {
+            feedbackItems = JSON.parse(jsonMatch[0]).feedback || [];
+          }
+        } catch { /* give up */ }
+      }
 
-      const newHistory = [...history, aiMessage];
-      const updates: Partial<Answer> = { chatHistory: newHistory };
-
-      // Se a IA deu nota (mode score ou contest), extrair
-      if (mode === "score" || mode === "contest") {
-        const extracted = extractScore(data.content);
-        if (extracted) {
-          updates.score = extracted.score;
-          updates.aiValidated = true;
-          updates.aiReasoning = data.content;
+      const feedbackMap: Record<string, AIFeedbackItem> = {};
+      for (const item of feedbackItems) {
+        if (item.questionId && item.reasoning) {
+          feedbackMap[item.questionId] = item;
         }
       }
-
-      updateAnswer(updates);
-
-      if (mode === "contest") {
-        setIsContesting(false);
-      }
-    } catch {
-      const aiMessage: ChatMessage = {
-        id: `msg_${Date.now()}`,
-        role: "assistant",
-        content: "Desculpe, houve um erro ao processar. Tente novamente.",
-        timestamp: new Date(),
-      };
-      updateAnswer({ chatHistory: [...history, aiMessage] });
+      setAiFeedback(feedbackMap);
+      setHasAnalyzed(true);
+    } catch (err) {
+      console.error("AI analysis error:", err);
+      alert("Erro ao analisar com a IA. Tente novamente.");
     } finally {
-      setIsAiTyping(false);
+      setIsAnalyzing(false);
     }
-  }
-
-  // Gestor envia resposta à pergunta — inicia discussão com IA
-  function handleSubmitAnswer() {
-    if (!hasJustification) return;
-
-    const userMsg: ChatMessage = {
-      id: `msg_${Date.now()}`,
-      role: "user",
-      content: answer.justification,
-      timestamp: new Date(),
-    };
-
-    const history = [userMsg];
-    updateAnswer({ chatHistory: history });
-    fetchAIResponse(history, "discuss");
-  }
-
-  // Envia mensagem no chat (resposta à IA durante discussão)
-  async function handleSendMessage() {
-    if (!chatInput.trim() || isAiTyping) return;
-
-    const userMessage: ChatMessage = {
-      id: `msg_${Date.now()}`,
-      role: "user",
-      content: chatInput,
-      timestamp: new Date(),
-    };
-
-    const newHistory = [...(answer.chatHistory || []), userMessage];
-    updateAnswer({ chatHistory: newHistory });
-    setChatInput("");
-
-    // Se está contestando, usa mode contest
-    if (isContesting) {
-      fetchAIResponse(newHistory, "contest");
-      return;
-    }
-
-    fetchAIResponse(newHistory, "discuss");
-  }
-
-  // Pede para IA dar a nota
-  function handleRequestScore() {
-    const history = answer.chatHistory || [];
-
-    const userMsg: ChatMessage = {
-      id: `msg_${Date.now()}`,
-      role: "user",
-      content: "Por favor, dê sua nota agora com base em tudo que discutimos.",
-      timestamp: new Date(),
-    };
-
-    const newHistory = [...history, userMsg];
-    updateAnswer({ chatHistory: newHistory });
-    fetchAIResponse(newHistory, "score");
-  }
-
-  // Inicia contestação
-  function handleStartContest() {
-    setIsContesting(true);
-    setChatInput("");
-  }
-
-  // Aceita a nota da IA
-  function handleAcceptScore() {
-    updateAnswer({ aiValidated: true });
-  }
-
-  function handleNavigate(direction: "prev" | "next") {
-    const targetIdx = direction === "prev" ? currentIndex - 1 : currentIndex + 1;
-    if (targetIdx < 0 || targetIdx >= questions.length) return;
-    setCurrentIndex(targetIdx);
-    setIsContesting(false);
   }
 
   async function handleFinalize() {
     if (!evaluation) return;
-    const allScored = evaluation.answers.every((a) => a.score !== null && a.aiValidated);
-    if (!allScored) {
-      const pending = evaluation.answers
-        .map((a, i) => (!a.score || !a.aiValidated ? questions[i] : null))
-        .filter(Boolean);
-      const names = pending.map((q) => `• ${q!.title}`).join("\n");
-      alert(
-        `As seguintes perguntas ainda não receberam nota da IA:\n\n${names}\n\nDiscuta com a IA e peça a nota para cada uma.`
-      );
+
+    // Validate all answers
+    const allValid = evaluation.answers.every((a, i) => {
+      if (a.score === null) return false;
+      if (a.score !== 3 && a.justification.trim().length < 100) return false;
+      return true;
+    });
+
+    if (!allValid) {
+      alert("Todas as perguntas precisam ter conceito. Conceitos diferentes de C precisam de justificativa (mínimo 100 caracteres).");
       return;
     }
-    const updated = { ...evaluation, status: "concluida" as const };
+
+    // Set all answers as validated and evaluation as complete
+    const finalAnswers = evaluation.answers.map((a) => ({
+      ...a,
+      aiValidated: true,
+    }));
+
+    const updated: Evaluation = {
+      ...evaluation,
+      answers: finalAnswers,
+      status: "concluida" as const,
+    };
+
     await upsertEvaluation(updated);
-    router.push("/historico");
+    router.push("/avaliacao");
   }
 
-  const progress =
-    evaluation.answers.filter((a) => a.score !== null && a.aiValidated).length /
-    questions.length;
-
-  // Estado do chat
-  const chatState = (() => {
-    if (!hasJustification && !hasChat) return "waiting_answer";
-    if (hasJustification && !hasChat) return "ready_to_send";
-    if (hasChat && !hasScore) return "discussing";
-    if (hasScore && isContesting) return "contesting";
-    if (hasScore) return "scored";
-    return "discussing";
-  })();
-
-  // Mínimo de trocas antes de poder pedir nota
-  const userMsgCount = (answer.chatHistory || []).filter((m) => m.role === "user").length;
-  const aiMsgCount = (answer.chatHistory || []).filter((m) => m.role === "assistant").length;
-  const canRequestScore = userMsgCount >= 2 && aiMsgCount >= 1 && !hasScore;
+  const isConcluida = evaluation.status === "concluida";
 
   return (
     <AppShell>
-    <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => router.push("/avaliacao")}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          {employee?.photoUrl ? (
-            <img src={employee.photoUrl} alt={employee.name} className="w-10 h-10 rounded-full object-cover" />
-          ) : (
-            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-sm font-semibold text-primary">
-              {employee?.name.split(" ").map((n) => n[0]).slice(0, 2).join("")}
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.push("/avaliacao")}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            {employee?.photoUrl ? (
+              <img src={employee.photoUrl} alt={employee.name} className="w-12 h-12 rounded-full object-cover" />
+            ) : (
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-sm font-semibold text-primary">
+                {employee?.name.split(" ").map((n) => n[0]).slice(0, 2).join("")}
+              </div>
+            )}
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold text-gray-900">
+                  {employee?.name}
+                </h1>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${evaluationTypeColors[evaluationType]}`}>
+                  {evaluationTypeLabels[evaluationType]}
+                </span>
+              </div>
+              <p className="text-sm text-gray-500">
+                {employee?.cargo} · {employee?.sector}
+              </p>
             </div>
-          )}
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-gray-900">
-                {employee?.name}
-              </h1>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${evaluationTypeColors[evaluationType]}`}>
-                {evaluationTypeLabels[evaluationType]}
+          </div>
+        </div>
+
+        {/* Progress */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-600">
+              {filledCount} de {questions.length} preenchidas
+            </span>
+            {isConcluida && (
+              <span className="flex items-center gap-1.5 text-sm font-medium text-accent">
+                <CheckCircle2 className="w-4 h-4" />
+                Avaliação concluída
               </span>
-            </div>
-            <p className="text-sm text-gray-500">
-              {employee?.cargo} · {employee?.sector}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="text-sm text-gray-500">
-            {currentIndex + 1} de {questions.length}
-          </div>
-          <button
-            onClick={handleFinalize}
-            className="flex items-center gap-2 bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent/90 transition text-sm font-medium"
-          >
-            <Save className="w-4 h-4" />
-            Finalizar
-          </button>
-        </div>
-      </div>
-
-      {/* Progress bar */}
-      <div className="w-full bg-gray-200 rounded-full h-2 mb-6">
-        <div
-          className="bg-primary h-2 rounded-full transition-all duration-300"
-          style={{ width: `${progress * 100}%` }}
-        />
-      </div>
-
-      {/* Value navigation — grouped by valor */}
-      <div className="space-y-2 mb-6">
-        {Object.entries(valueGroups).map(([category, indices]) => (
-          <div key={category} className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-gray-400 w-36 truncate">
-              {category}
-            </span>
-            <div className="flex gap-1.5">
-              {indices.map((i) => {
-                const a = evaluation.answers[i];
-                const isActive = i === currentIndex;
-                const scored = a?.score !== null && a?.aiValidated;
-                return (
-                  <button
-                    key={i}
-                    onClick={() => { setCurrentIndex(i); setIsContesting(false); }}
-                    className={`w-8 h-8 rounded-lg text-xs font-bold transition flex items-center justify-center ${
-                      isActive
-                        ? "bg-primary text-white"
-                        : scored
-                        ? "bg-accent/10 text-accent border border-accent/20"
-                        : a?.chatHistory?.length > 0
-                        ? "bg-secondary/10 text-secondary border border-secondary/20"
-                        : "bg-gray-100 text-gray-400"
-                    }`}
-                    title={questions[i]?.title}
-                  >
-                    {scored ? (
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                    ) : (
-                      `P${(indices.indexOf(i) + 1)}`
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left: Question & Answer */}
-        <div className="space-y-6">
-          {/* Question card */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <span className="text-xs font-medium px-2.5 py-1 bg-primary/10 text-primary rounded-full">
-              {question.category}
-            </span>
-            <h2 className="text-lg font-semibold text-gray-900 mt-3">
-              {question.title}
-            </h2>
-            <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-              {question.description}
-            </p>
-          </div>
-
-          {/* Answer textarea */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">
-              Sua resposta
-            </h3>
-            <p className="text-xs text-gray-400 mb-3">
-              {evaluationType === "auto"
-                ? "Descreva com exemplos concretos como você se comportou nos últimos 6 meses."
-                : evaluationType === "par"
-                ? "Descreva com exemplos como esse colega colabora e contribui no dia a dia."
-                : evaluationType === "liderado"
-                ? "Descreva com exemplos como seu gestor lidera, apoia e direciona a equipe."
-                : "Descreva com exemplos concretos e recentes. A IA vai discutir com você e depois dar a nota."}
-            </p>
-            <textarea
-              value={answer.justification}
-              onChange={(e) => updateAnswer({ justification: e.target.value })}
-              rows={4}
-              disabled={hasChat}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:bg-gray-50 disabled:text-gray-500"
-              placeholder={
-                evaluationType === "auto"
-                  ? "Ex: Quando enfrentei o desafio X, eu tomei a iniciativa de..."
-                  : evaluationType === "par"
-                  ? "Ex: No projeto compartilhado X, esse colega contribuiu com..."
-                  : evaluationType === "liderado"
-                  ? "Ex: Quando tive dificuldade com X, meu gestor me ajudou..."
-                  : "Ex: No projeto X, quando tivemos o problema Y, o colaborador fez Z..."
-              }
-            />
-            {hasJustification && !hasChat && (
-              <button
-                onClick={handleSubmitAnswer}
-                disabled={isAiTyping}
-                className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-dark transition text-sm font-medium disabled:opacity-30"
-              >
-                <Bot className="w-4 h-4" />
-                Iniciar discussão com IA
-              </button>
             )}
           </div>
-
-          {/* Score display (when AI has scored) */}
-          {hasScore && (
-            <div className={`bg-white rounded-xl p-6 shadow-sm border-2 ${
-              isComplete ? "border-accent/30" : "border-secondary/30"
-            }`}>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Star className="w-4 h-4 text-secondary" />
-                  Nota da IA
-                </h3>
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold score-${answer.score}`}>
-                  {answer.score}
-                </div>
-              </div>
-              <p className="text-xs text-gray-500">
-                {question.scale.find((s) => s.score === answer.score)?.label} — {question.scale.find((s) => s.score === answer.score)?.description}
-              </p>
-
-              {!isContesting && (
-                <div className="flex gap-2 mt-4">
-                  <button
-                    onClick={handleAcceptScore}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition text-sm font-medium"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    Aceitar nota
-                  </button>
-                  <button
-                    onClick={handleStartContest}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border-2 border-secondary/30 text-secondary rounded-lg hover:bg-secondary/5 transition text-sm font-medium"
-                  >
-                    <MessageSquareWarning className="w-4 h-4" />
-                    Contestar
-                  </button>
-                </div>
-              )}
-
-              {isContesting && (
-                <p className="text-xs text-secondary mt-3 flex items-center gap-1.5">
-                  <Scale className="w-3 h-3" />
-                  Traga fatos e dados no chat para contestar a nota
-                </p>
-              )}
-
-              {isComplete && !isContesting && (
-                <p className="mt-3 text-xs text-accent flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3 h-3" />
-                  Nota aceita — pode avançar
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Navigation */}
-          <div className="flex justify-between">
-            <button
-              onClick={() => handleNavigate("prev")}
-              disabled={currentIndex === 0}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition disabled:opacity-30"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Anterior
-            </button>
-            <button
-              onClick={() => handleNavigate("next")}
-              disabled={currentIndex === questions.length - 1}
-              className="flex items-center gap-2 px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark transition disabled:opacity-30"
-            >
-              Próxima
-              <ChevronRight className="w-4 h-4" />
-            </button>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-primary h-2 rounded-full transition-all duration-300"
+              style={{ width: `${(filledCount / questions.length) * 100}%` }}
+            />
           </div>
         </div>
 
-        {/* Right: AI Chat */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-[calc(100vh-220px)] sticky top-24">
-          <div className="p-4 border-b border-gray-100">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Bot className="w-4 h-4 text-primary" />
+        {/* All questions grouped by category */}
+        <div className="space-y-8">
+          {Object.entries(questionsByCategory).map(([category, items]) => (
+            <div key={category}>
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-xs font-semibold px-3 py-1.5 bg-primary/10 text-primary rounded-full">
+                  {category}
+                </span>
+                <div className="flex-1 h-px bg-gray-200" />
               </div>
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900">
-                  Avaliador IA
-                </h3>
-                <p className="text-xs text-gray-400">
-                  Discute, avalia e dá a nota com base nos valores Seazone
-                </p>
-              </div>
-            </div>
-          </div>
 
-          {chatState === "waiting_answer" && (
-            <div className="flex-1 flex items-center justify-center p-8">
-              <div className="text-center">
-                <AlertCircle className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-                <p className="text-sm text-gray-400">
-                  Responda a pergunta ao lado para iniciar
-                </p>
-              </div>
-            </div>
-          )}
+              <div className="space-y-6">
+                {items.map(({ question, index }) => {
+                  const answer = evaluation.answers[index];
+                  if (!answer) return null;
+                  const currentGrade = answer.score !== null ? scoreToGrade[answer.score] : null;
+                  const isScoreC = answer.score === 3;
+                  const needsJustification = answer.score !== null && !isScoreC;
+                  const feedback = aiFeedback[question.id];
 
-          {chatState === "ready_to_send" && (
-            <div className="flex-1 flex items-center justify-center p-8">
-              <div className="text-center">
-                <Bot className="w-12 h-12 text-primary/20 mx-auto mb-3" />
-                <p className="text-sm text-gray-500 font-medium">
-                  Resposta preenchida
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Clique em &quot;Iniciar discussão com IA&quot;
-                </p>
-              </div>
-            </div>
-          )}
-
-          {(chatState === "discussing" || chatState === "scored" || chatState === "contesting") && (
-            <>
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {(answer.chatHistory || []).map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex gap-3 ${
-                      msg.role === "user" ? "flex-row-reverse" : ""
-                    }`}
-                  >
+                  return (
                     <div
-                      className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
-                        msg.role === "assistant"
-                          ? "bg-primary/10"
-                          : "bg-gray-100"
-                      }`}
+                      key={question.id}
+                      className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
                     >
-                      {msg.role === "assistant" ? (
-                        <Bot className="w-3.5 h-3.5 text-primary" />
-                      ) : (
-                        <User className="w-3.5 h-3.5 text-gray-500" />
-                      )}
-                    </div>
-                    <div
-                      className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-line ${
-                        msg.role === "assistant"
-                          ? "bg-gray-50 text-gray-800"
-                          : "bg-primary text-white"
-                      }`}
-                      dangerouslySetInnerHTML={{
-                        __html: formatChatContent(msg.content),
-                      }}
-                    />
-                  </div>
-                ))}
-
-                {isAiTyping && (
-                  <div className="flex gap-3">
-                    <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <Bot className="w-3.5 h-3.5 text-primary" />
-                    </div>
-                    <div className="bg-gray-50 px-4 py-3 rounded-2xl">
-                      <div className="flex gap-1">
-                        <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" />
-                        <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
-                        <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+                      {/* Question title and description */}
+                      <div className="mb-4">
+                        <h3 className="text-base font-semibold text-gray-900">
+                          {question.title}
+                        </h3>
+                        <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                          {question.description}
+                        </p>
                       </div>
+
+                      {/* Grade selector */}
+                      <div className="mb-3">
+                        <p className="text-xs text-gray-400 mb-2">
+                          C é o esperado para a maioria. Conceitos diferentes precisam de justificativa.
+                        </p>
+                        <div className="flex gap-2">
+                          {grades.map((grade) => {
+                            const score = gradeToScore[grade];
+                            const isSelected = currentGrade === grade;
+                            const scaleLevel = question.scale.find((s) => s.score === score);
+                            return (
+                              <button
+                                key={grade}
+                                onClick={() => handleSelectGrade(index, grade)}
+                                disabled={isConcluida}
+                                className={`flex-1 py-2.5 rounded-xl text-center transition border-2 ${
+                                  isSelected
+                                    ? gradeColors[grade] + " border-transparent shadow-md scale-105"
+                                    : gradeColorsOutline[grade] + " bg-white"
+                                } disabled:opacity-60 disabled:cursor-not-allowed`}
+                                title={scaleLevel?.description}
+                              >
+                                <span className="text-xl font-bold block">{grade}</span>
+                                <span className="text-[10px] block mt-0.5 opacity-80">
+                                  {gradeLabels[grade]}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Scale description for selected grade */}
+                      {currentGrade && (
+                        <div className="mb-3 p-2.5 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500">
+                            <span className="font-semibold">Conceito {currentGrade} — {question.scale.find((s) => s.score === answer.score)?.label}:</span>{" "}
+                            {question.scale.find((s) => s.score === answer.score)?.description}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Justification textarea (for grades != C) */}
+                      {needsJustification && (
+                        <div className="mt-3">
+                          <label className="text-sm font-medium text-gray-700 block mb-1.5">
+                            Justifique o conceito {currentGrade}
+                          </label>
+                          <p className="text-xs text-gray-400 mb-2">
+                            {(answer.score ?? 0) > 3
+                              ? "Conceitos acima de C exigem exemplos concretos que demonstrem desempenho acima do esperado."
+                              : "Conceitos abaixo de C exigem exemplos concretos do comportamento observado."}
+                          </p>
+                          <textarea
+                            value={answer.justification}
+                            onChange={(e) => handleJustificationChange(index, e.target.value)}
+                            rows={3}
+                            disabled={isConcluida}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:bg-gray-50 disabled:text-gray-500 resize-none"
+                            placeholder="Descreva situações concretas e recentes (últimos 6 meses)..."
+                          />
+                          {answer.justification.trim().length > 0 && answer.justification.trim().length < 100 && (
+                            <p className="text-xs text-red-500 mt-1">
+                              Justificativa deve ter pelo menos 100 caracteres.
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* AI feedback inline */}
+                      {feedback && (() => {
+                        const agrees = feedback.suggestedGrade === feedback.currentGrade;
+                        return (
+                          <div className={`mt-4 p-4 rounded-lg border ${
+                            agrees
+                              ? "bg-emerald-50 border-emerald-200"
+                              : "bg-amber-50 border-amber-200"
+                          }`}>
+                            <div className="flex items-start gap-2">
+                              <Bot className={`w-4 h-4 mt-0.5 shrink-0 ${agrees ? "text-emerald-600" : "text-amber-600"}`} />
+                              <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className={`text-xs font-semibold ${agrees ? "text-emerald-700" : "text-amber-700"}`}>
+                                    {agrees ? "IA concorda" : "IA questiona"}
+                                  </span>
+                                  {!agrees && (
+                                    <span className="text-xs px-2 py-0.5 bg-amber-200 text-amber-800 rounded-full font-medium">
+                                      Sugere: {feedback.suggestedGrade}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className={`text-sm leading-relaxed ${agrees ? "text-emerald-900" : "text-amber-900"}`}>
+                                  {feedback.reasoning}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
-                  </div>
-                )}
-
-                {isComplete && !isContesting && (
-                  <div className="flex justify-center">
-                    <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-accent bg-accent/10">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      Nota aceita — pode avançar
-                    </span>
-                  </div>
-                )}
-
-                <div ref={chatEndRef} />
+                  );
+                })}
               </div>
-
-              <div className="p-4 border-t border-gray-100 space-y-2">
-                {/* Botão para pedir nota */}
-                {canRequestScore && (
-                  <button
-                    onClick={handleRequestScore}
-                    disabled={isAiTyping}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-secondary text-white rounded-xl hover:bg-secondary/90 transition text-sm font-medium disabled:opacity-30"
-                  >
-                    <Star className="w-4 h-4" />
-                    Receber nota da IA
-                  </button>
-                )}
-
-                {/* Input de chat (discussão ou contestação) */}
-                {(!hasScore || isContesting) && (
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSendMessage();
-                        }
-                      }}
-                      placeholder={
-                        isContesting
-                          ? "Traga fatos e dados para contestar..."
-                          : "Responda à IA..."
-                      }
-                      className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                      disabled={isAiTyping}
-                    />
-                    <button
-                      onClick={handleSendMessage}
-                      disabled={!chatInput.trim() || isAiTyping}
-                      className="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-dark transition disabled:opacity-30"
-                    >
-                      <Send className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
+            </div>
+          ))}
         </div>
+
+        {/* Action buttons */}
+        {!isConcluida && (
+          <div className="mt-10 mb-8 space-y-4">
+            {/* Analyze button */}
+            {!hasAnalyzed && (
+              <button
+                onClick={handleAnalyze}
+                disabled={!allAnswersReady || isAnalyzing}
+                className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-primary text-white rounded-xl hover:bg-primary-dark transition text-base font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Analisando todas as respostas...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    Enviar para análise da IA
+                  </>
+                )}
+              </button>
+            )}
+
+            {!allAnswersReady && !hasAnalyzed && (
+              <p className="text-xs text-gray-400 text-center">
+                Preencha todas as {questions.length} perguntas (com justificativas para conceitos diferentes de C) para habilitar a análise.
+              </p>
+            )}
+
+            {/* Post-analysis */}
+            {hasAnalyzed && (
+              <div className="space-y-4">
+                {/* Summary message */}
+                {Object.keys(aiFeedback).length === 0 ? (
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
+                    <CheckCircle2 className="w-6 h-6 text-emerald-600 mx-auto mb-2" />
+                    <p className="text-sm font-medium text-emerald-800">A IA não encontrou problemas nas suas respostas.</p>
+                    <p className="text-xs text-emerald-600 mt-1">Pode confirmar e finalizar.</p>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-center">
+                    <Bot className="w-6 h-6 text-amber-600 mx-auto mb-2" />
+                    <p className="text-sm font-medium text-amber-800">
+                      A IA tem {Object.keys(aiFeedback).length} observação(ões). Revise acima e ajuste se necessário.
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => {
+                      setHasAnalyzed(false);
+                      setAiFeedback({});
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-4 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition text-base font-semibold"
+                  >
+                    <RefreshCw className="w-5 h-5" />
+                    Ajustar e reenviar
+                  </button>
+                  <button
+                    onClick={handleFinalize}
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-accent text-white rounded-xl hover:bg-accent/90 transition text-base font-semibold"
+                  >
+                    <CheckCircle2 className="w-5 h-5" />
+                    Confirmar e finalizar
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
-    </div>
     </AppShell>
   );
 }

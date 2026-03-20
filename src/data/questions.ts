@@ -3,650 +3,533 @@ import { Question } from "@/lib/types";
 export const defaultQuestions: Question[] = [
   // === SANGUE NO OLHO ===
   {
-    id: "v1_q1",
-    title: "Reação diante de obstáculos",
+    id: "c1_sangue",
+    title: "Sangue no Olho",
     category: "Sangue no Olho",
     description:
-      "Pense em uma situação recente em que essa pessoa enfrentou um problema difícil no trabalho. O que ela fez? Desistiu, pediu ajuda, ou foi atrás de resolver sozinha? Conte o que aconteceu.",
+      "Considerando o nível e o escopo atual da função, com que frequência essa pessoa demonstra Sangue no Olho ao enfrentar obstáculos e sustentar esforço até a conclusão dos desafios?",
     scale: [
       {
         score: 1,
         label: "Insuficiente",
-        description:
-          "Desiste diante do primeiro obstáculo. Não demonstra garra nem persistência para buscar soluções.",
-        examples: [
-          "Abandona tarefas quando encontra dificuldade",
-          "Transfere responsabilidade ao encontrar bloqueios",
-          "Não busca alternativas quando o caminho original falha",
-        ],
+        description: "Desiste diante do primeiro obstáculo. Não demonstra garra nem persistência.",
+        examples: ["Abandona tarefas com dificuldade", "Transfere responsabilidade", "Não busca alternativas"],
       },
       {
         score: 2,
         label: "Abaixo do esperado",
-        description:
-          "Tenta resolver obstáculos, mas desanima rápido. Precisa de suporte constante para manter o foco.",
-        examples: [
-          "Faz uma tentativa e já pede ajuda",
-          "Perde motivação com prazos apertados",
-          "Entrega parcial quando encontra dificuldade",
-        ],
+        description: "Tenta resolver, mas desanima rápido. Precisa de suporte constante.",
+        examples: ["Faz uma tentativa e já pede ajuda", "Perde motivação sob pressão", "Entrega parcial"],
       },
       {
         score: 3,
         label: "Dentro do esperado",
-        description:
-          "Enfrenta obstáculos com resiliência adequada. Busca soluções e pede ajuda quando necessário.",
-        examples: [
-          "Persiste até resolver o problema",
-          "Busca ajuda de forma estratégica quando trava",
-          "Mantém a qualidade da entrega mesmo sob pressão",
-        ],
+        description: "Enfrenta obstáculos com resiliência adequada. Busca soluções e pede ajuda quando necessário.",
+        examples: ["Persiste até resolver", "Busca ajuda estratégica", "Mantém qualidade sob pressão"],
       },
       {
         score: 4,
         label: "Acima do esperado",
-        description:
-          "Demonstra garra acima da média. Encontra caminhos alternativos e intensifica esforço diante de dificuldades.",
-        examples: [
-          "Propõe soluções criativas quando o caminho padrão falha",
-          "Trabalha além do esperado para cumprir compromissos",
-          "Motiva colegas a não desistirem em momentos difíceis",
-        ],
+        description: "Demonstra garra acima da média. Encontra caminhos alternativos e intensifica esforço.",
+        examples: ["Soluções criativas", "Trabalha além do esperado", "Motiva colegas"],
       },
       {
         score: 5,
         label: "Excepcional",
-        description:
-          "Referência em determinação. Transforma obstáculos em oportunidades e nunca entrega menos do que prometeu.",
-        examples: [
-          "Histórico consistente de entregas em cenários adversos",
-          "Inspira o time inteiro com sua postura diante de crises",
-          "Busca e resolve problemas que outros evitam",
-        ],
+        description: "Referência em determinação. Transforma obstáculos em oportunidades.",
+        examples: ["Entregas consistentes em cenários adversos", "Inspira o time", "Resolve problemas que outros evitam"],
       },
     ],
   },
+
+  // === ATITUDE DE DONO ===
   {
-    id: "v1_q2",
-    title: "Comprometimento com metas",
-    category: "Sangue no Olho",
+    id: "c2_atitude_dono",
+    title: "Atitude de Dono",
+    category: "Atitude de Dono",
     description:
-      "Quando uma meta fica difícil de bater, o que essa pessoa faz? Ela desanima e reduz o ritmo, continua no mesmo passo, ou intensifica o esforço e busca alternativas? Me dê um exemplo concreto.",
+      "Considerando o nível da função, com que frequência essa pessoa demonstra Atitude de Dono nas decisões e responsabilidades que lhe cabem?",
     scale: [
       {
         score: 1,
         label: "Insuficiente",
-        description:
-          "Não demonstra comprometimento com metas. Aceita o fracasso sem buscar alternativas.",
-        examples: [
-          "Não acompanha suas próprias metas",
-          "Não comunica quando está fora do track",
-          "Aceita não entregar sem propor alternativas",
-        ],
+        description: "Não assume responsabilidade. Espera que outros decidam e resolvam.",
+        examples: ["Evita tomar decisões", "Não se posiciona", "Transfere problemas"],
       },
       {
         score: 2,
         label: "Abaixo do esperado",
-        description:
-          "Se esforça minimamente, mas não intensifica quando as metas ficam difíceis.",
-        examples: [
-          "Mantém o mesmo ritmo mesmo quando está atrasado",
-          "Sinaliza risco mas não propõe ações",
-          "Entrega parcial e justifica com dificuldades externas",
-        ],
+        description: "Assume responsabilidade parcialmente. Precisa ser cobrado para agir.",
+        examples: ["Age quando lembrado", "Decisões superficiais", "Pouca iniciativa"],
       },
       {
         score: 3,
         label: "Dentro do esperado",
-        description:
-          "Ajusta seu esforço quando as metas ficam difíceis. Comunica riscos e busca soluções.",
-        examples: [
-          "Reorganiza prioridades para alcançar a meta",
-          "Comunica proativamente quando está apertado",
-          "Busca recursos adicionais quando necessário",
-        ],
+        description: "Assume suas responsabilidades e toma decisões adequadas ao seu nível.",
+        examples: ["Cuida do que é seu", "Decide com autonomia", "Comunica impactos"],
       },
       {
         score: 4,
         label: "Acima do esperado",
-        description:
-          "Intensifica significativamente o esforço diante de metas difíceis. Encontra maneiras criativas de alcançar resultados.",
-        examples: [
-          "Propõe planos de recuperação quando está fora do track",
-          "Mobiliza colegas para superar desafios coletivos",
-          "Supera metas mesmo em cenários adversos",
-        ],
+        description: "Vai além do escopo. Trata problemas da empresa como se fossem seus.",
+        examples: ["Resolve fora do escopo", "Antecipa consequências", "Propõe melhorias estruturais"],
       },
       {
         score: 5,
         label: "Excepcional",
-        description:
-          "Referência em comprometimento. Consistentemente supera metas e eleva o padrão de entrega do time.",
-        examples: [
-          "Histórico de superar metas em ciclos consecutivos",
-          "Redefine o que é possível para o time",
-          "É o exemplo que gestores usam para motivar outros",
-        ],
+        description: "Referência em ownership. Cuida da empresa como dono, influencia cultura.",
+        examples: ["Lidera mudanças organizacionais", "É exemplo para outros", "Impacto além da área"],
       },
     ],
   },
 
   // === FOCO EM FATOS E DADOS ===
   {
-    id: "v2_q1",
-    title: "Embasamento de decisões",
+    id: "c3_fatos_dados",
+    title: "Foco em Fatos e Dados",
     category: "Foco em Fatos e Dados",
     description:
-      "Quando essa pessoa propõe algo ou toma uma decisão, ela traz números e dados para justificar? Ou geralmente decide mais por opinião e intuição? Me dê um exemplo recente.",
+      "Considerando o escopo da função, com que frequência essa pessoa utiliza Foco em Fatos e Dados para fundamentar decisões e argumentos?",
     scale: [
       {
         score: 1,
         label: "Insuficiente",
-        description:
-          "Toma decisões por achismo. Não busca dados nem evidências antes de concluir algo.",
-        examples: [
-          "Propõe mudanças sem nenhum dado de suporte",
-          "Tira conclusões precipitadas sem investigar",
-          "Ignora dados disponíveis ao tomar decisões",
-        ],
+        description: "Decide por achismo. Não busca dados antes de concluir.",
+        examples: ["Propõe sem dados", "Conclusões precipitadas", "Ignora dados disponíveis"],
       },
       {
         score: 2,
         label: "Abaixo do esperado",
-        description:
-          "Às vezes traz dados, mas de forma superficial ou incompleta. Ainda se apoia muito em intuição.",
-        examples: [
-          "Usa dados parciais para sustentar conclusões",
-          "Cita números sem verificar a fonte",
-          "Mistura dados com opiniões sem distinguir",
-        ],
+        description: "Usa dados superficialmente. Ainda se apoia muito em intuição.",
+        examples: ["Dados parciais", "Não verifica fontes", "Mistura dados com opinião"],
       },
       {
         score: 3,
         label: "Dentro do esperado",
-        description:
-          "Embasa suas decisões com dados relevantes. Busca evidências antes de propor soluções.",
-        examples: [
-          "Traz métricas para sustentar propostas",
-          "Valida hipóteses com dados antes de agir",
-          "Documenta o racional por trás das decisões",
-        ],
+        description: "Embasa decisões com dados relevantes. Busca evidências antes de propor.",
+        examples: ["Traz métricas", "Valida hipóteses", "Documenta racional"],
       },
       {
         score: 4,
         label: "Acima do esperado",
-        description:
-          "Referência em decisões baseadas em dados. Busca múltiplas fontes e questiona a qualidade dos dados.",
-        examples: [
-          "Cruza dados de diferentes fontes para validar conclusões",
-          "Questiona dados apresentados por outros quando parecem inconsistentes",
-          "Cria dashboards ou relatórios para facilitar decisões do time",
-        ],
+        description: "Referência em decisões baseadas em dados. Cruza fontes e questiona qualidade.",
+        examples: ["Cruza múltiplas fontes", "Questiona inconsistências", "Cria dashboards"],
       },
       {
         score: 5,
         label: "Excepcional",
-        description:
-          "Transforma a cultura de dados da área. Cria processos e ferramentas que elevam o nível de decisão de todos.",
-        examples: [
-          "Implementou processos data-driven que viraram padrão",
-          "É consultado por outras áreas para análises críticas",
-          "Mudou uma decisão estratégica com análise de dados original",
-        ],
-      },
-    ],
-  },
-  {
-    id: "v2_q2",
-    title: "Abertura a evidências contrárias",
-    category: "Foco em Fatos e Dados",
-    description:
-      "Quando alguém discorda dessa pessoa e traz dados que mostram o contrário do que ela pensa, como ela reage? Fica na defensiva ou reconsidera? Me conte uma situação em que isso aconteceu.",
-    scale: [
-      {
-        score: 1,
-        label: "Insuficiente",
-        description:
-          "Ignora dados que contradizem sua opinião. Se fecha quando questionado com evidências.",
-        examples: [
-          "Reage defensivamente a questionamentos com dados",
-          "Mantém posição mesmo quando os dados mostram o contrário",
-          "Desqualifica dados que não concordam com sua visão",
-        ],
-      },
-      {
-        score: 2,
-        label: "Abaixo do esperado",
-        description:
-          "Aceita dados contrários com resistência. Demora para ajustar posição.",
-        examples: [
-          "Reconhece os dados mas adia a mudança",
-          "Aceita parcialmente quando confrontado",
-          "Busca exceções para invalidar dados contrários",
-        ],
-      },
-      {
-        score: 3,
-        label: "Dentro do esperado",
-        description:
-          "Aceita mudanças quando os dados sustentam. Reage de forma construtiva a questionamentos.",
-        examples: [
-          "Muda de opinião quando apresentam dados convincentes",
-          "Agradece questionamentos e reavalia",
-          "Não leva para o lado pessoal quando sua ideia é desafiada",
-        ],
-      },
-      {
-        score: 4,
-        label: "Acima do esperado",
-        description:
-          "Busca ativamente dados que desafiem sua própria visão. Valoriza quando é corrigido com evidências.",
-        examples: [
-          "Pede para o time trazer dados contrários antes de decidir",
-          "Já mudou de posição publicamente e agradeceu quem trouxe os dados",
-          "Testa suas hipóteses antes de defendê-las",
-        ],
-      },
-      {
-        score: 5,
-        label: "Excepcional",
-        description:
-          "Exemplo de humildade intelectual. Cria ambientes onde desafiar ideias com dados é celebrado.",
-        examples: [
-          "Implementou rituais de 'advogado do diabo' com dados",
-          "É reconhecido como alguém que valoriza a verdade acima do ego",
-          "Inspira outros a questionarem suas próprias certezas",
-        ],
+        description: "Transforma a cultura de dados da área. Cria processos data-driven.",
+        examples: ["Processos data-driven viraram padrão", "Consultado por outras áreas", "Mudou decisão estratégica com análise"],
       },
     ],
   },
 
   // === PRIORIZE E SIMPLIFIQUE ===
   {
-    id: "v3_q1",
-    title: "Capacidade de priorização",
+    id: "c4_priorize",
+    title: "Priorize e Simplifique",
     category: "Priorize e Simplifique",
     description:
-      "Quando essa pessoa tem várias coisas para fazer ao mesmo tempo, como ela se organiza? Ela consegue separar o que é mais importante do que pode esperar? Me dê um exemplo de como ela lidou com múltiplas demandas.",
+      "Considerando o nível de responsabilidade da função, com que frequência essa pessoa demonstra capacidade de Priorizar e Simplificar?",
     scale: [
       {
         score: 1,
         label: "Insuficiente",
-        description:
-          "Não prioriza. Tenta fazer tudo ao mesmo tempo ou faz o que é mais fácil primeiro.",
-        examples: [
-          "Gasta tempo em tarefas de baixo impacto",
-          "Não consegue dizer não para demandas irrelevantes",
-          "Entregas importantes atrasam por falta de foco",
-        ],
+        description: "Não prioriza. Faz tudo ao mesmo tempo ou foca no que é mais fácil.",
+        examples: ["Gasta tempo em baixo impacto", "Não diz não", "Entregas atrasam por falta de foco"],
       },
       {
         score: 2,
         label: "Abaixo do esperado",
-        description:
-          "Tenta priorizar mas se perde com frequência. Confunde urgência com importância.",
-        examples: [
-          "Responde a tudo como urgente",
-          "Muda de foco com cada nova demanda",
-          "Precisa de ajuda constante para definir prioridades",
-        ],
+        description: "Tenta priorizar mas se perde. Confunde urgência com importância.",
+        examples: ["Tudo é urgente", "Muda de foco a cada demanda", "Precisa de ajuda para priorizar"],
       },
       {
         score: 3,
         label: "Dentro do esperado",
-        description:
-          "Organiza seu trabalho de forma adequada. Sabe separar urgente de importante na maioria das vezes.",
-        examples: [
-          "Mantém lista de prioridades atualizada",
-          "Negocia prazos quando tem conflitos de demanda",
-          "Entrega o mais importante primeiro",
-        ],
+        description: "Organiza trabalho adequadamente. Separa urgente de importante.",
+        examples: ["Prioridades atualizadas", "Negocia prazos", "Entrega o importante primeiro"],
       },
       {
         score: 4,
         label: "Acima do esperado",
-        description:
-          "Excelente em priorização. Ajuda o time a focar no que realmente importa.",
-        examples: [
-          "Questiona demandas que parecem de baixo impacto",
-          "Propõe cortar escopo para entregar mais rápido o essencial",
-          "Ajuda colegas a reorganizarem suas prioridades",
-        ],
+        description: "Excelente em priorização. Ajuda o time a focar no que importa.",
+        examples: ["Questiona demandas de baixo impacto", "Corta escopo", "Ajuda colegas a priorizar"],
       },
       {
         score: 5,
         label: "Excepcional",
-        description:
-          "Referência em foco e priorização. Transforma a forma como a área decide o que fazer e o que não fazer.",
-        examples: [
-          "Criou frameworks de priorização usados pelo time",
-          "Consistentemente elimina trabalho desnecessário",
-          "É quem a liderança consulta para definir o que cortar",
-        ],
-      },
-    ],
-  },
-  {
-    id: "v3_q2",
-    title: "Simplificação de processos",
-    category: "Priorize e Simplifique",
-    description:
-      "Essa pessoa já simplificou algum processo ou removeu algo desnecessário? Ela tende a criar soluções simples e diretas, ou costuma complicar as coisas? Me conte um caso.",
-    scale: [
-      {
-        score: 1,
-        label: "Insuficiente",
-        description:
-          "Adiciona complexidade desnecessária. Seus processos e soluções são mais complicados do que precisam ser.",
-        examples: [
-          "Cria processos burocráticos onde não precisa",
-          "Soluções dele são difíceis de manter ou entender",
-          "Não questiona complexidade existente",
-        ],
-      },
-      {
-        score: 2,
-        label: "Abaixo do esperado",
-        description:
-          "Não adiciona complexidade mas também não simplifica. Aceita processos complicados sem questionar.",
-        examples: [
-          "Segue processos desnecessários sem propor mudanças",
-          "Suas soluções funcionam mas poderiam ser mais simples",
-          "Não identifica oportunidades de simplificação",
-        ],
-      },
-      {
-        score: 3,
-        label: "Dentro do esperado",
-        description:
-          "Busca simplicidade nas suas entregas. Questiona complexidade quando percebe.",
-        examples: [
-          "Propõe versões mais simples quando algo parece over-engineered",
-          "Remove etapas desnecessárias de processos",
-          "Entrega soluções funcionais sem excesso de abstração",
-        ],
-      },
-      {
-        score: 4,
-        label: "Acima do esperado",
-        description:
-          "Proativamente simplifica processos e soluções. Outros reconhecem sua capacidade de fazer mais com menos.",
-        examples: [
-          "Simplificou processos que economizaram horas do time",
-          "É conhecido por soluções elegantes e diretas",
-          "Questiona 'sempre fizemos assim' e propõe alternativas mais simples",
-        ],
-      },
-      {
-        score: 5,
-        label: "Excepcional",
-        description:
-          "Transforma a cultura de simplicidade. Elimina complexidade estrutural e eleva a eficiência da área.",
-        examples: [
-          "Eliminou processos inteiros que não geravam valor",
-          "Criou padrões de simplicidade adotados pela empresa",
-          "Reduziu significativamente custos/tempo com simplificações",
-        ],
+        description: "Referência em foco. Transforma como a área decide o que fazer.",
+        examples: ["Criou frameworks de priorização", "Elimina trabalho desnecessário", "Consultado para definir cortes"],
       },
     ],
   },
 
-  // === PROATIVIDADE ===
+  // === ESCOPO DA FUNÇÃO ===
   {
-    id: "v4_q1",
-    title: "Antecipação de problemas",
-    category: "Proatividade",
+    id: "c5_escopo",
+    title: "Escopo da Função",
+    category: "Escopo da Função",
     description:
-      "Essa pessoa costuma perceber problemas antes deles acontecerem, ou só reage quando já virou urgência? Me dê um exemplo em que ela identificou algo com antecedência e agiu sem ninguém pedir.",
+      "Considerando o nível da função, com que frequência essa pessoa atua de forma madura e adequada ao Escopo da Função?",
     scale: [
       {
         score: 1,
         label: "Insuficiente",
-        description:
-          "Puramente reativo. Só age quando o problema explode e alguém pede para resolver.",
-        examples: [
-          "Problemas previsíveis viram crise na mão dele",
-          "Espera ser cobrado para agir",
-          "Não monitora riscos da sua área",
-        ],
+        description: "Não cumpre as responsabilidades básicas do cargo.",
+        examples: ["Entregas abaixo do mínimo", "Não entende o escopo", "Precisa supervisão constante"],
       },
       {
         score: 2,
         label: "Abaixo do esperado",
-        description:
-          "Identifica problemas mas não age espontaneamente. Precisa de um empurrão para tomar iniciativa.",
-        examples: [
-          "Comenta sobre riscos mas não propõe ações",
-          "Age quando lembrado, não por iniciativa própria",
-          "Sabe que algo vai dar errado mas espera acontecer",
-        ],
+        description: "Cumpre parcialmente. Precisa de direcionamento frequente.",
+        examples: ["Entregas incompletas", "Escopo limitado", "Depende de ajuda"],
       },
       {
         score: 3,
         label: "Dentro do esperado",
-        description:
-          "Age proativamente na maioria das vezes. Identifica e resolve problemas antes que impactem resultados.",
-        examples: [
-          "Sinaliza riscos com antecedência e propõe soluções",
-          "Resolve problemas pequenos sem esperar ser pedido",
-          "Monitora indicadores da sua área regularmente",
-        ],
+        description: "Atua de forma madura e adequada ao nível da função.",
+        examples: ["Entregas completas", "Autonomia adequada", "Entende e cumpre o escopo"],
       },
       {
         score: 4,
         label: "Acima do esperado",
-        description:
-          "Alta proatividade. Antecipa problemas com frequência e propõe melhorias espontaneamente.",
-        examples: [
-          "Preveniu crises com alertas antecipados",
-          "Propõe melhorias regularmente, mesmo fora do seu escopo direto",
-          "É reconhecido como alguém que 'não deixa a bola cair'",
-        ],
+        description: "Vai além do escopo. Contribui acima do esperado para o nível.",
+        examples: ["Assume responsabilidades extras", "Entrega acima do nível", "Mentora colegas"],
       },
       {
         score: 5,
         label: "Excepcional",
-        description:
-          "Referência em proatividade. Antecipa problemas sistêmicos e cria processos preventivos para a área.",
-        examples: [
-          "Criou alertas/monitoramentos que previram problemas críticos",
-          "Sua proatividade evitou perdas significativas para a empresa",
-          "Inspira outros a serem mais proativos pelo exemplo",
-        ],
-      },
-    ],
-  },
-  {
-    id: "v4_q2",
-    title: "Proposição de melhorias",
-    category: "Proatividade",
-    description:
-      "Essa pessoa costuma sugerir melhorias por conta própria, ou só faz quando alguém pede? Na última vez que algo deu errado na área, qual foi a atitude dela — ficou quieta, ajudou a resolver, ou foi além e propôs como evitar no futuro?",
-    scale: [
-      {
-        score: 1,
-        label: "Insuficiente",
-        description:
-          "Nunca propõe melhorias. Quando algo dá errado, se omite ou espera que outros resolvam.",
-        examples: [
-          "Não contribui em retrospectivas ou post-mortems",
-          "Reclama de problemas mas não propõe soluções",
-          "Se posiciona como vítima quando algo dá errado",
-        ],
-      },
-      {
-        score: 2,
-        label: "Abaixo do esperado",
-        description:
-          "Propõe melhorias raramente e apenas quando perguntado. Em crises, faz o mínimo.",
-        examples: [
-          "Só sugere melhorias quando diretamente questionado",
-          "Em crises, faz sua parte mas não vai além",
-          "Ideias de melhoria são vagas e sem plano de ação",
-        ],
-      },
-      {
-        score: 3,
-        label: "Dentro do esperado",
-        description:
-          "Propõe melhorias com regularidade. Em situações adversas, contribui ativamente para a solução.",
-        examples: [
-          "Traz sugestões concretas em rituais do time",
-          "Quando algo dá errado, ajuda a resolver e propõe prevenção",
-          "Implementa melhorias no seu escopo de trabalho",
-        ],
-      },
-      {
-        score: 4,
-        label: "Acima do esperado",
-        description:
-          "Proativamente identifica oportunidades de melhoria e lidera implementação. É protagonista em momentos de crise.",
-        examples: [
-          "Lidera post-mortems e implementa ações corretivas",
-          "Propõe melhorias que impactam além da sua área",
-          "É o primeiro a se voluntariar quando algo dá errado",
-        ],
-      },
-      {
-        score: 5,
-        label: "Excepcional",
-        description:
-          "Transforma problemas em melhorias estruturais. Cria cultura de melhoria contínua na área.",
-        examples: [
-          "Implementou mudanças que eliminaram categorias inteiras de problemas",
-          "Criou rituais de melhoria contínua adotados pelo time",
-          "É reconhecido como agente de transformação na empresa",
-        ],
+        description: "Atua consistentemente no nível acima. Pronto para promoção.",
+        examples: ["Opera no nível acima", "Referência no cargo", "Impacto desproporcional ao nível"],
       },
     ],
   },
 
-  // === AI FIRST ===
+  // === ENTREGAS DE VALOR ===
   {
-    id: "v5_q1",
-    title: "Uso de IA no trabalho",
-    category: "AI First",
+    id: "c6_entregas",
+    title: "Entregas de Valor",
+    category: "Entregas de Valor",
     description:
-      "Essa pessoa usa inteligência artificial no dia a dia de trabalho? Quando recebe uma tarefa nova, ela pensa em usar IA antes de fazer manualmente? Me dê um exemplo de quando ela usou (ou não usou) IA para resolver algo.",
+      "Considerando o impacto esperado para o nível da função, com que frequência essa pessoa realiza Entregas de Valor relevantes?",
     scale: [
       {
         score: 1,
         label: "Insuficiente",
-        description:
-          "Não usa IA. Não demonstra interesse nem abertura para incorporar IA no trabalho.",
-        examples: [
-          "Nunca experimentou ferramentas de IA",
-          "Resiste ativamente a sugestões de usar IA",
-          "Faz tudo manualmente mesmo quando IA poderia acelerar",
-        ],
+        description: "Entregas não geram valor. Trabalho sem impacto perceptível.",
+        examples: ["Tarefas sem resultado", "Retrabalho frequente", "Não entrega no prazo"],
       },
       {
         score: 2,
         label: "Abaixo do esperado",
-        description:
-          "Usa IA esporadicamente, sem consistência. Não é seu reflexo natural ao iniciar tarefas.",
-        examples: [
-          "Já experimentou IA mas não incorporou na rotina",
-          "Usa IA só quando alguém sugere",
-          "Usa IA para coisas básicas mas não explora o potencial",
-        ],
+        description: "Entregas de valor baixo ou inconsistente.",
+        examples: ["Entrega mas sem impacto", "Qualidade irregular", "Valor abaixo do esperado"],
       },
       {
         score: 3,
         label: "Dentro do esperado",
-        description:
-          "Usa IA regularmente como ferramenta de trabalho. Considera IA como opção ao iniciar tarefas.",
-        examples: [
-          "Usa IA para acelerar tarefas recorrentes",
-          "Sabe quando IA ajuda e quando não ajuda",
-          "Mantém prompts e workflows de IA organizados",
-        ],
+        description: "Realiza entregas de valor relevantes e consistentes para o nível.",
+        examples: ["Entregas no prazo", "Impacto adequado", "Qualidade consistente"],
       },
       {
         score: 4,
         label: "Acima do esperado",
-        description:
-          "IA é parte integral do seu fluxo de trabalho. Encontra aplicações criativas e compartilha com o time.",
-        examples: [
-          "Criou workflows com IA que aceleraram entregas significativamente",
-          "Compartilha prompts e técnicas com colegas",
-          "Usa IA para resolver problemas que antes eram manuais",
-        ],
+        description: "Entregas de alto valor. Resultados acima do esperado para o nível.",
+        examples: ["Impacto mensurável", "Qualidade superior", "Entregas que surpreendem"],
       },
       {
         score: 5,
         label: "Excepcional",
-        description:
-          "Referência em AI First. Transforma processos com IA e eleva o nível de adoção de toda a área.",
-        examples: [
-          "Implementou soluções com IA que viraram padrão na empresa",
-          "Treina e capacita colegas no uso de IA",
-          "Reduziu significativamente tempo/custo de processos com IA",
-        ],
+        description: "Entregas transformadoras. Gera valor desproporcional ao nível.",
+        examples: ["Resultados que mudam a área", "Entregas reconhecidas pela empresa", "Impacto estratégico"],
       },
     ],
   },
+
+  // === CONSISTÊNCIA ===
   {
-    id: "v5_q2",
-    title: "Disseminação de IA no time",
-    category: "AI First",
+    id: "c7_consistencia",
+    title: "Consistência",
+    category: "Consistência",
     description:
-      "Essa pessoa compartilha o que aprende sobre IA com o time, ou guarda só para ela? Ela ajuda colegas a usar IA? Me conte se ela já ensinou algo ou organizou algum momento para compartilhar conhecimento de IA.",
+      "Considerando o nível da função, com que frequência essa pessoa mantém Consistência no desempenho ao longo do tempo?",
     scale: [
       {
         score: 1,
         label: "Insuficiente",
-        description:
-          "Não compartilha nem contribui para adoção de IA. Pode até desencorajar outros.",
-        examples: [
-          "Não participa de discussões sobre IA",
-          "Não compartilha nenhum aprendizado",
-          "Expressa ceticismo sem fundamento sobre IA",
-        ],
+        description: "Desempenho muito irregular. Altos e baixos constantes.",
+        examples: ["Semanas boas e ruins", "Imprevisível", "Não se pode contar com entregas"],
       },
       {
         score: 2,
         label: "Abaixo do esperado",
-        description:
-          "Compartilha pouco. Usa IA individualmente mas não contribui para o time.",
-        examples: [
-          "Guarda prompts e técnicas para si",
-          "Comenta sobre IA superficialmente mas não ensina",
-          "Não participa ativamente de iniciativas de IA do time",
-        ],
+        description: "Oscila no desempenho. Bons momentos mas não sustenta.",
+        examples: ["Começa bem e perde ritmo", "Inconsistente sob pressão", "Precisa de cobrança"],
       },
       {
         score: 3,
         label: "Dentro do esperado",
-        description:
-          "Compartilha aprendizados quando solicitado. Participa de iniciativas de IA do time.",
-        examples: [
-          "Compartilha prompts úteis quando perguntam",
-          "Participa de rituais de IA do time",
-          "Mostra interesse em aprender com colegas que usam IA",
-        ],
+        description: "Mantém desempenho consistente. Confiável nas entregas.",
+        examples: ["Ritmo estável", "Entregas previsíveis", "Mantém qualidade"],
       },
       {
         score: 4,
         label: "Acima do esperado",
-        description:
-          "Proativamente compartilha e ensina. Ajuda colegas a adotarem IA no dia a dia.",
-        examples: [
-          "Organiza sessões informais de compartilhamento de IA",
-          "Ajuda colegas a configurar e usar ferramentas de IA",
-          "Documenta e compartilha workflows de IA do time",
-        ],
+        description: "Altamente consistente. Referência de confiabilidade no time.",
+        examples: ["Nunca deixa a bola cair", "Consistente mesmo em crise", "Time conta com ele"],
       },
       {
         score: 5,
         label: "Excepcional",
-        description:
-          "Líder de adoção de IA. Cria cultura AI First e capacita toda a área.",
-        examples: [
-          "Criou programa de capacitação em IA para o time",
-          "É referência na empresa para adoção de IA",
-          "Lidera transformação de processos com IA além da sua área",
-        ],
+        description: "Consistência inabalável. Eleva o padrão de todo o time.",
+        examples: ["Histórico impecável", "Define o padrão de entrega", "Consistência inspira outros"],
+      },
+    ],
+  },
+
+  // === PENSAR FORA DA CAIXA ===
+  {
+    id: "c8_fora_caixa",
+    title: "Pensar Fora da Caixa",
+    category: "Pensar Fora da Caixa",
+    description:
+      "Considerando o escopo da função, com que frequência essa pessoa demonstra capacidade de Pensar Fora da Caixa ao lidar com desafios?",
+    scale: [
+      {
+        score: 1,
+        label: "Insuficiente",
+        description: "Preso a padrões. Não propõe nada diferente.",
+        examples: ["Sempre faz igual", "Não questiona processos", "Resiste a mudanças"],
+      },
+      {
+        score: 2,
+        label: "Abaixo do esperado",
+        description: "Raramente propõe algo novo. Segue o padrão na maioria das vezes.",
+        examples: ["Ocasionalmente sugere", "Ideias superficiais", "Não sai da zona de conforto"],
+      },
+      {
+        score: 3,
+        label: "Dentro do esperado",
+        description: "Propõe soluções criativas quando necessário. Questiona o status quo.",
+        examples: ["Traz ideias em reuniões", "Sugere alternativas", "Aberto a experimentar"],
+      },
+      {
+        score: 4,
+        label: "Acima do esperado",
+        description: "Criativo consistentemente. Traz soluções inovadoras que geram resultado.",
+        examples: ["Soluções que ninguém pensou", "Inova no dia a dia", "Implementa ideias criativas"],
+      },
+      {
+        score: 5,
+        label: "Excepcional",
+        description: "Referência em inovação. Transforma a forma como a área trabalha.",
+        examples: ["Criou processos inovadores", "Reconhecido pela criatividade", "Inspira inovação no time"],
+      },
+    ],
+  },
+
+  // === ORGANIZAÇÃO ===
+  {
+    id: "c9_organizacao",
+    title: "Organização",
+    category: "Organização",
+    description:
+      "Considerando o nível de responsabilidade da função, com que frequência essa pessoa demonstra Organização na gestão das suas atividades?",
+    scale: [
+      {
+        score: 1,
+        label: "Insuficiente",
+        description: "Desorganizado. Perde prazos e informações com frequência.",
+        examples: ["Esquece compromissos", "Informações perdidas", "Caos no trabalho"],
+      },
+      {
+        score: 2,
+        label: "Abaixo do esperado",
+        description: "Organização irregular. Funciona em momentos calmos mas perde controle sob demanda.",
+        examples: ["Se perde com múltiplas tarefas", "Desorganiza sob pressão", "Precisa de lembretes"],
+      },
+      {
+        score: 3,
+        label: "Dentro do esperado",
+        description: "Organizado e confiável. Gerencia atividades de forma adequada.",
+        examples: ["Prazos cumpridos", "Informações acessíveis", "Rotina organizada"],
+      },
+      {
+        score: 4,
+        label: "Acima do esperado",
+        description: "Muito organizado. Ajuda a organizar o time e processos.",
+        examples: ["Cria sistemas de organização", "Ajuda colegas", "Processos documentados"],
+      },
+      {
+        score: 5,
+        label: "Excepcional",
+        description: "Referência em organização. Cria estruturas que beneficiam toda a área.",
+        examples: ["Processos que viraram padrão", "Organização que escalou", "Reduz caos do time"],
+      },
+    ],
+  },
+
+  // === ADAPTABILIDADE ===
+  {
+    id: "c10_adaptabilidade",
+    title: "Adaptabilidade",
+    category: "Adaptabilidade",
+    description:
+      "Considerando o contexto e o nível da função, com que frequência essa pessoa demonstra Adaptabilidade diante de mudanças?",
+    scale: [
+      {
+        score: 1,
+        label: "Insuficiente",
+        description: "Resiste a mudanças. Fica paralisado ou reclama quando algo muda.",
+        examples: ["Reclama de mudanças", "Não se adapta", "Quer sempre fazer do mesmo jeito"],
+      },
+      {
+        score: 2,
+        label: "Abaixo do esperado",
+        description: "Aceita mudanças com resistência. Demora para se adaptar.",
+        examples: ["Adaptação lenta", "Precisa de empurrão", "Fica desconfortável"],
+      },
+      {
+        score: 3,
+        label: "Dentro do esperado",
+        description: "Se adapta bem a mudanças. Reage de forma construtiva.",
+        examples: ["Aceita mudanças", "Ajusta rápido", "Mantém produtividade"],
+      },
+      {
+        score: 4,
+        label: "Acima do esperado",
+        description: "Abraça mudanças. Ajuda outros a se adaptarem.",
+        examples: ["Primeiro a se adaptar", "Ajuda o time", "Vê mudança como oportunidade"],
+      },
+      {
+        score: 5,
+        label: "Excepcional",
+        description: "Líder em adaptação. Antecipa mudanças e prepara o time.",
+        examples: ["Antecipa tendências", "Prepara o time para mudanças", "Transforma crises em oportunidades"],
+      },
+    ],
+  },
+
+  // === COMUNICAÇÃO ===
+  {
+    id: "c11_comunicacao",
+    title: "Comunicação",
+    category: "Comunicação",
+    description:
+      "Considerando o nível da função, com que frequência essa pessoa demonstra Comunicação clara e adequada ao seu contexto de atuação?",
+    scale: [
+      {
+        score: 1,
+        label: "Insuficiente",
+        description: "Comunicação confusa ou ausente. Informações não chegam.",
+        examples: ["Mensagens confusas", "Não comunica", "Mal-entendidos frequentes"],
+      },
+      {
+        score: 2,
+        label: "Abaixo do esperado",
+        description: "Comunica mas de forma incompleta ou no momento errado.",
+        examples: ["Informação parcial", "Timing ruim", "Falta clareza"],
+      },
+      {
+        score: 3,
+        label: "Dentro do esperado",
+        description: "Comunicação clara e adequada. Mantém stakeholders informados.",
+        examples: ["Mensagens claras", "Comunica no momento certo", "Alinha expectativas"],
+      },
+      {
+        score: 4,
+        label: "Acima do esperado",
+        description: "Excelente comunicador. Adapta a mensagem ao público e influencia positivamente.",
+        examples: ["Comunica com impacto", "Adapta ao público", "Facilita entendimento"],
+      },
+      {
+        score: 5,
+        label: "Excepcional",
+        description: "Referência em comunicação. Transforma a forma como a área se comunica.",
+        examples: ["Cria padrões de comunicação", "Influencia pela comunicação", "Resolvi conflitos pela comunicação"],
+      },
+    ],
+  },
+
+  // === COLABORAÇÃO ===
+  {
+    id: "c12_colaboracao",
+    title: "Colaboração",
+    category: "Colaboração",
+    description:
+      "Considerando o escopo e a senioridade da função, com que frequência essa pessoa demonstra Colaboração positiva?",
+    scale: [
+      {
+        score: 1,
+        label: "Insuficiente",
+        description: "Não colabora. Trabalha isolado e dificulta o trabalho dos outros.",
+        examples: ["Não ajuda colegas", "Guarda informação", "Gera conflitos"],
+      },
+      {
+        score: 2,
+        label: "Abaixo do esperado",
+        description: "Colabora quando pedido, mas não toma iniciativa.",
+        examples: ["Ajuda quando cobrado", "Colaboração mínima", "Prioriza só o seu"],
+      },
+      {
+        score: 3,
+        label: "Dentro do esperado",
+        description: "Colabora positivamente. Trabalha bem em equipe e contribui.",
+        examples: ["Ajuda espontaneamente", "Trabalha bem em grupo", "Compartilha conhecimento"],
+      },
+      {
+        score: 4,
+        label: "Acima do esperado",
+        description: "Colaboração ativa. Busca sinergia e potencializa o trabalho dos outros.",
+        examples: ["Conecta áreas", "Multiplica resultados", "Referência de trabalho em equipe"],
+      },
+      {
+        score: 5,
+        label: "Excepcional",
+        description: "Líder em colaboração. Cria cultura colaborativa na área.",
+        examples: ["Cria rituais de colaboração", "Elimina silos", "Transforma a dinâmica do time"],
+      },
+    ],
+  },
+
+  // === IA (NOVO) ===
+  {
+    id: "c13_ia",
+    title: "Uso de IA",
+    category: "IA",
+    description:
+      "Considerando o contexto e nível da função, com que frequência essa pessoa utiliza Inteligência Artificial para potencializar seu trabalho e resultados?",
+    scale: [
+      {
+        score: 1,
+        label: "Insuficiente",
+        description: "Não usa IA. Não demonstra interesse nem abertura para incorporar.",
+        examples: ["Nunca experimentou IA", "Resiste a sugestões", "Tudo manual"],
+      },
+      {
+        score: 2,
+        label: "Abaixo do esperado",
+        description: "Usa IA esporadicamente. Não faz parte da rotina.",
+        examples: ["Já experimentou mas não incorporou", "Usa só quando sugerem", "Uso básico"],
+      },
+      {
+        score: 3,
+        label: "Dentro do esperado",
+        description: "Usa IA regularmente como ferramenta de trabalho.",
+        examples: ["Usa para acelerar tarefas", "Sabe quando IA ajuda", "Faz parte do fluxo"],
+      },
+      {
+        score: 4,
+        label: "Acima do esperado",
+        description: "IA é parte integral do trabalho. Encontra aplicações criativas e compartilha.",
+        examples: ["Workflows com IA", "Compartilha técnicas", "Resolve problemas novos com IA"],
+      },
+      {
+        score: 5,
+        label: "Excepcional",
+        description: "Referência em IA. Transforma processos e eleva adoção de toda a área.",
+        examples: ["Soluções com IA viraram padrão", "Treina colegas", "Reduziu tempo/custo com IA"],
       },
     ],
   },

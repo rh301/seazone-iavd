@@ -44,6 +44,11 @@ export default function DetalhesAvaliacao({
         router.push("/");
         return;
       }
+      // Histórico só mostra avaliações do gestor
+      if (eval_.evaluationType !== "gestor") {
+        router.push("/historico");
+        return;
+      }
       setEvaluation(eval_);
       setQuestions(getQuestions());
     }

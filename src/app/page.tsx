@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   ClipboardCheck,
   TrendingUp,
@@ -16,10 +16,12 @@ import { fetchEvaluations, fetchPeerAssignments } from "@/lib/db";
 import { useAuth } from "@/lib/auth-context";
 import { getRequiredEvaluations, canManageQuestions } from "@/lib/permissions";
 import { Evaluation, EvaluationType, evaluationTypeLabels, evaluationTypeColors } from "@/lib/types";
+import { useRouter } from "next/navigation";
 import AppShell from "@/components/app-shell";
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [totalTasks, setTotalTasks] = useState(0);
   const [tasksByType, setTasksByType] = useState<Record<EvaluationType, { total: number; completed: number }>>({
@@ -53,7 +55,7 @@ export default function Dashboard() {
             e.evaluatorId === user!.id &&
             e.employeeId === task.evaluateeId &&
             e.evaluationType === task.evaluationType &&
-            e.status === "concluida"
+            (e.status === "concluida" || e.status === "calibrada")
         );
         if (done) byType[task.evaluationType].completed++;
       }
@@ -62,6 +64,12 @@ export default function Dashboard() {
     }
     load();
   }, [user]);
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/login");
+    }
+  }, [isLoading, user, router]);
 
   if (!user) return null;
 
@@ -72,7 +80,7 @@ export default function Dashboard() {
   const progress = totalTasks > 0 ? (totalCompleted / totalTasks) * 100 : 0;
 
   // Average score
-  const myEvals = evaluations.filter((e) => e.evaluatorId === user.id && e.status === "concluida");
+  const myEvals = evaluations.filter((e) => e.evaluatorId === user.id && (e.status === "concluida" || e.status === "calibrada"));
   let totalScore = 0;
   let scoreCount = 0;
   myEvals.forEach((e) => {

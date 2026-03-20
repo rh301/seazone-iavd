@@ -9,9 +9,13 @@ import {
   removeEvaluation,
   removeEvaluationsForEmployee,
   modifyPeerAssignment,
+  addPeerAssignment,
+  removePeerAssignment,
   regenerateAndSavePeers,
+  fetchManagerOverrides,
+  saveManagerOverrides,
 } from "@/lib/db";
-import { getAllUsers, findUser, getPeerPool, getManager } from "@/lib/org-tree";
+import { getAllUsers, findUser, getPeerPool, getManager, setManagerOverrides, getManagerOverrides } from "@/lib/org-tree";
 import { getPeersToEvaluate, type PeerAssignment } from "@/lib/peer-assignment";
 import { Evaluation, evaluationTypeLabels, EvaluationType } from "@/lib/types";
 import AppShell from "@/components/app-shell";
@@ -25,7 +29,10 @@ import {
   ChevronDown,
   AlertTriangle,
   CheckCircle2,
+  Plus,
+  X,
 } from "lucide-react";
+
 
 export default function GestaoPage() {
   const { user } = useAuth();
@@ -37,6 +44,9 @@ export default function GestaoPage() {
     evaluatorId: string;
     oldEvaluateeId: string;
   } | null>(null);
+  const [addingPeerFor, setAddingPeerFor] = useState<string | null>(null);
+  const [changingManagerFor, setChangingManagerFor] = useState<string | null>(null);
+  const [mgrOverrides, setMgrOverrides] = useState<Record<string, string>>({});
 
   useEffect(() => {
     async function load() {
@@ -44,6 +54,9 @@ export default function GestaoPage() {
       setEvaluations(evals);
       const peers = await fetchPeerAssignments();
       setPeerAssignments(peers);
+      const overrides = await fetchManagerOverrides();
+      setMgrOverrides(overrides);
+      setManagerOverrides(overrides);
     }
     load();
   }, []);
@@ -98,6 +111,35 @@ export default function GestaoPage() {
     await modifyPeerAssignment(evaluatorId, oldEvaluateeId, newEvaluateeId);
     setChangingPeer(null);
     await refresh();
+  }
+
+  async function handleAddPeer(evaluatorId: string, evaluateeId: string) {
+    await addPeerAssignment(evaluatorId, evaluateeId);
+    setAddingPeerFor(null);
+    await refresh();
+  }
+
+  async function handleRemovePeer(evaluatorId: string, evaluateeId: string) {
+    if (!confirm("Remover este par?")) return;
+    await removePeerAssignment(evaluatorId, evaluateeId);
+    await refresh();
+  }
+
+  async function handleChangeManager(employeeId: string, newManagerId: string) {
+    const updated = { ...mgrOverrides, [employeeId]: newManagerId };
+    await saveManagerOverrides(updated);
+    setMgrOverrides(updated);
+    setManagerOverrides(updated);
+    setChangingManagerFor(null);
+  }
+
+  async function handleRestoreManager(employeeId: string) {
+    if (!confirm("Restaurar gestor original do organograma?")) return;
+    const updated = { ...mgrOverrides };
+    delete updated[employeeId];
+    await saveManagerOverrides(updated);
+    setMgrOverrides(updated);
+    setManagerOverrides(updated);
   }
 
   async function handleRegeneratePeers() {
@@ -196,9 +238,47 @@ export default function GestaoPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-xs text-gray-400 mb-1">Gestor</p>
-                        <p className="text-sm font-medium text-gray-900">
-                          {managerUser?.name || "Sem gestor"}
-                        </p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-medium text-gray-900">
+                            {managerUser?.name || "Sem gestor"}
+                          </p>
+                          {mgrOverrides[person.id] && (
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">override</span>
+                          )}
+                          <button
+                            onClick={() => setChangingManagerFor(changingManagerFor === person.id ? null : person.id)}
+                            className="text-xs text-primary hover:text-primary-dark font-medium"
+                          >
+                            Trocar
+                          </button>
+                          {mgrOverrides[person.id] && (
+                            <button
+                              onClick={() => handleRestoreManager(person.id)}
+                              className="text-xs text-gray-400 hover:text-gray-600"
+                            >
+                              Restaurar
+                            </button>
+                          )}
+                        </div>
+                        {changingManagerFor === person.id && (
+                          <div className="mt-2">
+                            <select
+                              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2"
+                              defaultValue=""
+                              onChange={(e) => {
+                                if (e.target.value) handleChangeManager(person.id, e.target.value);
+                              }}
+                            >
+                              <option value="">Selecionar novo gestor...</option>
+                              {allPeople
+                                .filter((p) => p.id !== person.id)
+                                .sort((a, b) => a.name.localeCompare(b.name))
+                                .map((p) => (
+                                  <option key={p.id} value={p.id}>{p.name} — {p.cargo} ({p.sector})</option>
+                                ))}
+                            </select>
+                          </div>
+                        )}
                       </div>
                       <div>
                         <p className="text-xs text-gray-400 mb-1">Setor</p>
@@ -208,13 +288,53 @@ export default function GestaoPage() {
 
                     {/* Pares */}
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                        <Users className="w-4 h-4 text-emerald-600" />
-                        Pares atribuídos ({personPeers.length})
+                      <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center justify-between">
+                        <span className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-emerald-600" />
+                          Pares atribuídos ({personPeers.length})
+                        </span>
+                        <button
+                          onClick={() => setAddingPeerFor(addingPeerFor === person.id ? null : person.id)}
+                          className="flex items-center gap-1 text-xs text-accent hover:text-accent/80 font-medium"
+                        >
+                          <Plus className="w-3 h-3" />
+                          Adicionar par
+                        </button>
                       </h4>
-                      {personPeers.length === 0 ? (
+
+                      {/* Add peer selector */}
+                      {addingPeerFor === person.id && (
+                        <div className="bg-accent/5 border border-accent/20 rounded-lg p-3 mb-2">
+                          <p className="text-xs text-gray-600 mb-2">Selecione quem será par de {person.name.split(" ")[0]}:</p>
+                          <select
+                            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2"
+                            defaultValue=""
+                            onChange={(e) => {
+                              if (e.target.value) handleAddPeer(person.id, e.target.value);
+                            }}
+                          >
+                            <option value="">Selecionar pessoa...</option>
+                            {allPeople
+                              .filter((p) => p.id !== person.id && !personPeers.includes(p.id))
+                              .sort((a, b) => a.name.localeCompare(b.name))
+                              .map((p) => (
+                                <option key={p.id} value={p.id}>{p.name} — {p.cargo} ({p.sector})</option>
+                              ))}
+                          </select>
+                          <button
+                            onClick={() => setAddingPeerFor(null)}
+                            className="mt-2 text-xs text-gray-400 hover:text-gray-600"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      )}
+
+                      {personPeers.length === 0 && addingPeerFor !== person.id && (
                         <p className="text-xs text-gray-400 italic">Sem pares atribuídos</p>
-                      ) : (
+                      )}
+
+                      {personPeers.length > 0 && (
                         <div className="space-y-2">
                           {personPeers.map((peerId) => {
                             const peer = findUser(peerId);
@@ -224,7 +344,7 @@ export default function GestaoPage() {
                               <div key={peerId} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
                                 <div>
                                   <p className="text-sm font-medium text-gray-900">{peer?.name || peerId}</p>
-                                  <p className="text-xs text-gray-500">{peer?.sector}</p>
+                                  <p className="text-xs text-gray-500">{peer?.cargo} · {peer?.sector}</p>
                                 </div>
                                 {isChanging ? (
                                   <div className="flex items-center gap-2">
@@ -236,10 +356,11 @@ export default function GestaoPage() {
                                       }}
                                     >
                                       <option value="">Selecionar novo par...</option>
-                                      {peerPool
+                                      {allPeople
                                         .filter((p) => p.id !== person.id && !personPeers.includes(p.id))
+                                        .sort((a, b) => a.name.localeCompare(b.name))
                                         .map((p) => (
-                                          <option key={p.id} value={p.id}>{p.name} ({p.sector})</option>
+                                          <option key={p.id} value={p.id}>{p.name} — {p.cargo} ({p.sector})</option>
                                         ))}
                                     </select>
                                     <button
@@ -250,12 +371,21 @@ export default function GestaoPage() {
                                     </button>
                                   </div>
                                 ) : (
-                                  <button
-                                    onClick={() => setChangingPeer({ evaluatorId: person.id, oldEvaluateeId: peerId })}
-                                    className="text-xs text-primary hover:text-primary-dark font-medium"
-                                  >
-                                    Trocar
-                                  </button>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() => setChangingPeer({ evaluatorId: person.id, oldEvaluateeId: peerId })}
+                                      className="text-xs text-primary hover:text-primary-dark font-medium"
+                                    >
+                                      Trocar
+                                    </button>
+                                    <button
+                                      onClick={() => handleRemovePeer(person.id, peerId)}
+                                      className="p-1 text-gray-400 hover:text-danger transition"
+                                      title="Remover par"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
                                 )}
                               </div>
                             );
