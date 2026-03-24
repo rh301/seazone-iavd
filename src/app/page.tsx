@@ -12,7 +12,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { getQuestions } from "@/lib/store";
-import { fetchEvaluations, fetchPeerAssignments } from "@/lib/db";
+import { fetchEvaluationsByEvaluator, fetchPeerAssignments } from "@/lib/db";
 import { useAuth } from "@/lib/auth-context";
 import { getRequiredEvaluations, canManageQuestions } from "@/lib/permissions";
 import { Evaluation, EvaluationType, evaluationTypeLabels, evaluationTypeColors } from "@/lib/types";
@@ -34,7 +34,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) return;
     async function load() {
-      const evals = await fetchEvaluations();
+      const evals = await fetchEvaluationsByEvaluator(user!.id);
       setEvaluations(evals);
 
       const assignments = await fetchPeerAssignments();

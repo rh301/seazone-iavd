@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { acquireSlot, releaseSlot } from "@/lib/rate-limiter";
 
 interface ScaleLevel {
   score: number;
@@ -159,6 +160,11 @@ export async function POST(req: NextRequest) {
     return fallbackResponse(body);
   }
 
+  const acquired = await acquireSlot();
+  if (!acquired) {
+    return fallbackResponse(body);
+  }
+
   try {
     const { systemPrompt, messages } = buildMessages(body);
 
@@ -190,6 +196,8 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Chat Diretoria API error:", error);
     return fallbackResponse(body);
+  } finally {
+    releaseSlot();
   }
 }
 

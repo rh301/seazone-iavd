@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { acquireSlot, releaseSlot } from "@/lib/rate-limiter";
 
 interface HelpRequest {
   message: string;
@@ -47,6 +48,11 @@ export async function POST(req: NextRequest) {
     return fallbackResponse(body);
   }
 
+  const acquired = await acquireSlot();
+  if (!acquired) {
+    return fallbackResponse(body); // Graceful fallback instead of error
+  }
+
   try {
     const messages = body.chatHistory.map((m) => ({
       role: m.role,
@@ -77,6 +83,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ content });
   } catch {
     return fallbackResponse(body);
+  } finally {
+    releaseSlot();
   }
 }
 

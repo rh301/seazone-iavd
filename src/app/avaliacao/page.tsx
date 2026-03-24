@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { getRequiredEvaluations, type EvaluationTask } from "@/lib/permissions";
 import { getQuestions, createEmptyAnswers } from "@/lib/store";
-import { fetchEvaluations, fetchPeerAssignments, upsertEvaluation } from "@/lib/db";
+import { fetchEvaluationsByEvaluator, fetchPeerAssignments, upsertEvaluation } from "@/lib/db";
 import {
   Search,
   ArrowRight,
@@ -48,7 +48,7 @@ export default function AvaliacaoPage() {
   useEffect(() => {
     if (!user) return;
     async function load() {
-      const evals = await fetchEvaluations();
+      const evals = await fetchEvaluationsByEvaluator(user!.id);
       setEvaluations(evals);
       const assignments = await fetchPeerAssignments();
       setTasks(getRequiredEvaluations(user!.id, assignments));
@@ -110,7 +110,7 @@ export default function AvaliacaoPage() {
       status: "em_andamento",
       answers: createEmptyAnswers(questions),
     });
-    const freshEvals = await fetchEvaluations();
+    const freshEvals = await fetchEvaluationsByEvaluator(user!.id);
     setEvaluations(freshEvals);
     router.push(`/avaliacao/${evalId}`);
   }

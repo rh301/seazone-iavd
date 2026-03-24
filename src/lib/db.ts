@@ -2,8 +2,25 @@ import { supabase } from "./supabase";
 import { Evaluation, DirectorInsight, ChatMessage, EvaluationType } from "./types";
 import { generatePeerAssignments, type PeerAssignment } from "./peer-assignment";
 
+// ── Helper to map DB rows to Evaluation objects ──
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapRow(row: any): Evaluation {
+  return {
+    id: row.id,
+    employeeId: row.employee_id,
+    evaluatorId: row.evaluator_id,
+    evaluationType: row.evaluation_type as EvaluationType,
+    status: row.status,
+    date: row.date,
+    answers: row.answers || [],
+    calibration: row.calibration || undefined,
+  };
+}
+
 // ── Evaluations ──
 
+/** Fetch ALL evaluations — use only in admin/RH pages (calibração, resultados, gestão) */
 export async function fetchEvaluations(): Promise<Evaluation[]> {
   const { data, error } = await supabase
     .from("evaluations")
@@ -15,16 +32,78 @@ export async function fetchEvaluations(): Promise<Evaluation[]> {
     return [];
   }
 
-  return (data || []).map((row) => ({
-    id: row.id,
-    employeeId: row.employee_id,
-    evaluatorId: row.evaluator_id,
-    evaluationType: row.evaluation_type as EvaluationType,
-    status: row.status,
-    date: row.date,
-    answers: row.answers || [],
-    calibration: row.calibration || undefined,
-  }));
+  return (data || []).map(mapRow);
+}
+
+/** Fetch evaluations where user is the evaluator (for dashboard, avaliação page) */
+export async function fetchEvaluationsByEvaluator(evaluatorId: string): Promise<Evaluation[]> {
+  const { data, error } = await supabase
+    .from("evaluations")
+    .select("*")
+    .eq("evaluator_id", evaluatorId)
+    .order("date", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching evaluations by evaluator:", error);
+    return [];
+  }
+
+  return (data || []).map(mapRow);
+}
+
+/** Fetch evaluations where user is being evaluated (for minhas-notas) */
+export async function fetchEvaluationsByEmployee(employeeId: string, type?: EvaluationType): Promise<Evaluation[]> {
+  let query = supabase
+    .from("evaluations")
+    .select("*")
+    .eq("employee_id", employeeId);
+
+  if (type) query = query.eq("evaluation_type", type);
+
+  const { data, error } = await query.order("date", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching evaluations by employee:", error);
+    return [];
+  }
+
+  return (data || []).map(mapRow);
+}
+
+/** Fetch evaluations for a specific evaluator+employee pair */
+export async function fetchEvaluationsByPair(evaluatorId: string, employeeId: string): Promise<Evaluation[]> {
+  const { data, error } = await supabase
+    .from("evaluations")
+    .select("*")
+    .eq("evaluator_id", evaluatorId)
+    .eq("employee_id", employeeId)
+    .order("date", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching evaluations by pair:", error);
+    return [];
+  }
+
+  return (data || []).map(mapRow);
+}
+
+/** Fetch evaluations filtered by type and status (for historico, calibração filtered views) */
+export async function fetchEvaluationsByType(type: EvaluationType, status?: string): Promise<Evaluation[]> {
+  let query = supabase
+    .from("evaluations")
+    .select("*")
+    .eq("evaluation_type", type);
+
+  if (status) query = query.eq("status", status);
+
+  const { data, error } = await query.order("date", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching evaluations by type:", error);
+    return [];
+  }
+
+  return (data || []).map(mapRow);
 }
 
 export async function fetchEvaluation(id: string): Promise<Evaluation | null> {

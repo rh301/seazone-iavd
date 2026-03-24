@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { getQuestions } from "@/lib/store";
-import { fetchEvaluations, fetchNotesReleased } from "@/lib/db";
+import { fetchEvaluationsByEmployee, fetchNotesReleased } from "@/lib/db";
 import { findUser } from "@/lib/org-tree";
 import { toGrade, avgToGrade } from "@/lib/utils";
 import { historyRecords, currentCycleRecords, allPeriods, cicloAnterior } from "@/data/history";
@@ -44,11 +44,8 @@ export default function MinhasNotasPage() {
   useEffect(() => {
     if (!user) return;
     async function load() {
-      const allEvals = await fetchEvaluations();
-      // Only gestor evaluations (the official score that gets calibrated)
-      const myEvals = allEvals.filter(
-        (e) => e.employeeId === user!.id && e.evaluationType === "gestor" && e.status !== "em_andamento"
-      );
+      const gestorEvals = await fetchEvaluationsByEmployee(user!.id, "gestor");
+      const myEvals = gestorEvals.filter((e) => e.status !== "em_andamento");
       setEvaluations(myEvals);
       setQuestions(getQuestions());
       const rel = await fetchNotesReleased();

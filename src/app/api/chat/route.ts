@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { EvaluationType } from "@/lib/types";
+import { acquireSlot, releaseSlot } from "@/lib/rate-limiter";
 
 interface ScaleLevel {
   score: number;
@@ -515,6 +516,44 @@ ${question.scale.map((s) => `  Nota ${s.score} (${s.label}): ${s.description}\n 
   return { systemPrompt, messages };
 }
 
+// ── RESPONSE CACHE (in-memory, short-lived) ──
+
+const responseCache = new Map<string, { content: string; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+function getCacheKey(body: ChatRequest): string | null {
+  // Only cache holistic mode (same input = same output)
+  if (body.mode !== "holistic") return null;
+  const key = JSON.stringify({
+    mode: body.mode,
+    employeeName: body.employeeName,
+    evaluationType: body.evaluationType,
+    allAnswers: body.allAnswers?.map((a) => ({ id: a.questionId, score: a.score, j: a.justification })),
+  });
+  return key;
+}
+
+function getFromCache(key: string): string | null {
+  const entry = responseCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL) {
+    responseCache.delete(key);
+    return null;
+  }
+  return entry.content;
+}
+
+function setCache(key: string, content: string) {
+  responseCache.set(key, { content, timestamp: Date.now() });
+  // Evict old entries if cache grows too large
+  if (responseCache.size > 500) {
+    const now = Date.now();
+    for (const [k, v] of responseCache) {
+      if (now - v.timestamp > CACHE_TTL) responseCache.delete(k);
+    }
+  }
+}
+
 // ── API HANDLER ──
 
 export async function POST(req: NextRequest) {
@@ -525,9 +564,28 @@ export async function POST(req: NextRequest) {
     return fallbackResponse(body);
   }
 
+  // Check cache first
+  const cacheKey = getCacheKey(body);
+  if (cacheKey) {
+    const cached = getFromCache(cacheKey);
+    if (cached) {
+      return NextResponse.json({ content: cached });
+    }
+  }
+
+  // Acquire rate-limit slot
+  const acquired = await acquireSlot();
+  if (!acquired) {
+    return NextResponse.json(
+      { content: "O sistema está com muitos acessos no momento. Aguarde alguns segundos e tente novamente." },
+      { status: 429 }
+    );
+  }
+
   try {
     const { systemPrompt, messages } = buildMessages(body);
 
+    // Use streaming to avoid serverless function timeout
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -538,6 +596,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: body.mode === "holistic" ? 2000 : 600,
+        stream: true,
         system: systemPrompt,
         messages,
       }),
@@ -545,16 +604,96 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       console.error("Anthropic API error:", response.status);
+      releaseSlot();
+
+      // Rate limited by Anthropic — tell user to wait
+      if (response.status === 429) {
+        return NextResponse.json(
+          { content: "A IA está temporariamente sobrecarregada. Aguarde 10 segundos e tente novamente." },
+          { status: 429 }
+        );
+      }
+
       return fallbackResponse(body);
     }
 
-    const data = await response.json();
-    const content =
-      data.content?.[0]?.text || "Desculpe, não consegui gerar uma resposta.";
+    // Stream the response back to the client
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        const reader = response.body!.getReader();
+        const decoder = new TextDecoder();
+        let fullContent = "";
 
-    return NextResponse.json({ content });
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split("\n");
+
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const jsonStr = line.slice(6).trim();
+                if (jsonStr === "[DONE]") continue;
+
+                try {
+                  const event = JSON.parse(jsonStr);
+
+                  if (event.type === "content_block_delta" && event.delta?.text) {
+                    fullContent += event.delta.text;
+                    // Send SSE chunk to client
+                    controller.enqueue(
+                      encoder.encode(`data: ${JSON.stringify({ delta: event.delta.text })}\n\n`)
+                    );
+                  }
+
+                  if (event.type === "message_stop") {
+                    // Cache the complete response if applicable
+                    if (cacheKey && fullContent) {
+                      setCache(cacheKey, fullContent);
+                    }
+                    controller.enqueue(
+                      encoder.encode(`data: ${JSON.stringify({ done: true, content: fullContent })}\n\n`)
+                    );
+                  }
+                } catch {
+                  // Skip unparseable lines
+                }
+              }
+            }
+          }
+
+          // If stream ended without message_stop, send final content
+          if (fullContent && !fullContent.endsWith("[DONE]")) {
+            if (cacheKey) setCache(cacheKey, fullContent);
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ done: true, content: fullContent })}\n\n`)
+            );
+          }
+        } catch (err) {
+          console.error("Stream processing error:", err);
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ error: true, content: fullContent || "Erro ao processar resposta da IA." })}\n\n`)
+          );
+        } finally {
+          releaseSlot();
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
   } catch (error) {
     console.error("Chat API error:", error);
+    releaseSlot();
     return fallbackResponse(body);
   }
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Evaluation, evaluationTypeLabels, EvaluationType } from "@/lib/types";
 import { getQuestions } from "@/lib/store";
-import { fetchEvaluations } from "@/lib/db";
+import { fetchEvaluationsByType } from "@/lib/db";
 import { useAuth } from "@/lib/auth-context";
 import { canViewEvaluation } from "@/lib/permissions";
 import { findUser, getAllSubordinates } from "@/lib/org-tree";
@@ -37,7 +37,7 @@ export default function Historico() {
 
   useEffect(() => {
     async function load() {
-      const evals = await fetchEvaluations();
+      const evals = await fetchEvaluationsByType("gestor");
       setEvaluations(evals);
     }
     load();

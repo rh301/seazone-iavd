@@ -79,7 +79,7 @@ export default function AvaliacaoPage({
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       upsertEvaluation(updated);
-    }, 800);
+    }, 2500);
   }, []);
 
   // Cleanup timer on unmount
@@ -210,12 +210,53 @@ export default function AvaliacaoPage({
         }),
       });
 
-      const data = await res.json();
+      // Handle both streaming (SSE) and non-streaming (JSON) responses
+      let fullContent = "";
+      const contentType = res.headers.get("content-type") || "";
+
+      if (contentType.includes("text/event-stream")) {
+        // Read SSE stream and collect full content
+        const reader = res.body!.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split("\n");
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const event = JSON.parse(line.slice(6));
+                if (event.done && event.content) {
+                  fullContent = event.content;
+                } else if (event.delta) {
+                  fullContent += event.delta;
+                } else if (event.error && event.content) {
+                  fullContent = event.content;
+                }
+              } catch { /* skip unparseable */ }
+            }
+          }
+        }
+      } else {
+        // Non-streaming JSON response (fallback or cached)
+        const data = await res.json();
+        fullContent = data.content;
+      }
+
+      // Handle rate limiting
+      if (res.status === 429) {
+        alert("O sistema está com muitos acessos. Aguarde alguns segundos e tente novamente.");
+        return;
+      }
 
       // Parse response — expect JSON with feedback array
       let feedbackItems: AIFeedbackItem[] = [];
       try {
-        let content = data.content;
+        let content = fullContent;
         // Strip markdown code fences if present
         if (typeof content === "string") {
           content = content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
@@ -223,10 +264,10 @@ export default function AvaliacaoPage({
         const parsed = typeof content === "string" ? JSON.parse(content) : content;
         feedbackItems = parsed.feedback || [];
       } catch {
-        console.error("Failed to parse AI feedback as JSON:", data.content);
+        console.error("Failed to parse AI feedback as JSON:", fullContent);
         // Try regex extraction as last resort
         try {
-          const jsonMatch = data.content.match(/\{[\s\S]*"feedback"[\s\S]*\}/);
+          const jsonMatch = fullContent.match(/\{[\s\S]*"feedback"[\s\S]*\}/);
           if (jsonMatch) {
             feedbackItems = JSON.parse(jsonMatch[0]).feedback || [];
           }
