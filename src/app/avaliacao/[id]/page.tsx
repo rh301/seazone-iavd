@@ -104,8 +104,31 @@ export default function AvaliacaoPage({
         router.push("/");
         return;
       }
+      const currentQuestions = getQuestions();
+
+      // Sync answers with current questions (handles added/removed questions)
+      const syncedAnswers = currentQuestions.map((q) => {
+        const existing = eval_.answers.find((a) => a.questionId === q.id);
+        if (existing) return existing;
+        return {
+          questionId: q.id,
+          score: null,
+          justification: "",
+          chatHistory: [],
+          aiValidated: false,
+          contestation: undefined,
+          aiReasoning: undefined,
+        } as Answer;
+      });
+
+      if (syncedAnswers.length !== eval_.answers.length) {
+        eval_.answers = syncedAnswers;
+        // Persist the synced answers
+        upsertEvaluation(eval_);
+      }
+
       setEvaluation(eval_);
-      setQuestions(getQuestions());
+      setQuestions(currentQuestions);
     }
     load();
   }, [id, router, currentUser]);
