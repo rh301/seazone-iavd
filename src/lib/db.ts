@@ -271,6 +271,37 @@ export async function saveManagerOverrides(overrides: Record<string, string>): P
   if (error) console.error("Error saving manager overrides:", error);
 }
 
+// ── Results Access Control ──
+// Format: Record<userId, string[]> — userId can see these people IDs
+// If userId is in the map, they have access to /resultados and see only the listed people
+// C-Level and RH always have full access (not stored here)
+
+export interface ResultsAccessConfig {
+  accessList: Record<string, string[]>; // userId -> array of visible people IDs
+}
+
+export async function fetchResultsAccess(): Promise<ResultsAccessConfig> {
+  const { data, error } = await supabase
+    .from("app_settings")
+    .select("value")
+    .eq("key", "results_access")
+    .single();
+
+  if (error || !data) return { accessList: {} };
+  try {
+    return JSON.parse(data.value);
+  } catch {
+    return { accessList: {} };
+  }
+}
+
+export async function saveResultsAccess(config: ResultsAccessConfig): Promise<void> {
+  const { error } = await supabase
+    .from("app_settings")
+    .upsert({ key: "results_access", value: JSON.stringify(config), updated_at: new Date().toISOString() });
+  if (error) console.error("Error saving results access:", error);
+}
+
 // ── Calibration Schedule ──
 
 export interface CalibrationAreaProgress {

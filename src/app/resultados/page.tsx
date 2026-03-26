@@ -8,7 +8,7 @@ import {
   evaluationTypeColors,
 } from "@/lib/types";
 import { getQuestions } from "@/lib/store";
-import { fetchEvaluations } from "@/lib/db";
+import { fetchEvaluations, fetchResultsAccess } from "@/lib/db";
 import { useAuth } from "@/lib/auth-context";
 import { isRH, getVisibleUsers } from "@/lib/permissions";
 import { findUser, getAllUsers } from "@/lib/org-tree";
@@ -63,35 +63,57 @@ export default function Resultados() {
   const [sectorFilter, setSectorFilter] = useState("todas");
   const [statusFilter, setStatusFilter] = useState("todas");
   const [expandedPerson, setExpandedPerson] = useState<string | null>(null);
+  const [resultsAccess, setResultsAccess] = useState<Record<string, string[]>>({});
+  const [accessLoaded, setAccessLoaded] = useState(false);
 
   useEffect(() => {
     async function load() {
-      const evals = await fetchEvaluations();
+      const [evals, access] = await Promise.all([
+        fetchEvaluations(),
+        fetchResultsAccess(),
+      ]);
       setEvaluations(evals);
+      setResultsAccess(access.accessList);
+      setAccessLoaded(true);
     }
     load();
   }, []);
 
-  if (!user) return null;
+  if (!user || !accessLoaded) return null;
 
   const isAdmin = isRH(user) || user.role === "c_level";
-  const isLeader = isAdmin || user.role === "diretor" || user.role === "coordenador";
 
-  if (!isLeader) {
+  // Check access: admin always, others need to be in accessList OR be a leader with subordinates
+  const hasCustomAccess = user.id in resultsAccess;
+  const isOrgLeader = user.role === "diretor" || user.role === "coordenador";
+  const hasAccess = isAdmin || hasCustomAccess || isOrgLeader;
+
+  if (!hasAccess) {
     return (
       <AppShell>
         <div className="text-center py-16">
           <BarChart3 className="w-12 h-12 text-gray-200 mx-auto mb-3" />
           <h2 className="text-lg font-semibold text-gray-900">Sem permissão</h2>
-          <p className="text-gray-500 mt-1">Esta página é restrita para lideranças.</p>
+          <p className="text-gray-500 mt-1">Você não tem acesso a esta página.</p>
         </div>
       </AppShell>
     );
   }
 
   const questions = getQuestions();
-  // RH/C-Level see everyone, others see only their subordinates
-  const allPeople = isAdmin ? getAllUsers() : getVisibleUsers(user);
+
+  // Determine visible people
+  let allPeople: ReturnType<typeof getAllUsers>;
+  if (isAdmin) {
+    allPeople = getAllUsers();
+  } else if (hasCustomAccess) {
+    // Custom access: only see the specific people configured by RH
+    const allowedIds = new Set(resultsAccess[user.id]);
+    allPeople = getAllUsers().filter((u) => allowedIds.has(u.id));
+  } else {
+    // Org leader: see subordinates
+    allPeople = getVisibleUsers(user);
+  }
   const completed = evaluations.filter(
     (e) => e.status === "concluida" || e.status === "calibrada"
   );

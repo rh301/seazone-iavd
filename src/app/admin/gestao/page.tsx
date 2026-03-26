@@ -16,6 +16,8 @@ import {
   saveManagerOverrides,
   fetchNotesReleased,
   updateNotesReleased,
+  fetchResultsAccess,
+  saveResultsAccess,
 } from "@/lib/db";
 import { getAllUsers, findUser, getPeerPool, getManager, setManagerOverrides, getManagerOverrides } from "@/lib/org-tree";
 import { getPeersToEvaluate, type PeerAssignment } from "@/lib/peer-assignment";
@@ -33,6 +35,8 @@ import {
   CheckCircle2,
   Plus,
   X,
+  Eye,
+  BarChart3,
 } from "lucide-react";
 
 
@@ -50,6 +54,11 @@ export default function GestaoPage() {
   const [changingManagerFor, setChangingManagerFor] = useState<string | null>(null);
   const [mgrOverrides, setMgrOverrides] = useState<Record<string, string>>({});
   const [notesReleased, setNotesReleased] = useState(false);
+  const [activeTab, setActiveTab] = useState<"pessoas" | "acesso">("pessoas");
+  const [resultsAccess, setResultsAccess] = useState<Record<string, string[]>>({});
+  const [accessSearch, setAccessSearch] = useState("");
+  const [addingAccessFor, setAddingAccessFor] = useState<string | null>(null);
+  const [addPersonSearch, setAddPersonSearch] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -62,6 +71,8 @@ export default function GestaoPage() {
       setManagerOverrides(overrides);
       const released = await fetchNotesReleased();
       setNotesReleased(released);
+      const access = await fetchResultsAccess();
+      setResultsAccess(access.accessList);
     }
     load();
   }, []);
@@ -164,6 +175,38 @@ export default function GestaoPage() {
     setNotesReleased(newState);
   }
 
+  async function handleAddAccessUser(userId: string) {
+    const updated = { ...resultsAccess, [userId]: resultsAccess[userId] || [] };
+    setResultsAccess(updated);
+    await saveResultsAccess({ accessList: updated });
+    setAccessSearch("");
+  }
+
+  async function handleRemoveAccessUser(userId: string) {
+    if (!confirm("Remover acesso de resultados desta pessoa?")) return;
+    const updated = { ...resultsAccess };
+    delete updated[userId];
+    setResultsAccess(updated);
+    await saveResultsAccess({ accessList: updated });
+  }
+
+  async function handleAddVisiblePerson(accessUserId: string, personId: string) {
+    const current = resultsAccess[accessUserId] || [];
+    if (current.includes(personId)) return;
+    const updated = { ...resultsAccess, [accessUserId]: [...current, personId] };
+    setResultsAccess(updated);
+    await saveResultsAccess({ accessList: updated });
+    setAddPersonSearch("");
+    setAddingAccessFor(null);
+  }
+
+  async function handleRemoveVisiblePerson(accessUserId: string, personId: string) {
+    const current = resultsAccess[accessUserId] || [];
+    const updated = { ...resultsAccess, [accessUserId]: current.filter((id) => id !== personId) };
+    setResultsAccess(updated);
+    await saveResultsAccess({ accessList: updated });
+  }
+
   return (
     <AppShell>
       <div>
@@ -198,6 +241,182 @@ export default function GestaoPage() {
           </div>
         </div>
 
+        {/* Tabs */}
+        <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-xl w-fit">
+          <button
+            onClick={() => setActiveTab("pessoas")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === "pessoas" ? "bg-white text-primary shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            <Users className="w-4 h-4 inline mr-1.5" />
+            Pessoas e Pares
+          </button>
+          <button
+            onClick={() => setActiveTab("acesso")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === "acesso" ? "bg-white text-primary shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            <Eye className="w-4 h-4 inline mr-1.5" />
+            Acesso a Resultados
+          </button>
+        </div>
+
+        {/* Tab: Acesso a Resultados */}
+        {activeTab === "acesso" && (
+          <div>
+            <p className="text-sm text-gray-500 mb-4">
+              Configure quem pode acessar a aba Resultados e quais pessoas cada um pode ver.
+              C-Level e RH sempre têm acesso total.
+            </p>
+
+            {/* Add user with access */}
+            <div className="relative mb-6">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={accessSearch}
+                onChange={(e) => setAccessSearch(e.target.value)}
+                placeholder="Buscar pessoa para dar acesso a Resultados..."
+                className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              />
+              {accessSearch.length >= 2 && (
+                <div className="absolute z-10 top-full mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                  {allPeople
+                    .filter((p) => {
+                      const q = accessSearch.toLowerCase();
+                      return (p.name.toLowerCase().includes(q) || p.sector.toLowerCase().includes(q)) && !(p.id in resultsAccess);
+                    })
+                    .slice(0, 10)
+                    .map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => handleAddAccessUser(p.id)}
+                        className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center gap-2 text-sm"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-primary" />
+                        <span className="font-medium">{p.name}</span>
+                        <span className="text-gray-400 text-xs">{p.cargo} · {p.sector}</span>
+                      </button>
+                    ))}
+                </div>
+              )}
+            </div>
+
+            {/* List of people with access */}
+            {Object.keys(resultsAccess).length === 0 && (
+              <div className="text-center py-12 text-gray-400">
+                <BarChart3 className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                <p className="text-sm">Nenhum acesso customizado configurado.</p>
+                <p className="text-xs mt-1">Diretores e coordenadores já veem seus liderados por padrão.</p>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {Object.entries(resultsAccess).map(([userId, visibleIds]) => {
+                const person = findUser(userId);
+                if (!person) return null;
+
+                return (
+                  <div key={userId} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {person.photoUrl ? (
+                          <img src={person.photoUrl} alt={person.name} className="w-9 h-9 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-xs">
+                            {person.name.split(" ").map((n) => n[0]).slice(0, 2).join("")}
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-semibold text-sm text-gray-900">{person.name}</p>
+                          <p className="text-xs text-gray-500">{person.cargo} · {person.sector}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400">Vê {visibleIds.length} pessoa(s)</span>
+                        <button
+                          onClick={() => handleRemoveAccessUser(userId)}
+                          className="text-red-400 hover:text-red-600 p-1"
+                          title="Remover acesso"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Visible people */}
+                    <div className="border-t border-gray-50 px-4 py-3 bg-gray-50/50">
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {visibleIds.map((pid) => {
+                          const p = findUser(pid);
+                          if (!p) return null;
+                          return (
+                            <span key={pid} className="inline-flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2.5 py-1 text-xs">
+                              {p.name}
+                              <button onClick={() => handleRemoveVisiblePerson(userId, pid)} className="text-gray-400 hover:text-red-500">
+                                <X className="w-3 h-3" />
+                              </button>
+                            </span>
+                          );
+                        })}
+                        {visibleIds.length === 0 && (
+                          <span className="text-xs text-gray-400 italic">Nenhuma pessoa adicionada</span>
+                        )}
+                      </div>
+                      {addingAccessFor === userId ? (
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={addPersonSearch}
+                            onChange={(e) => setAddPersonSearch(e.target.value)}
+                            placeholder="Buscar pessoa para adicionar..."
+                            autoFocus
+                            className="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary/30"
+                          />
+                          {addPersonSearch.length >= 2 && (
+                            <div className="absolute z-10 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-36 overflow-y-auto">
+                              {allPeople
+                                .filter((p) => {
+                                  const q = addPersonSearch.toLowerCase();
+                                  return (p.name.toLowerCase().includes(q) || p.sector.toLowerCase().includes(q)) && !visibleIds.includes(p.id);
+                                })
+                                .slice(0, 8)
+                                .map((p) => (
+                                  <button
+                                    key={p.id}
+                                    onClick={() => handleAddVisiblePerson(userId, p.id)}
+                                    className="w-full text-left px-3 py-1.5 hover:bg-gray-50 text-xs"
+                                  >
+                                    <span className="font-medium">{p.name}</span>
+                                    <span className="text-gray-400 ml-1">{p.sector}</span>
+                                  </button>
+                                ))}
+                            </div>
+                          )}
+                          <button
+                            onClick={() => { setAddingAccessFor(null); setAddPersonSearch(""); }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setAddingAccessFor(userId)}
+                          className="flex items-center gap-1 text-xs text-primary hover:text-primary-dark transition"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          Adicionar pessoa
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Pessoas e Pares */}
+        {activeTab === "pessoas" && <>
         {/* Search */}
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -481,6 +700,7 @@ export default function GestaoPage() {
             );
           })}
         </div>
+        </>}
       </div>
     </AppShell>
   );
