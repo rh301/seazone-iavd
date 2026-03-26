@@ -4,7 +4,7 @@ import { Fragment, useEffect, useState } from "react";
 import {
   Evaluation,
   EvaluationType,
-  evaluationTypeLabels,
+  evaluationTypeResultLabels,
   evaluationTypeColors,
 } from "@/lib/types";
 import { getQuestions } from "@/lib/store";
@@ -415,7 +415,7 @@ export default function Resultados() {
                     <span
                       className={`text-xs font-medium px-2.5 py-1 rounded-full w-36 text-center ${evaluationTypeColors[type]}`}
                     >
-                      {evaluationTypeLabels[type]}
+                      {evaluationTypeResultLabels[type]}
                     </span>
                     <div className="flex-1 bg-gray-100 rounded-full h-2.5">
                       <div
@@ -591,7 +591,7 @@ export default function Resultados() {
                                     {avg !== undefined ? avgToGrade(avg) : "—"}
                                   </p>
                                   <p className="text-[10px] text-gray-400">
-                                    {evaluationTypeLabels[type].split(" ")[0]}
+                                    {evaluationTypeResultLabels[type]}
                                   </p>
                                 </div>
                               );
@@ -644,7 +644,7 @@ export default function Resultados() {
                                   <span
                                     className={`px-2 py-0.5 rounded-full ${evaluationTypeColors[type]}`}
                                   >
-                                    {evaluationTypeLabels[type].split(" ")[0]}
+                                    {evaluationTypeResultLabels[type]}
                                   </span>
                                 </th>
                               ))}

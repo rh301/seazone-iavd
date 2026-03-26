@@ -59,6 +59,14 @@ export const evaluationTypeLabels: Record<EvaluationType, string> = {
   liderado: "Avaliar meu Gestor",
 };
 
+/** Labels do ponto de vista de quem recebe a avaliação (para resultados/histórico) */
+export const evaluationTypeResultLabels: Record<EvaluationType, string> = {
+  auto: "Autoavaliação",
+  gestor: "Gestor",
+  par: "Par",
+  liderado: "Liderado",
+};
+
 export const evaluationTypeColors: Record<EvaluationType, string> = {
   auto: "bg-blue-100 text-blue-700",
   gestor: "bg-amber-100 text-amber-700",
