@@ -357,13 +357,14 @@ export default function CalibracaoPage() {
                   {/* Expanded detail */}
                   {isExpanded && (
                     <div className="border-t border-gray-100 p-5 space-y-6">
-                      {/* Medals */}
+                      {/* Medals — collapsible */}
                       {personMedals.length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <details className="group">
+                          <summary className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2 cursor-pointer list-none">
                             <Award className="w-4 h-4 text-secondary" />
                             Medalhas ({personMedals.length})
-                          </h4>
+                            <ChevronRight className="w-3.5 h-3.5 text-gray-400 transition group-open:rotate-90" />
+                          </summary>
                           <div className="space-y-2">
                             {personMedals.map((medal, idx) => (
                               <div key={idx} className="bg-secondary/5 border border-secondary/10 rounded-lg p-3">
@@ -375,7 +376,7 @@ export default function CalibracaoPage() {
                               </div>
                             ))}
                           </div>
-                        </div>
+                        </details>
                       )}
 
                       {completedEvals.length === 0 && (

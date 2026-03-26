@@ -49,6 +49,7 @@ interface ChatRequest {
   evaluateeSector?: string;
   evaluateeCargo?: string;
   allAnswers?: HolisticAnswer[];
+  employeeMedals?: string[];
 }
 
 // ── CALIBRATION RULES (shared across all types) ──
@@ -469,6 +470,11 @@ TODAS AS RESPOSTAS (${body.allAnswers.length} perguntas):
 - Média: ${avg.toFixed(1)}
 - Respostas diferentes de C: ${nonC} de ${scores.length}
 - Distribuição: ${[5, 4, 3, 2, 1].map((s) => `${gradeMap[s]}=${scores.filter((v) => v === s).length}`).join(", ")}`;
+
+    if (body.employeeMedals && body.employeeMedals.length > 0) {
+      holisticContext += `\n\nMEDALHAS DE HONRA RECEBIDAS (${body.employeeMedals.length}):\n${body.employeeMedals.map((m, i) => `  ${i + 1}. ${m}`).join("\n")}`;
+      holisticContext += `\n\nUse as medalhas como EVIDÊNCIA ADICIONAL ao avaliar consistência. Se as medalhas corroboram os conceitos dados, mencione isso. Se contradizem (ex: medalha de "Sangue no olho" mas conceito E nesse critério), questione.`;
+    }
 
     const messages: { role: "user" | "assistant"; content: string }[] = [
       { role: "user", content: holisticContext },

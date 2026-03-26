@@ -1,4 +1,6 @@
-// Auto-generated from medals CSV — DO NOT EDIT
+// Auto-generated from Google Sheets — DO NOT EDIT MANUALLY
+// Last sync: 2026-03-26T20:15:55.787Z
+// Source: https://docs.google.com/spreadsheets/d/1tolIf1eKRMLyYIWwWjB8D3-82YkK1uOPOGmlZXzDfNs/edit?gid=647381004
 export interface Medal {
   employeeEmail: string;
   employeeName: string;
@@ -1233,5 +1235,176 @@ export const medals: Medal[] = [
     "justificativa": "A proprietário dos imóveis CLF0204 / CLF0104 estava com dúvida sobre o preenchimento do carnê leão e nos solicitou todos os dados de CPF dos hóspedes que não constavam na Wallet. A Naara prontamente com base em seus conhecimentos técnicos me orientou e explicou que nessa modalidade não é necessários os dados dos hóspedes, sendo o CPF necessário apenas no caso de DIMOB ou caso ela alugasse o imóvel por conta própria. Dessa forma, consegui orientar a prop com precisão, muito obrigada pela ajuda Na",
     "quemEnviou": "Raquel Szabo",
     "data": "13/03/2026"
+  },
+  {
+    "employeeEmail": "mickael.lucena@seazone.com.br",
+    "employeeName": "Mickael Lucena",
+    "employeeId": "mickael-lucena",
+    "habilidade": "Colaboração",
+    "justificativa": "O proprietário do imóvel TCO0811 estava crítico devido ter encontrado um piso quebrado em seu imóvel. O Mickael me auxiliou no contato com a franquia para fazermos o levantamento do orçamento para conserto. Após o orçamento, informou nos detalhes como foi a tratativa entre franquia e proprietário, além disso, para podermos acompanhar a manutenção já proativamente abriu um novo suporte específico para esse acompanhamento. Sua colaboração foi fundamental para tornar o proprietário saudável novamen",
+    "quemEnviou": "Raquel Szabo",
+    "data": "16/03/2026"
+  },
+  {
+    "employeeEmail": "luana.ornelas@seazone.com.br",
+    "employeeName": "Luana Ornelas",
+    "employeeId": "luana-ornelas",
+    "habilidade": "Colaboração",
+    "justificativa": "Conversei por ligação com o contator do proprietário dos imóveis FTSs na sexta-feira 13/03, na segunda-feira 16/03 pela manhã ele já havia entrando em contato com nosso time de suporte questionando sobre as notas fiscais dos imóveis que havia me solicitado, a Luana proativamente já identificou que o financeiro havia acabado de retornar e já encaminhou e esclareceu os detalhes com o proprietário. Sua colaboração e proatividade foi fundamental para agilizar o retorno, muito obrigada Lu!",
+    "quemEnviou": "Raquel Szabo",
+    "data": "17/03/2026"
+  },
+  {
+    "employeeEmail": "belle.guerreiro@seazone.com.br",
+    "employeeName": "Belle Guerreiro",
+    "employeeId": "belle-guerreiro",
+    "habilidade": "Colaboração",
+    "justificativa": "A Belle conduziu um treinamento sobre IA para o time de CS, trazendo muito clareza e tirando várias dúvidas nossas.  Demonstrou muito conhecimento técnico e foi super solícita em compartilhar com a gente.\n\nSou muito grata pela colaboração e pela disponibilidade dela. Obrigada, Belle! 💛",
+    "quemEnviou": "Raquel Magnaguagno",
+    "data": "17/03/2026"
+  },
+  {
+    "employeeEmail": "nathalia.karen@seazone.com.br",
+    "employeeName": "Nathalia Karen",
+    "employeeId": "nathalia-karen",
+    "habilidade": "Entrega de valor",
+    "justificativa": "Nath é uma profissional exemplar. Tem me ajudado imensamente nas análises dos imóveis e desempenhado um papel crucial na resolução dos problemas com os proprietários. Em todas as reuniões nas quais apresento dados, as análises da Nath estão presentes, não apenas na ocupação e preços, mas também com sugestões para melhorias no anúncio e ajustes estratégicos para otimizar a performance. Muito obrigada, Nath!",
+    "quemEnviou": "Kethrin",
+    "data": "17/03/2026"
+  },
+  {
+    "employeeEmail": "kethrin.weiss@seazone.com.br",
+    "employeeName": "Kethrin Weiss",
+    "employeeId": "kethrin-weiss",
+    "habilidade": "Comunicação",
+    "justificativa": "A Keth é muito organizada, com suas iniciativa alinhamos vários pontos entre CS e RM, cujo qual deixou meu trabalho bem mais eficiente e direcionado para o time de CS. Ela trouxe proximidade, transparência e facilidade no dia a dia.",
+    "quemEnviou": "Nathalia karen",
+    "data": "17/03/2026"
+  },
+  {
+    "employeeEmail": "david.soares@seazone.com.br",
+    "employeeName": "David Soares",
+    "employeeId": "david-soares",
+    "habilidade": "Colaboração",
+    "justificativa": "Gostaria de enviar uma medalha ao David para reconhecimento pelo apoio essencial durante a execução do meu projeto. No momento em que eu enfrentava dificuldades, especialmente na etapa de integração dos danos, ele foi de suma importância.\n\nDesde o início até a finalização, o David se mostrou extremamente solícito, dedicado e colaborativo. Inclusive, disponibilizou uma tarde inteira para me auxiliar, mesmo tendo suas próprias demandas, demonstrando um alto nível de comprometimento e espírito de e",
+    "quemEnviou": "Fabiola Azevedo",
+    "data": "18/03/2026"
+  },
+  {
+    "employeeEmail": "kethrin.weiss@seazone.com.br",
+    "employeeName": "Kethrin Weiss",
+    "employeeId": "kethrin-weiss",
+    "habilidade": "Foco em fatos e dados",
+    "justificativa": "O proprietário do imóvel MGI0068 solicitou nossa avaliação para incluir adicional por hóspede no imóvel. A Kethrin junto ao time de RM avaliou todos os pontos e construiu vários argumentos para informar ao proprietário do motivo de não ser viável essa estratégia, todos sendo sustentados com base em dados concretos de performance do imóvel. Além disso, participou comigo da reunião com o proprietário colaborando com a argumentação, muito obrigada Keth! <3",
+    "quemEnviou": "Raquel Szabo",
+    "data": "18/03/2026"
+  },
+  {
+    "employeeEmail": "belle.guerreiro@seazone.com.br",
+    "employeeName": "Belle Guerreiro",
+    "employeeId": "belle-guerreiro",
+    "habilidade": "Colaboração",
+    "justificativa": "A Belle dedicou parte do seu tempo para me ajudar com dúvidas sobre a IA Loveble. Sua colaboração foi essencial para ampliar minha visão e compreender melhor os próximos passos do meu projeto. Muito obrigada pela ajuda! <3",
+    "quemEnviou": "Raquel Szabo",
+    "data": "18/03/2026"
+  },
+  {
+    "employeeEmail": "luana.ornelas@seazone.com.br",
+    "employeeName": "Luana Ornelas",
+    "employeeId": "luana-ornelas",
+    "habilidade": "Atitude de dono",
+    "justificativa": "Nos últimos 2 dias tivemos dois desfalques na equipe por motivo de doença, e a Luana prontamente se disponibilizou para descer para o atendimento da fila de Suporte Proprietários, por se preocupar com o atendimento dos nossos clientes. Frequentemente a Lua tem ações que refletem seu pensamento de olhar macro da empresa, e não limitada a setor, time, área! Parabéns, Lua, por sua atitude de buscar a solução do problema independentemente se é sua responsabilidade direta ou não! Isso é muito positiv",
+    "quemEnviou": "Melina Marambaia",
+    "data": "18/03/2026"
+  },
+  {
+    "employeeEmail": "david.soares@seazone.com.br",
+    "employeeName": "David Soares",
+    "employeeId": "david-soares",
+    "habilidade": "Colaboração",
+    "justificativa": "David foi essencial para me ajudar a finalizar meu projeto da lovable na data prevista, eu estava com muita dificuldade na integração dos dados externos dentro do projeto e David me ajudou por 2 dias nesse processo. Obrigada mesmo!",
+    "quemEnviou": "Isabella Bino da Silva",
+    "data": "19/03/2026"
+  },
+  {
+    "employeeEmail": "emanuelle.lages@seazone.com.br",
+    "employeeName": "Emanuelle Lages",
+    "employeeId": "emanuelle-lages",
+    "habilidade": "Atitude de dono",
+    "justificativa": "A Manu estava fazendo um estudo em Campos do Jordão e notou que todos estudos anteriores o time considerava vagas na proporção 1 vaga para cada unidade, mas ao consultar a legislação notou que esse zoneamento deveriam ser 2 vagas a cada unidade.\nEssa diferença iria prejudicar o projeto, pois o terreno não teria espaço. Mesmo falando seu ponto, foi descredibilizada e insistiu em provar que estava correta em Daily. \nAo gerar a dúvida em todo o time, foi consultado o arquiteto terceiro contratado d",
+    "quemEnviou": "Maria Guimarães",
+    "data": "19/03/2026"
+  },
+  {
+    "employeeEmail": "weslley.bertoldo@seazone.com.br",
+    "employeeName": "Weslley Bertoldo",
+    "employeeId": "weslley-bertoldo",
+    "habilidade": "Colaboração",
+    "justificativa": "Gostaria de indicar o Wesley para a Medalha de Honra.\n\nMesmo diante de um prazo apertado, ele se mostrou extremamente disponível e colaborativo, dedicando seu tempo para me apoiar na criação de uma automação em um momento crítico do meu projeto. Eu estava com uma trava que não conseguiria superar sozinha, e a ajuda dele foi essencial para destravar o processo e dar continuidade à entrega.\n\nSua atitude demonstra não apenas conhecimento técnico, mas também espírito de equipe, proatividade e compro",
+    "quemEnviou": "Caroline Peçanha Cavalcante",
+    "data": "19/03/2026"
+  },
+  {
+    "employeeEmail": "carlos.negreiros@seazone.com.br",
+    "employeeName": "Carlos Negreiros",
+    "employeeId": "carlos-negreiros",
+    "habilidade": "Colaboração",
+    "justificativa": "Tive problema pra rodar o backend do sapron, pois nunca tinha trabalhado com backend e não entendia nada, o Carlos Cezar me ajudou com todos os detalhes para conseguir rodar",
+    "quemEnviou": "Amanda Gois",
+    "data": "19/03/2026"
+  },
+  {
+    "employeeEmail": "melina.marambaia@seazone.com.br",
+    "employeeName": "Melina Marambaia",
+    "employeeId": "melina-marambaia",
+    "habilidade": "Pensar fora da caixa",
+    "justificativa": "Estávamos com um bug na blip que os chamados estavam caindo pras equipes erradas em mensagens ativas e não estávamos conseguindo resolver de jeito nenhum. A Mel deu uma ideia fazendo uma análise de padrões dos templates, e acertou em cheio na causa do problema.",
+    "quemEnviou": "Francisco Duclou Rito",
+    "data": "19/03/2026"
+  },
+  {
+    "employeeEmail": "jorge.sampaio@seazone.com.br",
+    "employeeName": "Jorge Sampaio",
+    "employeeId": "jorge-sampaio",
+    "habilidade": "Colaboração",
+    "justificativa": "O Sampaio dedicou o tempo dele e o conhecimento para criar uma apresentação ao time, sobre como começar a usar o Claude e suas aplicações. Um assunto novo para o setor, onde tivemos bastante dúvidas e o Sampaio soube nos orientar em todas.",
+    "quemEnviou": "Gabriel Soldorio",
+    "data": "24/03/2026"
+  },
+  {
+    "employeeEmail": "ediandra.santana@seazone.com.br",
+    "employeeName": "Ediandra Santana",
+    "employeeId": "ediandra-santana",
+    "habilidade": "Colaboração",
+    "justificativa": "Após ter finalizado o projeto dela sobre o uso da IA na empresa, Edi me deu uma grande ajuda com uma ideia a ser colocada em prática, bem como mostrando a ferramenta que ela utilizou, como ela utilizou e também como eu poderia utilizar para criar o meu projeto. Isso serviu como um ponto de partida para mim, levando à outra ferramenta, onde consegui alcançar o objetivo final.",
+    "quemEnviou": "Yuri Oliveira Quinto",
+    "data": "24/03/2026"
+  },
+  {
+    "employeeEmail": "maria.guarneri@seazone.com.br",
+    "employeeName": "Maria Guarneri",
+    "employeeId": "maria-guarneri",
+    "habilidade": "Sangue no olho",
+    "justificativa": "A Malu trouxe em feedbacks antigos a ideia de desenvolver um projeto de monitoramento de legislação das reuniões. A Malu buscou em diversas fontes, aprendeu diversos formas de concretizar isso e em pouco tempo trouxe um MVP viável que já está sendo utilizado. \nAntes era um processo que muitas vezes ficávamos meses sem saber de uma atualização, por ser muitas regiões e agora com o projeto da Malu todo mês rodamos para saber se tem atualizações nas legislações para alertar ao time",
+    "quemEnviou": "Maria Guimarães",
+    "data": "20/03/2026"
+  },
+  {
+    "employeeEmail": "bianca.valente@seazone.com.br",
+    "employeeName": "Bianca Valente",
+    "employeeId": "bianca-valente",
+    "habilidade": "Entrega de valor",
+    "justificativa": "O ponto alto da minha semana no trabalho foi saber que a Bica tinha criado um dash com os big numbers de SZI e SZS! Com certa frequência preciso desses dados para montar materiais atrativos para nossos clientes e time comercial, e tinha muita dificuldade de encontrar uma fonte confiável, os números sempre divergiam... este material que ela criou vai ser muito útil, mesmo!",
+    "quemEnviou": "Laura Medeiros",
+    "data": "20/03/2026"
+  },
+  {
+    "employeeEmail": "julia.martins@seazone.com.br",
+    "employeeName": "Julia Martins",
+    "employeeId": "julia-martins",
+    "habilidade": "Atitude de dono",
+    "justificativa": "A Ju tinha entrado de férias e a Manu assumiu as atividades de AP do time, ao voltar, mesmo sem ter sido solicitado, a Ju resolveu rever as APs realizadas pela Manu com o intuito de entender pontos de melhoria.\nTambém marcaram uma reunião para passar os feedbacks e também reportaram possíveis oportunidades para mim, assim fazendo todo o time crescer em conhecimento!",
+    "quemEnviou": "Maria Guimarães",
+    "data": "20/03/2026"
   }
 ];

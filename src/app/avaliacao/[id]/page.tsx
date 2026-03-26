@@ -7,8 +7,10 @@ import { getQuestions } from "@/lib/store";
 import { fetchEvaluation, upsertEvaluation } from "@/lib/db";
 import { useAuth } from "@/lib/auth-context";
 import { findUser } from "@/lib/org-tree";
+import { medals } from "@/data/medals";
 import AppShell from "@/components/app-shell";
 import {
+  Award,
   ChevronLeft,
   CheckCircle2,
   Bot,
@@ -230,6 +232,9 @@ export default function AvaliacaoPage({
           evaluatorSector: currentUser?.sector || "",
           evaluateeSector: employee?.sector || "",
           evaluateeCargo: employee?.cargo || "",
+          employeeMedals: medals
+            .filter((m) => m.employeeId === evaluation!.employeeId || m.employeeEmail.toLowerCase().split("@")[0] === employee?.name.toLowerCase().split(" ")[0])
+            .map((m) => `${m.habilidade}: "${m.justificativa}" (por ${m.quemEnviou}, ${m.data})`),
         }),
       });
 
@@ -384,6 +389,35 @@ export default function AvaliacaoPage({
             </div>
           </div>
         </div>
+
+        {/* Medals of the person being evaluated */}
+        {(() => {
+          const personMedals = medals.filter(
+            (m) => m.employeeId === evaluation.employeeId ||
+              m.employeeEmail.toLowerCase().split("@")[0] === employee?.name.toLowerCase().split(" ")[0]
+          );
+          if (personMedals.length === 0) return null;
+          return (
+            <details className="mb-6 bg-secondary/5 border border-secondary/10 rounded-xl p-4 group">
+              <summary className="flex items-center gap-2 cursor-pointer list-none text-sm font-semibold text-secondary">
+                <Award className="w-4 h-4" />
+                Medalhas de {employee?.name.split(" ")[0]} ({personMedals.length})
+                <span className="text-xs text-gray-400 font-normal ml-auto">clique para ver</span>
+              </summary>
+              <div className="mt-3 space-y-2">
+                {personMedals.map((medal, idx) => (
+                  <div key={idx} className="bg-white rounded-lg p-3 border border-secondary/10">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-semibold text-secondary">{medal.habilidade}</span>
+                      <span className="text-xs text-gray-400">{medal.data} · {medal.quemEnviou}</span>
+                    </div>
+                    <p className="text-xs text-gray-600">{medal.justificativa}</p>
+                  </div>
+                ))}
+              </div>
+            </details>
+          );
+        })()}
 
         {/* Progress */}
         <div className="mb-6">
