@@ -328,6 +328,10 @@ export default function AvaliacaoPage({
       return;
     }
 
+    if (!confirm("Tem certeza que deseja enviar esta avaliação?\n\nApós o envio, suas respostas não poderão mais ser alteradas.")) {
+      return;
+    }
+
     // Set all answers as validated and evaluation as complete
     const finalAnswers = evaluation.answers.map((a) => ({
       ...a,
@@ -388,9 +392,9 @@ export default function AvaliacaoPage({
               {filledCount} de {questions.length} preenchidas
             </span>
             {isConcluida && (
-              <span className="flex items-center gap-1.5 text-sm font-medium text-accent">
+              <span className="flex items-center gap-1.5 text-sm font-medium text-accent bg-accent/10 px-3 py-1 rounded-full">
                 <CheckCircle2 className="w-4 h-4" />
-                Avaliação concluída
+                Enviada — somente leitura
               </span>
             )}
           </div>

@@ -91,13 +91,10 @@ export default function AvaliacaoPage() {
 
   async function startOrContinue(task: EvaluationTask) {
     const existing = getEvalStatus(task);
-    if (existing && existing.status === "em_andamento") {
+    if (existing && (existing.status === "em_andamento" || existing.status === "concluida")) {
+      // Open existing evaluation (view-only if concluida)
       router.push(`/avaliacao/${existing.id}`);
       return;
-    }
-    if (existing && (existing.status === "concluida" )) {
-      if (!confirm("Essa avaliação já foi concluída. Deseja criar uma nova?"))
-        return;
     }
     const questions = getQuestions();
     const evalId = `eval_${Date.now()}`;
