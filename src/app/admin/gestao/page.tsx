@@ -14,6 +14,8 @@ import {
   regenerateAndSavePeers,
   fetchManagerOverrides,
   saveManagerOverrides,
+  fetchNotesReleased,
+  updateNotesReleased,
 } from "@/lib/db";
 import { getAllUsers, findUser, getPeerPool, getManager, setManagerOverrides, getManagerOverrides } from "@/lib/org-tree";
 import { getPeersToEvaluate, type PeerAssignment } from "@/lib/peer-assignment";
@@ -47,6 +49,7 @@ export default function GestaoPage() {
   const [addingPeerFor, setAddingPeerFor] = useState<string | null>(null);
   const [changingManagerFor, setChangingManagerFor] = useState<string | null>(null);
   const [mgrOverrides, setMgrOverrides] = useState<Record<string, string>>({});
+  const [notesReleased, setNotesReleased] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -57,6 +60,8 @@ export default function GestaoPage() {
       const overrides = await fetchManagerOverrides();
       setMgrOverrides(overrides);
       setManagerOverrides(overrides);
+      const released = await fetchNotesReleased();
+      setNotesReleased(released);
     }
     load();
   }, []);
@@ -149,6 +154,16 @@ export default function GestaoPage() {
     await refresh();
   }
 
+  async function handleToggleNotes() {
+    const newState = !notesReleased;
+    const msg = newState
+      ? "Liberar notas para todos os colaboradores? Eles poderão ver suas notas em 'Minhas Notas'."
+      : "Bloquear notas? Os colaboradores não poderão mais ver suas notas.";
+    if (!confirm(msg)) return;
+    await updateNotesReleased(newState);
+    setNotesReleased(newState);
+  }
+
   return (
     <AppShell>
       <div>
@@ -162,13 +177,25 @@ export default function GestaoPage() {
               Gerencie pessoas, pares e avaliações
             </p>
           </div>
-          <button
-            onClick={handleRegeneratePeers}
-            className="flex items-center gap-2 px-4 py-2 border border-secondary/30 text-secondary rounded-xl text-sm font-medium hover:bg-secondary/5 transition"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Regenerar todos os pares
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleToggleNotes}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition ${
+                notesReleased
+                  ? "bg-accent text-white hover:bg-accent/90"
+                  : "border border-gray-300 text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              {notesReleased ? "Notas Liberadas" : "Liberar Notas"}
+            </button>
+            <button
+              onClick={handleRegeneratePeers}
+              className="flex items-center gap-2 px-4 py-2 border border-secondary/30 text-secondary rounded-xl text-sm font-medium hover:bg-secondary/5 transition"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Regenerar pares
+            </button>
+          </div>
         </div>
 
         {/* Search */}

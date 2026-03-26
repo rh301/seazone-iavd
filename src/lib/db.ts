@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { Evaluation, DirectorInsight, ChatMessage, EvaluationType } from "./types";
+import { Evaluation, EvaluationType } from "./types";
 import { generatePeerAssignments, type PeerAssignment } from "./peer-assignment";
 
 // ── Helper to map DB rows to Evaluation objects ──
@@ -151,82 +151,6 @@ export async function removeEvaluationsForEmployee(employeeId: string): Promise<
     .delete()
     .eq("employee_id", employeeId);
   if (error) console.error("Error deleting evaluations:", error);
-}
-
-// ── Director Insights ──
-
-export async function fetchDirectorInsights(): Promise<DirectorInsight[]> {
-  const { data, error } = await supabase.from("director_insights").select("*");
-  if (error) return [];
-
-  return (data || []).map((row) => ({
-    questionId: row.question_id,
-    userId: row.user_id,
-    interpretation: row.interpretation,
-    updatedAt: row.updated_at,
-  }));
-}
-
-export async function fetchInsightsForQuestion(questionId: string): Promise<DirectorInsight[]> {
-  const { data, error } = await supabase
-    .from("director_insights")
-    .select("*")
-    .eq("question_id", questionId);
-  if (error) return [];
-
-  return (data || []).map((row) => ({
-    questionId: row.question_id,
-    userId: row.user_id,
-    interpretation: row.interpretation,
-    updatedAt: row.updated_at,
-  }));
-}
-
-export async function upsertDirectorInsight(insight: DirectorInsight): Promise<void> {
-  const { error } = await supabase.from("director_insights").upsert(
-    {
-      question_id: insight.questionId,
-      user_id: insight.userId,
-      interpretation: insight.interpretation,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "question_id,user_id" }
-  );
-  if (error) console.error("Error saving insight:", error);
-}
-
-// ── Director Chats ──
-
-export async function fetchDirectorChat(
-  questionId: string,
-  userId: string
-): Promise<ChatMessage[]> {
-  const { data, error } = await supabase
-    .from("director_chats")
-    .select("messages")
-    .eq("question_id", questionId)
-    .eq("user_id", userId)
-    .single();
-
-  if (error || !data) return [];
-  return data.messages || [];
-}
-
-export async function upsertDirectorChat(
-  questionId: string,
-  userId: string,
-  messages: ChatMessage[]
-): Promise<void> {
-  const { error } = await supabase.from("director_chats").upsert(
-    {
-      question_id: questionId,
-      user_id: userId,
-      messages,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "question_id,user_id" }
-  );
-  if (error) console.error("Error saving director chat:", error);
 }
 
 // ── Peer Assignments ──

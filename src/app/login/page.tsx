@@ -43,7 +43,7 @@ const faqItems = [
   {
     question: "Quem participa da Avaliação de Desempenho?",
     answer:
-      "Todos os colaboradores da Seazone participam do processo de AVD. Gestores avaliam seus liderados com apoio de inteligência artificial, e a diretoria realiza a calibragem final para garantir justiça entre áreas.",
+      "Todos os colaboradores da Seazone participam do processo de AVD. Gestores avaliam seus liderados com apoio de inteligência artificial, garantindo uma avaliação justa e consistente entre áreas.",
   },
   {
     question: "Com que frequência a AVD acontece?",
@@ -53,7 +53,7 @@ const faqItems = [
   {
     question: "O que acontece com os resultados da minha avaliação?",
     answer:
-      "Os resultados passam por uma etapa de calibragem conduzida pela diretoria e pelo RH, garantindo consistência e justiça. Depois, são utilizados para guiar planos de desenvolvimento individual, promoções e movimentações.",
+      "Os resultados são revisados pelo RH, garantindo consistência e justiça. Depois, são utilizados para guiar planos de desenvolvimento individual, promoções e movimentações.",
   },
   {
     question: "E se eu discordar do feedback recebido?",

@@ -56,7 +56,7 @@ export default function MinhasNotasPage() {
 
   if (!user) return null;
 
-  // Only gestor evaluations shown (the official calibrated score)
+  // Only gestor evaluations shown (the official score)
 
   function getScore(ev: Evaluation): number | null {
     const scores = ev.answers
@@ -108,7 +108,7 @@ export default function MinhasNotasPage() {
               </h3>
               <p className="text-sm text-amber-700 mt-1">
                 As notas do ciclo atual serão liberadas pelo RH após a
-                calibragem. Você será notificado quando estiverem disponíveis.
+                revisão do RH. Você será notificado quando estiverem disponíveis.
               </p>
             </div>
           </div>

@@ -20,7 +20,7 @@ SOBRE A PLATAFORMA:
 - São 10 perguntas baseadas em 5 valores Seazone: Sangue no Olho, Foco em Fatos e Dados, Priorize e Simplifique, Proatividade, AI First
 - A IA conversa com o avaliador para investigar exemplos concretos e depois sugere uma nota de 1 a 5
 - Nota 3 é o esperado (bom). Nota 4-5 são raras e exigem evidências fortes
-- Após todas as avaliações, o RH faz a calibragem e libera as notas
+- Após todas as avaliações, o RH revisa e libera as notas
 
 SOBRE AS NOTAS:
 - 1 = comportamento não demonstrado
@@ -33,7 +33,7 @@ DÚVIDAS COMUNS:
 - "Quem me avalia?" → Seu gestor, você mesmo, 2 pares e seus liderados (se tiver)
 - "Posso ver minhas notas?" → Sim, na aba "Minhas Notas", após o RH liberar
 - "O que são pares?" → Colegas do mesmo nível na sua equipe ou coordenadores de equipes irmãs
-- "A IA decide minha nota?" → A IA sugere, mas o RH calibra antes de liberar
+- "A IA decide minha nota?" → A IA sugere, mas o RH revisa antes de liberar
 - "Posso contestar?" → Sim, durante a avaliação você pode contestar a nota da IA com novos exemplos
 
 REGRAS:
