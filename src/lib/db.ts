@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { Evaluation, EvaluationType } from "./types";
+import { Evaluation, EvaluationType, ChatMessage, DirectorInsight } from "./types";
 import { generatePeerAssignments, type PeerAssignment } from "./peer-assignment";
 
 // ── Helper to map DB rows to Evaluation objects ──
@@ -14,6 +14,7 @@ function mapRow(row: any): Evaluation {
     status: row.status,
     date: row.date,
     answers: row.answers || [],
+    calibration: row.calibration || undefined,
   };
 }
 
@@ -122,6 +123,7 @@ export async function fetchEvaluation(id: string): Promise<Evaluation | null> {
     status: data.status,
     date: data.date,
     answers: data.answers || [],
+    calibration: data.calibration || undefined,
   };
 }
 
@@ -134,6 +136,7 @@ export async function upsertEvaluation(evaluation: Evaluation): Promise<void> {
     status: evaluation.status,
     date: evaluation.date,
     answers: evaluation.answers,
+    calibration: evaluation.calibration || null,
     updated_at: new Date().toISOString(),
   });
 
@@ -266,4 +269,65 @@ export async function saveManagerOverrides(overrides: Record<string, string>): P
     .from("app_settings")
     .upsert({ key: "manager_overrides", value: JSON.stringify(overrides), updated_at: new Date().toISOString() });
   if (error) console.error("Error saving manager overrides:", error);
+}
+
+// ── Calibration Schedule ──
+
+export interface CalibrationAreaProgress {
+  area: string;
+  totalPeople: number;
+  calibratedPeople: string[];
+  order: number;
+  updatedBy: string;
+  updatedAt: string;
+}
+
+export interface CalibrationScheduleConfig {
+  startTime: string;
+  minutesPerPerson: number;
+  areas: CalibrationAreaProgress[];
+}
+
+export async function fetchCalibrationSchedule(): Promise<CalibrationScheduleConfig> {
+  const { data, error } = await supabase
+    .from("app_settings")
+    .select("value")
+    .eq("key", "calibration_schedule")
+    .single();
+
+  if (error || !data) return { startTime: "09:00", minutesPerPerson: 5, areas: [] };
+  try {
+    return JSON.parse(data.value);
+  } catch {
+    return { startTime: "09:00", minutesPerPerson: 5, areas: [] };
+  }
+}
+
+export async function saveCalibrationSchedule(config: CalibrationScheduleConfig): Promise<void> {
+  const { error } = await supabase
+    .from("app_settings")
+    .upsert({ key: "calibration_schedule", value: JSON.stringify(config), updated_at: new Date().toISOString() });
+  if (error) console.error("Error saving calibration schedule:", error);
+}
+
+export async function fetchCalibrationProgress(): Promise<CalibrationAreaProgress[]> {
+  const { data, error } = await supabase
+    .from("app_settings")
+    .select("value")
+    .eq("key", "calibration_progress")
+    .single();
+
+  if (error || !data) return [];
+  try {
+    return JSON.parse(data.value);
+  } catch {
+    return [];
+  }
+}
+
+export async function saveCalibrationProgress(progress: CalibrationAreaProgress[]): Promise<void> {
+  const { error } = await supabase
+    .from("app_settings")
+    .upsert({ key: "calibration_progress", value: JSON.stringify(progress), updated_at: new Date().toISOString() });
+  if (error) console.error("Error saving calibration progress:", error);
 }

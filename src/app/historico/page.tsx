@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import AppShell from "@/components/app-shell";
 
-type StatusFilter = "todas" | "em_andamento" | "concluida";
+type StatusFilter = "todas" | "em_andamento" | "concluida" | "calibrada";
 
 export default function Historico() {
   const { user } = useAuth();
@@ -109,7 +109,7 @@ export default function Historico() {
 
   // ── Dashboard stats ──
   const completed = visibleEvaluations.filter(
-    (e) => e.status === "concluida"
+    (e) => e.status === "concluida" || e.status === "calibrada"
   );
   const inProgress = visibleEvaluations.filter(
     (e) => e.status === "em_andamento"
@@ -169,6 +169,9 @@ export default function Historico() {
       const evaluator = findUser(e.evaluatorId);
       const scores = questions.map((q) => {
         const a = e.answers.find((a) => a.questionId === q.id);
+        if (e.calibration?.entries[q.id]) {
+          return e.calibration.entries[q.id].calibratedScore.toString();
+        }
         return a?.score?.toString() || "";
       });
       const avg = getAvgScore(e);

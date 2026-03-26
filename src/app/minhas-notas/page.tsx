@@ -60,7 +60,12 @@ export default function MinhasNotasPage() {
 
   function getScore(ev: Evaluation): number | null {
     const scores = ev.answers
-      .map((a) => a.score)
+      .map((a) => {
+        if (ev.calibration?.entries[a.questionId]) {
+          return ev.calibration.entries[a.questionId].calibratedScore;
+        }
+        return a.score;
+      })
       .filter((s): s is number => s !== null);
 
     if (scores.length === 0) return null;
@@ -190,7 +195,10 @@ export default function MinhasNotasPage() {
                         );
                         if (!q) return null;
 
-                        const finalScore = answer.score;
+                        const calibrated =
+                          ev.calibration?.entries[answer.questionId];
+                        const finalScore =
+                          calibrated?.calibratedScore ?? answer.score;
                         const scaleLevel = q.scale.find(
                           (s) => s.score === finalScore
                         );

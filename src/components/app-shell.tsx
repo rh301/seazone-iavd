@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { roleLabels, roleColors } from "@/lib/auth-types";
-import { isRH } from "@/lib/permissions";
+import { canCalibrate, isRH } from "@/lib/permissions";
 import { LogOut, Loader2 } from "lucide-react";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -63,6 +63,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               >
                 Resultados
               </a>
+              {(canCalibrate(user) || ["diretor", "coordenador"].includes(user.role)) && (
+                <a
+                  href="/agenda-calibracao"
+                  className="text-white/80 hover:text-white transition text-sm font-medium"
+                >
+                  Agenda
+                </a>
+              )}
+              {canCalibrate(user) && (
+                <a
+                  href="/calibracao"
+                  className="text-white/80 hover:text-white transition text-sm font-medium"
+                >
+                  Calibração
+                </a>
+              )}
               {isRH(user) && (
                 <a
                   href="/admin/gestao"

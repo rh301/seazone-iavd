@@ -91,7 +91,7 @@ export default function AvaliacaoPage() {
 
   async function startOrContinue(task: EvaluationTask) {
     const existing = getEvalStatus(task);
-    if (existing && (existing.status === "em_andamento" || existing.status === "concluida")) {
+    if (existing && (existing.status === "em_andamento" || existing.status === "concluida" || existing.status === "calibrada")) {
       // Open existing evaluation (view-only if concluida)
       router.push(`/avaliacao/${existing.id}`);
       return;
@@ -117,7 +117,7 @@ export default function AvaliacaoPage() {
   const completedTasks = tasks.filter(
     (t) => {
       const s = getEvalStatus(t)?.status;
-      return s === "concluida" ;
+      return s === "concluida" || s === "calibrada";
     }
   ).length;
 
@@ -163,7 +163,7 @@ export default function AvaliacaoPage() {
             const completedInType = typeTasks.filter(
               (t) => {
                 const s = getEvalStatus(t)?.status;
-                return s === "concluida" ;
+                return s === "concluida" || s === "calibrada";
               }
             ).length;
 
@@ -189,7 +189,7 @@ export default function AvaliacaoPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {typeTasks.map((task) => {
                     const evalData = getEvalStatus(task);
-                    const isDone = evalData?.status === "concluida" ;
+                    const isDone = evalData?.status === "concluida" || evalData?.status === "calibrada";
                     const isInProgress = evalData?.status === "em_andamento";
 
                     return (

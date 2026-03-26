@@ -55,7 +55,7 @@ export default function Dashboard() {
             e.evaluatorId === user!.id &&
             e.employeeId === task.evaluateeId &&
             e.evaluationType === task.evaluationType &&
-            (e.status === "concluida")
+            (e.status === "concluida" || e.status === "calibrada")
         );
         if (done) byType[task.evaluationType].completed++;
       }
@@ -80,7 +80,7 @@ export default function Dashboard() {
   const progress = totalTasks > 0 ? (totalCompleted / totalTasks) * 100 : 0;
 
   // Average score
-  const myEvals = evaluations.filter((e) => e.evaluatorId === user.id && (e.status === "concluida"));
+  const myEvals = evaluations.filter((e) => e.evaluatorId === user.id && (e.status === "concluida" || e.status === "calibrada"));
   let totalScore = 0;
   let scoreCount = 0;
   myEvals.forEach((e) => {
