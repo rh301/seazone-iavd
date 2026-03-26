@@ -7,7 +7,7 @@ import { fetchEvaluations, upsertEvaluation, fetchNotesReleased, updateNotesRele
 import { useAuth } from "@/lib/auth-context";
 import { canCalibrate, canReleaseNotes } from "@/lib/permissions";
 import { findUser, getAllUsers, setManagerOverrides, getManagerOverrides } from "@/lib/org-tree";
-import { scoreToGrade, toGrade } from "@/lib/utils";
+import { scoreToGrade, toGrade, avgToGrade } from "@/lib/utils";
 import { medals } from "@/data/medals";
 import {
   Scale,
@@ -310,13 +310,13 @@ export default function CalibracaoPage() {
                       {gestorAvg !== null && (
                         <div className="text-center">
                           <p className="text-xs text-gray-400">Gestor</p>
-                          <p className="text-lg font-bold text-primary">{gestorAvg.toFixed(1)}</p>
+                          <p className={`text-lg font-bold score-${Math.round(gestorAvg)} w-8 h-8 rounded-lg flex items-center justify-center mx-auto`}>{avgToGrade(gestorAvg)}</p>
                         </div>
                       )}
                       {autoEval && getAvgForEval(autoEval) !== null && (
                         <div className="text-center">
                           <p className="text-xs text-gray-400">Auto</p>
-                          <p className="text-lg font-bold text-gray-700">{getAvgForEval(autoEval)!.toFixed(1)}</p>
+                          <p className={`text-lg font-bold score-${Math.round(getAvgForEval(autoEval)!)} w-8 h-8 rounded-lg flex items-center justify-center mx-auto`}>{avgToGrade(getAvgForEval(autoEval))}</p>
                         </div>
                       )}
                       {parEvals.length > 0 && (
@@ -325,7 +325,7 @@ export default function CalibracaoPage() {
                           <p className="text-lg font-bold text-gray-700">
                             {(() => {
                               const scores = parEvals.flatMap(e => e.answers.map(a => a.score).filter((s): s is number => s !== null));
-                              return scores.length > 0 ? (scores.reduce((a,b) => a+b, 0) / scores.length).toFixed(1) : "—";
+                              return scores.length > 0 ? avgToGrade(scores.reduce((a,b) => a+b, 0) / scores.length) : "—";
                             })()}
                           </p>
                         </div>
@@ -336,7 +336,7 @@ export default function CalibracaoPage() {
                           <p className="text-lg font-bold text-gray-700">
                             {(() => {
                               const scores = lideradoEvals.flatMap(e => e.answers.map(a => a.score).filter((s): s is number => s !== null));
-                              return scores.length > 0 ? (scores.reduce((a,b) => a+b, 0) / scores.length).toFixed(1) : "—";
+                              return scores.length > 0 ? avgToGrade(scores.reduce((a,b) => a+b, 0) / scores.length) : "—";
                             })()}
                           </p>
                         </div>
