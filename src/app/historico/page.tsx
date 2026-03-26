@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import AppShell from "@/components/app-shell";
 
-type StatusFilter = "todas" | "em_andamento" | "concluida" | "calibrada";
+type StatusFilter = "todas" | "em_andamento" | "concluida";
 
 export default function Historico() {
   const { user } = useAuth();
@@ -109,7 +109,7 @@ export default function Historico() {
 
   // ── Dashboard stats ──
   const completed = visibleEvaluations.filter(
-    (e) => e.status === "concluida" || e.status === "calibrada"
+    (e) => e.status === "concluida"
   );
   const inProgress = visibleEvaluations.filter(
     (e) => e.status === "em_andamento"
@@ -169,9 +169,6 @@ export default function Historico() {
       const evaluator = findUser(e.evaluatorId);
       const scores = questions.map((q) => {
         const a = e.answers.find((a) => a.questionId === q.id);
-        if (e.calibration?.entries[q.id]) {
-          return e.calibration.entries[q.id].calibratedScore.toString();
-        }
         return a?.score?.toString() || "";
       });
       const avg = getAvgScore(e);
@@ -214,11 +211,6 @@ export default function Historico() {
       label: "Concluída",
       icon: CheckCircle2,
       color: "text-accent bg-accent/10",
-    },
-    calibrada: {
-      label: "Calibrada",
-      icon: FileText,
-      color: "text-primary bg-primary/10",
     },
   };
 
@@ -404,7 +396,6 @@ export default function Historico() {
               <option value="todas">Todos os status</option>
               <option value="em_andamento">Em andamento</option>
               <option value="concluida">Concluída</option>
-              <option value="calibrada">Calibrada</option>
             </select>
           </div>
           {departments.length > 1 && (
@@ -486,17 +477,10 @@ export default function Historico() {
                             </p>
                             <p className="text-xs text-gray-400">Aval.</p>
                           </div>
-                          {empEvals.some(e => e.status === "calibrada") ? (
-                            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-primary bg-primary/10">
-                              <FileText className="w-3.5 h-3.5" />
-                              Calibrada
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-accent bg-accent/10">
+                          <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-accent bg-accent/10">
                               <CheckCircle2 className="w-3.5 h-3.5" />
                               Concluída
                             </span>
-                          )}
                         </>
                       ) : (
                         <span className="text-xs text-gray-400 italic">Sem avaliação</span>

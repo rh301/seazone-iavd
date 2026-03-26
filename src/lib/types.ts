@@ -49,13 +49,6 @@ export interface DirectorInsight {
   updatedAt: string;
 }
 
-export interface CalibrationEntry {
-  originalScore: number;
-  calibratedScore: number;
-  comment: string;
-  calibratedBy: string;
-  calibratedAt: string;
-}
 
 export type EvaluationType = "auto" | "gestor" | "par" | "liderado";
 
@@ -79,11 +72,6 @@ export interface Evaluation {
   evaluatorId: string;
   evaluationType: EvaluationType;
   date: string;
-  status: "em_andamento" | "concluida" | "calibrada";
+  status: "em_andamento" | "concluida";
   answers: Answer[];
-  calibration?: {
-    entries: Record<string, CalibrationEntry>; // questionId -> entry
-    calibratedBy: string;
-    calibratedAt: string;
-  };
 }

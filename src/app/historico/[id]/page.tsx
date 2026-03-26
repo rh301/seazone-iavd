@@ -67,16 +67,14 @@ export default function DetalhesAvaliacao({
     ? (scores.reduce((a, b) => a + b, 0) / scores.length)
     : 0;
 
-  const statusLabels = {
+  const statusLabels: Record<string, string> = {
     em_andamento: "Em andamento",
     concluida: "Concluída",
-    calibrada: "Calibrada",
   };
 
-  const statusColors = {
+  const statusColors: Record<string, string> = {
     em_andamento: "text-secondary bg-secondary/10",
     concluida: "text-accent bg-accent/10",
-    calibrada: "text-primary bg-primary/10",
   };
 
   return (

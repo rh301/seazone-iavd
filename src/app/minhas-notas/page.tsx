@@ -60,13 +60,7 @@ export default function MinhasNotasPage() {
 
   function getScore(ev: Evaluation): number | null {
     const scores = ev.answers
-      .map((a) => {
-        // Use calibrated score if available
-        if (ev.calibration?.entries[a.questionId]) {
-          return ev.calibration.entries[a.questionId].calibratedScore;
-        }
-        return a.score;
-      })
+      .map((a) => a.score)
       .filter((s): s is number => s !== null);
 
     if (scores.length === 0) return null;
@@ -162,11 +156,6 @@ export default function MinhasNotasPage() {
                         </p>
                         <p className="text-xs text-gray-500">
                           {ev.date}
-                          {ev.status === "calibrada" && (
-                            <span className="ml-2 text-accent">
-                              Calibrada
-                            </span>
-                          )}
                         </p>
                       </div>
                     </div>
@@ -201,10 +190,7 @@ export default function MinhasNotasPage() {
                         );
                         if (!q) return null;
 
-                        const calibrated =
-                          ev.calibration?.entries[answer.questionId];
-                        const finalScore =
-                          calibrated?.calibratedScore ?? answer.score;
+                        const finalScore = answer.score;
                         const scaleLevel = q.scale.find(
                           (s) => s.score === finalScore
                         );

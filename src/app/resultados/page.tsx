@@ -44,9 +44,6 @@ type PersonResult = {
 const typeOrder: EvaluationType[] = ["auto", "gestor", "par", "liderado"];
 
 function getEffectiveScore(ev: Evaluation, questionId: string): number | null {
-  if (ev.calibration?.entries[questionId]) {
-    return ev.calibration.entries[questionId].calibratedScore;
-  }
   const answer = ev.answers.find((a) => a.questionId === questionId);
   return answer?.score ?? null;
 }
@@ -80,7 +77,7 @@ export default function Resultados() {
   // RH/C-Level see everyone, others see only their subordinates
   const allPeople = isAdmin ? getAllUsers() : getVisibleUsers(user);
   const completed = evaluations.filter(
-    (e) => e.status === "concluida" || e.status === "calibrada"
+    (e) => e.status === "concluida"
   );
 
   // Build per-person results
@@ -138,7 +135,7 @@ export default function Resultados() {
       avgByType,
       avgByQuestion,
       overallAvg,
-      isCalibrated: evals.some((e) => e.status === "calibrada"),
+      isCalibrated: false,
     };
   });
 
