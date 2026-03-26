@@ -315,7 +315,7 @@ export default function GestaoPage() {
                 if (!person) return null;
 
                 return (
-                  <div key={userId} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                  <div key={userId} className="bg-white rounded-xl border border-gray-100 shadow-sm">
                     <div className="p-4 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         {person.photoUrl ? (
@@ -343,7 +343,7 @@ export default function GestaoPage() {
                     </div>
 
                     {/* Visible people */}
-                    <div className="border-t border-gray-50 px-4 py-3 bg-gray-50/50">
+                    <div className="border-t border-gray-50 px-4 py-3 pb-6 bg-gray-50/50 relative">
                       <div className="flex flex-wrap gap-2 mb-2">
                         {visibleIds.map((pid) => {
                           const p = findUser(pid);
@@ -372,7 +372,7 @@ export default function GestaoPage() {
                             className="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary/30"
                           />
                           {addPersonSearch.length >= 2 && (
-                            <div className="absolute z-10 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-36 overflow-y-auto">
+                            <div className="absolute z-50 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-36 overflow-y-auto">
                               {allPeople
                                 .filter((p) => {
                                   const q = addPersonSearch.toLowerCase();
