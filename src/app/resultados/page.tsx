@@ -75,6 +75,19 @@ export default function Resultados() {
   if (!user) return null;
 
   const isAdmin = isRH(user) || user.role === "c_level";
+  const isLeader = isAdmin || user.role === "diretor" || user.role === "coordenador";
+
+  if (!isLeader) {
+    return (
+      <AppShell>
+        <div className="text-center py-16">
+          <BarChart3 className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+          <h2 className="text-lg font-semibold text-gray-900">Sem permissão</h2>
+          <p className="text-gray-500 mt-1">Esta página é restrita para lideranças.</p>
+        </div>
+      </AppShell>
+    );
+  }
 
   const questions = getQuestions();
   // RH/C-Level see everyone, others see only their subordinates

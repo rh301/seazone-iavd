@@ -57,12 +57,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               >
                 Minhas Notas
               </a>
-              <a
-                href="/resultados"
-                className="text-white/80 hover:text-white transition text-sm font-medium"
-              >
-                Resultados
-              </a>
+              {(canCalibrate(user) || ["diretor", "coordenador"].includes(user.role)) && (
+                <a
+                  href="/resultados"
+                  className="text-white/80 hover:text-white transition text-sm font-medium"
+                >
+                  Resultados
+                </a>
+              )}
               {(canCalibrate(user) || ["diretor", "coordenador"].includes(user.role)) && (
                 <a
                   href="/agenda-calibracao"
