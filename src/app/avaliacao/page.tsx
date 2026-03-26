@@ -15,7 +15,10 @@ import {
   Users,
   UserCheck,
   Star,
+  Award,
+  X,
 } from "lucide-react";
+import { medals } from "@/data/medals";
 import AppShell from "@/components/app-shell";
 import {
   Evaluation,
@@ -43,7 +46,16 @@ export default function AvaliacaoPage() {
   const [search, setSearch] = useState("");
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [tasks, setTasks] = useState<EvaluationTask[]>([]);
+  const [showMedalsFor, setShowMedalsFor] = useState<string | null>(null);
   const router = useRouter();
+
+  function getMedalsForPerson(evaluateeId: string, evaluateeName: string) {
+    return medals.filter(
+      (m) => m.employeeId === evaluateeId ||
+        evaluateeId.startsWith(m.employeeId) ||
+        m.employeeEmail.toLowerCase().split("@")[0].replace(".", "-") === evaluateeName.toLowerCase().split(" ").slice(0, 2).join("-").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    );
+  }
 
   useEffect(() => {
     if (!user) return;
@@ -193,10 +205,10 @@ export default function AvaliacaoPage() {
                     const isInProgress = evalData?.status === "em_andamento";
 
                     return (
+                      <div key={`${task.evaluationType}-${task.evaluateeId}`} className="space-y-1">
                       <button
-                        key={`${task.evaluationType}-${task.evaluateeId}`}
                         onClick={() => startOrContinue(task)}
-                        className="group bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md hover:border-primary/20 transition text-left"
+                        className="w-full group bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md hover:border-primary/20 transition text-left"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
@@ -216,9 +228,28 @@ export default function AvaliacaoPage() {
                               </div>
                             )}
                             <div className="min-w-0">
-                              <h3 className="font-semibold text-gray-900 text-sm truncate">
-                                {task.evaluateeName}
-                              </h3>
+                              <div className="flex items-center gap-1.5">
+                                <h3 className="font-semibold text-gray-900 text-sm truncate">
+                                  {task.evaluateeName}
+                                </h3>
+                                {(() => {
+                                  const personMedals = getMedalsForPerson(task.evaluateeId, task.evaluateeName);
+                                  if (personMedals.length === 0) return null;
+                                  return (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowMedalsFor(showMedalsFor === task.evaluateeId ? null : task.evaluateeId);
+                                      }}
+                                      className="flex items-center gap-0.5 text-secondary hover:text-secondary/80 transition shrink-0"
+                                      title={`${personMedals.length} medalha(s)`}
+                                    >
+                                      <Award className="w-3.5 h-3.5" />
+                                      <span className="text-xs font-bold">{personMedals.length}</span>
+                                    </button>
+                                  );
+                                })()}
+                              </div>
                               <p className="text-xs text-gray-500 truncate">
                                 {task.evaluateeCargo}
                               </p>
@@ -242,6 +273,36 @@ export default function AvaliacaoPage() {
                           </div>
                         </div>
                       </button>
+                      {/* Medals panel */}
+                      {showMedalsFor === task.evaluateeId && (() => {
+                        const personMedals = getMedalsForPerson(task.evaluateeId, task.evaluateeName);
+                        return (
+                          <div className="bg-secondary/5 border border-secondary/20 rounded-xl p-4 -mt-1">
+                            <div className="flex items-center justify-between mb-3">
+                              <h4 className="text-sm font-semibold text-secondary flex items-center gap-1.5">
+                                <Award className="w-4 h-4" />
+                                Medalhas de {task.evaluateeName.split(" ")[0]}
+                              </h4>
+                              <button onClick={() => setShowMedalsFor(null)} className="text-gray-400 hover:text-gray-600">
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                              {personMedals.map((medal, idx) => (
+                                <div key={idx} className="bg-white rounded-lg p-2.5 border border-secondary/10">
+                                  <div className="flex items-center justify-between mb-0.5">
+                                    <span className="text-xs font-semibold text-secondary">{medal.habilidade}</span>
+                                    <span className="text-[10px] text-gray-400">{medal.data}</span>
+                                  </div>
+                                  <p className="text-xs text-gray-600 line-clamp-2">{medal.justificativa}</p>
+                                  <p className="text-[10px] text-gray-400 mt-0.5">por {medal.quemEnviou}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                      </div>
                     );
                   })}
                 </div>

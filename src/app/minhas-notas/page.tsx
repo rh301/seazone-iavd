@@ -100,7 +100,7 @@ export default function MinhasNotasPage() {
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Minhas Notas</h1>
           <p className="text-gray-500 mt-1">
-            Veja as avaliações que fizeram sobre você
+            Veja sua nota final da Avaliação de Desempenho
           </p>
         </div>
 
@@ -135,7 +135,7 @@ export default function MinhasNotasPage() {
         {hasData && (
           <div className="space-y-3">
             <h2 className="font-semibold text-gray-900 mb-4">
-              Avaliação do seu gestor
+              Nota da AVD
             </h2>
             {evaluations.map((ev) => {
               const avg = getScore(ev);
@@ -157,10 +157,10 @@ export default function MinhasNotasPage() {
                     <div className="flex items-center gap-3">
                       <div className="text-sm">
                         <p className="font-medium text-gray-900">
-                          {evaluator?.name || "Gestor"}
+                          Nota da AVD
                         </p>
                         <p className="text-xs text-gray-500">
-                          {ev.date}
+                          Ciclo {ev.date}
                         </p>
                       </div>
                     </div>
