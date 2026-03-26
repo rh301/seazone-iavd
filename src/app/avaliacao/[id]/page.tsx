@@ -232,9 +232,10 @@ export default function AvaliacaoPage({
           evaluatorSector: currentUser?.sector || "",
           evaluateeSector: employee?.sector || "",
           evaluateeCargo: employee?.cargo || "",
-          employeeMedals: medals
-            .filter((m) => m.employeeId === evaluation!.employeeId || m.employeeEmail.toLowerCase().split("@")[0] === employee?.name.toLowerCase().split(" ")[0])
-            .map((m) => `${m.habilidade}: "${m.justificativa}" (por ${m.quemEnviou}, ${m.data})`),
+          employeeMedals: (employee?.email
+            ? medals.filter((m) => m.employeeEmail.toLowerCase() === employee.email!.toLowerCase())
+            : []
+          ).map((m) => `${m.habilidade}: "${m.justificativa}" (por ${m.quemEnviou}, ${m.data})`),
         }),
       });
 
@@ -392,10 +393,10 @@ export default function AvaliacaoPage({
 
         {/* Medals of the person being evaluated */}
         {(() => {
-          const personMedals = medals.filter(
-            (m) => m.employeeId === evaluation.employeeId ||
-              m.employeeEmail.toLowerCase().split("@")[0] === employee?.name.toLowerCase().split(" ")[0]
-          );
+          const employeeEmail = employee?.email?.toLowerCase() || "";
+          const personMedals = employeeEmail
+            ? medals.filter((m) => m.employeeEmail.toLowerCase() === employeeEmail)
+            : [];
           if (personMedals.length === 0) return null;
           return (
             <details className="mb-6 bg-secondary/5 border border-secondary/10 rounded-xl p-4 group">

@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { getRequiredEvaluations, type EvaluationTask } from "@/lib/permissions";
 import { getQuestions, createEmptyAnswers } from "@/lib/store";
 import { fetchEvaluationsByEvaluator, fetchPeerAssignments, upsertEvaluation } from "@/lib/db";
+import { findUser } from "@/lib/org-tree";
 import {
   Search,
   ArrowRight,
@@ -49,12 +50,11 @@ export default function AvaliacaoPage() {
   const [showMedalsFor, setShowMedalsFor] = useState<string | null>(null);
   const router = useRouter();
 
-  function getMedalsForPerson(evaluateeId: string, evaluateeName: string) {
-    return medals.filter(
-      (m) => m.employeeId === evaluateeId ||
-        evaluateeId.startsWith(m.employeeId) ||
-        m.employeeEmail.toLowerCase().split("@")[0].replace(".", "-") === evaluateeName.toLowerCase().split(" ").slice(0, 2).join("-").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    );
+  function getMedalsForPerson(evaluateeId: string) {
+    const userData = findUser(evaluateeId);
+    if (!userData?.email) return [];
+    const email = userData.email.toLowerCase();
+    return medals.filter((m) => m.employeeEmail.toLowerCase() === email);
   }
 
   useEffect(() => {
@@ -233,7 +233,7 @@ export default function AvaliacaoPage() {
                                   {task.evaluateeName}
                                 </h3>
                                 {(() => {
-                                  const personMedals = getMedalsForPerson(task.evaluateeId, task.evaluateeName);
+                                  const personMedals = getMedalsForPerson(task.evaluateeId);
                                   if (personMedals.length === 0) return null;
                                   return (
                                     <button
@@ -275,7 +275,7 @@ export default function AvaliacaoPage() {
                       </button>
                       {/* Medals panel */}
                       {showMedalsFor === task.evaluateeId && (() => {
-                        const personMedals = getMedalsForPerson(task.evaluateeId, task.evaluateeName);
+                        const personMedals = getMedalsForPerson(task.evaluateeId);
                         return (
                           <div className="bg-secondary/5 border border-secondary/20 rounded-xl p-4 -mt-1">
                             <div className="flex items-center justify-between mb-3">

@@ -278,11 +278,12 @@ export default function CalibracaoPage() {
               const lideradoEvals = completedEvals.filter((e) => e.evaluationType === "liderado");
               const gestorAvg = gestorEval ? getAvgForEval(gestorEval) : null;
 
-              // Medals for this person (match by id or email prefix)
-              const personMedals = medals.filter(
-                (m) => m.employeeId === empId ||
-                  m.employeeEmail.toLowerCase().startsWith(emp.name.toLowerCase().split(" ")[0])
-              );
+              // Medals for this person (match by email)
+              const empData = findUser(empId);
+              const empEmail = empData?.email?.toLowerCase() || "";
+              const personMedals = empEmail
+                ? medals.filter((m) => m.employeeEmail.toLowerCase() === empEmail)
+                : [];
 
               return (
                 <div key={empId} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
