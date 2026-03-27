@@ -93,24 +93,26 @@ export default function AgendaCalibracao() {
     setTimeout(() => setExpandedNodes(initial), 0);
   }
 
-  // Calculate times depth-first, respecting per-team start times
+  // Calculate default times depth-first, but allow per-person overrides
+  const personSchedules = schedule.personSchedules || {};
   const timeMap = new Map<string, string>();
-  const dateMap = new Map<string, string>(); // personId -> date label
+  const dateMap = new Map<string, string>();
 
-  // Walk each root team separately with its own start time
-  for (const root of [...roots].sort((a, b) => a.name.localeCompare(b.name))) {
-    const teamSchedule = getAreaSchedule(root.name || root.id);
-    let teamIdx = 0;
-
-    function walkForTime(personId: string) {
-      timeMap.set(personId, addMinutes(teamSchedule.startTime, teamIdx * schedule.minutesPerPerson));
-      if (teamSchedule.date) dateMap.set(personId, teamSchedule.date);
-      teamIdx++;
-      const children = (childrenMap.get(personId) || []).sort((a, b) => a.name.localeCompare(b.name));
-      for (const c of children) walkForTime(c.id);
+  let globalIdx = 0;
+  function walkForTime(personId: string) {
+    const ps = personSchedules[personId];
+    if (ps) {
+      timeMap.set(personId, ps.time);
+      dateMap.set(personId, ps.date);
+    } else {
+      timeMap.set(personId, addMinutes(schedule.startTime, globalIdx * schedule.minutesPerPerson));
+      if (schedule.date) dateMap.set(personId, schedule.date);
     }
-    walkForTime(root.id);
+    globalIdx++;
+    const children = (childrenMap.get(personId) || []).sort((a, b) => a.name.localeCompare(b.name));
+    for (const c of children) walkForTime(c.id);
   }
+  for (const root of [...roots].sort((a, b) => a.name.localeCompare(b.name))) walkForTime(root.id);
 
   // Calibrated tracking
   const calibratedSet = new Set<string>(
@@ -122,23 +124,22 @@ export default function AgendaCalibracao() {
     await saveCalibrationSchedule(updated);
   }
 
-  function getAreaSchedule(areaName: string): { date: string; startTime: string } {
-    const area = schedule.areas.find((a) => a.area === areaName);
-    return {
-      date: area?.date || schedule.date,
-      startTime: area?.startTime || schedule.startTime,
+  function setPersonSchedule(personId: string, field: "date" | "time", value: string) {
+    const updated = { ...schedule };
+    const ps = { ...(updated.personSchedules || {}) };
+    ps[personId] = {
+      date: field === "date" ? value : (ps[personId]?.date || schedule.date || ""),
+      time: field === "time" ? value : (ps[personId]?.time || timeMap.get(personId) || schedule.startTime),
     };
+    updated.personSchedules = ps;
+    save(updated);
   }
 
-  function setAreaSchedule(areaName: string, field: "date" | "startTime", value: string) {
-    const updated = { ...schedule, areas: schedule.areas.map((a) => ({ ...a })) };
-    let area = updated.areas.find((a) => a.area === areaName);
-    if (!area) {
-      area = { area: areaName, totalPeople: 0, calibratedPeople: [], order: 0, updatedBy: "", updatedAt: "" };
-      updated.areas.push(area);
-    }
-    if (field === "date") area.date = value;
-    else area.startTime = value;
+  function clearPersonSchedule(personId: string) {
+    const updated = { ...schedule };
+    const ps = { ...(updated.personSchedules || {}) };
+    delete ps[personId];
+    updated.personSchedules = ps;
     save(updated);
   }
 
@@ -233,9 +234,36 @@ export default function AgendaCalibracao() {
             </div>
           )}
 
-          <span className="text-[10px] text-gray-400 shrink-0 font-mono" title={dateMap.get(person.id) || ""}>
-            {dateMap.get(person.id) ? new Date(dateMap.get(person.id)! + "T12:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) + " " : ""}{time}
-          </span>
+          {editingScheduleFor === person.id && canEdit ? (
+            <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+              <input
+                type="date"
+                value={personSchedules[person.id]?.date || dateMap.get(person.id) || schedule.date || ""}
+                onChange={(e) => setPersonSchedule(person.id, "date", e.target.value)}
+                className="text-[10px] border border-primary/30 rounded px-1 py-0.5 w-[105px]"
+              />
+              <input
+                type="time"
+                value={personSchedules[person.id]?.time || time}
+                onChange={(e) => setPersonSchedule(person.id, "time", e.target.value)}
+                className="text-[10px] border border-primary/30 rounded px-1 py-0.5 w-[70px]"
+              />
+              {personSchedules[person.id] && (
+                <button onClick={() => clearPersonSchedule(person.id)} className="text-gray-400 hover:text-red-500" title="Restaurar padrão">
+                  <RotateCcw className="w-2.5 h-2.5" />
+                </button>
+              )}
+              <button onClick={() => setEditingScheduleFor(null)} className="text-gray-400 hover:text-gray-600 text-[10px]">OK</button>
+            </div>
+          ) : (
+            <span
+              className={`text-[10px] shrink-0 font-mono cursor-pointer hover:text-primary transition ${personSchedules[person.id] ? "text-primary font-semibold" : "text-gray-400"}`}
+              onClick={(e) => { if (canEdit) { e.stopPropagation(); setEditingScheduleFor(person.id); } }}
+              title={canEdit ? "Clique para editar data/hora" : ""}
+            >
+              {dateMap.get(person.id) ? new Date(dateMap.get(person.id)! + "T12:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) + " " : ""}{time}
+            </span>
+          )}
 
           {person.photoUrl ? (
             <img src={person.photoUrl} alt={person.name} className="w-7 h-7 rounded-full object-cover shrink-0" />
@@ -253,15 +281,6 @@ export default function AgendaCalibracao() {
 
           {team && team.total > 0 && (
             <div className="flex items-center gap-1.5 shrink-0">
-              {canEdit && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setEditingScheduleFor(editingScheduleFor === person.id ? null : person.id); }}
-                  className="text-[10px] text-gray-400 hover:text-primary transition px-1"
-                  title="Alterar data/hora desta equipe"
-                >
-                  <Clock className="w-3 h-3" />
-                </button>
-              )}
               <div className="w-16 bg-gray-100 rounded-full h-1.5">
                 <div className={`h-full rounded-full ${team.calibrated === team.total ? "bg-accent" : "bg-primary"}`} style={{ width: `${(team.calibrated / team.total) * 100}%` }} />
               </div>
@@ -275,39 +294,6 @@ export default function AgendaCalibracao() {
             </button>
           )}
         </div>
-
-        {editingScheduleFor === person.id && canEdit && hasChildren && (() => {
-          const teamSched = getAreaSchedule(person.name || person.id);
-          const areaKey = person.name || person.id;
-          const hasCustom = schedule.areas.some((a) => a.area === areaKey && (a.date || a.startTime));
-          return (
-            <div className="my-1 p-3 bg-blue-50 border-l-2 border-primary rounded-r-lg flex items-center gap-4 flex-wrap" style={{ marginLeft: `${level * 20 + 32}px` }}>
-              <span className="text-xs font-medium text-primary">Agenda de {person.name.split(" ")[0]}:</span>
-              <div className="flex items-center gap-2">
-                <label className="text-[10px] text-gray-500">Data</label>
-                <input
-                  type="date"
-                  value={teamSched.date}
-                  onChange={(e) => setAreaSchedule(areaKey, "date", e.target.value)}
-                  className="text-xs border border-gray-200 rounded-lg px-2 py-1"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-[10px] text-gray-500">Início</label>
-                <input
-                  type="time"
-                  value={teamSched.startTime}
-                  onChange={(e) => setAreaSchedule(areaKey, "startTime", e.target.value)}
-                  className="text-xs border border-gray-200 rounded-lg px-2 py-1"
-                />
-              </div>
-              {hasCustom && (
-                <span className="text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded">customizado</span>
-              )}
-              <button onClick={() => setEditingScheduleFor(null)} className="text-xs text-gray-400 hover:text-gray-600 ml-auto">Fechar</button>
-            </div>
-          );
-        })()}
 
         {isEditing && canEdit && (
           <div className="my-1 p-2.5 bg-primary/5 border-l-2 border-primary rounded-r-lg" style={{ marginLeft: `${level * 20 + 32}px` }}>

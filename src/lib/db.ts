@@ -315,11 +315,17 @@ export interface CalibrationAreaProgress {
   startTime?: string; // HH:mm — override per area
 }
 
-export interface CalibrationScheduleConfig {
+export interface PersonScheduleEntry {
   date: string; // YYYY-MM-DD
-  startTime: string; // HH:mm
+  time: string; // HH:mm
+}
+
+export interface CalibrationScheduleConfig {
+  date: string; // YYYY-MM-DD (default)
+  startTime: string; // HH:mm (default)
   minutesPerPerson: number;
   areas: CalibrationAreaProgress[];
+  personSchedules?: Record<string, PersonScheduleEntry>; // personId -> {date, time}
 }
 
 export async function fetchCalibrationSchedule(): Promise<CalibrationScheduleConfig> {
