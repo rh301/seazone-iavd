@@ -42,6 +42,7 @@ export default function CalibracaoPage() {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [editingManager, setEditingManager] = useState<string | null>(null);
   const [mgrOverrides, setMgrOverrides] = useState<Record<string, string>>({});
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -52,11 +53,12 @@ export default function CalibracaoPage() {
       const overrides = await fetchManagerOverrides();
       setMgrOverrides(overrides);
       setManagerOverrides(overrides);
+      setDataLoaded(true);
     }
     load();
   }, []);
 
-  if (!user) return null;
+  if (!user || !dataLoaded) return null;
 
   if (!canCalibrate(user)) {
     return (

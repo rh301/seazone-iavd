@@ -29,15 +29,6 @@ export const users: UserData[] = [
     "email": "adama.sene@seazone.com.br"
   },
   {
-    "id": "adriano-dalagnelo-junior",
-    "name": "Adriano Dalagnelo Junior",
-    "sector": "Pré-Vendas SZS",
-    "cargo": "Analista de Pré-Vendas SZS",
-    "slackUrl": "https://seazone-fund.slack.com/team/U09V1E035PH",
-    "photoUrl": "https://avatars.slack-edge.com/2025-11-27/10035582506512_dba770dfdef36b6b52d8_512.jpg",
-    "email": "adriano.dalagnelo@seazone.com.br"
-  },
-  {
     "id": "alan-diego-pontizelli",
     "name": "Alan Diego Pontizelli",
     "sector": "Finanças",
@@ -227,15 +218,6 @@ export const users: UserData[] = [
     "email": "anderson.pimentel@seazone.com.br"
   },
   {
-    "id": "andre-bacelar-ribeiro-oliveira",
-    "name": "André Bacelar Ribeiro Oliveira",
-    "sector": "Planejamento Financeiro",
-    "cargo": "Especialista de Planejamento Financeiro",
-    "slackUrl": "https://seazone-fund.slack.com/team/U0ADYV034BZ",
-    "photoUrl": "https://avatars.slack-edge.com/2026-02-11/10490752441650_0c84924f7d50998db230_512.jpg",
-    "email": null
-  },
-  {
     "id": "andressa-jeniffer-manoel-sindarsic",
     "name": "Andressa Jeniffer Manoel Sindarsic",
     "sector": "Orçamento Lançamentos",
@@ -306,15 +288,6 @@ export const users: UserData[] = [
     "slackUrl": "https://seazone-fund.slack.com/team/U09NFRDE3RC",
     "photoUrl": "https://avatars.slack-edge.com/2025-10-27/9786426482500_c50d38f66d071b620edf_512.jpg",
     "email": "aridan.pantoja@seazone.com.br"
-  },
-  {
-    "id": "arilo-claudio-dias-neto",
-    "name": "Arilo Claudio Dias Neto",
-    "sector": "Tecnologia",
-    "cargo": "CTO",
-    "slackUrl": "https://seazone-fund.slack.com/team/U071PNR5ACW",
-    "photoUrl": "https://avatars.slack-edge.com/2024-05-03/7064451402114_48eaf0a3b8d6b5700454_512.jpg",
-    "email": null
   },
   {
     "id": "arthur-sergio-goncalves-dos-santos",
@@ -495,15 +468,6 @@ export const users: UserData[] = [
     "slackUrl": "https://seazone-fund.slack.com/team/U07NFV502UQ",
     "photoUrl": "https://avatars.slack-edge.com/2024-10-04/7829745040789_ccee38a3f86042ac6a68_512.jpg",
     "email": "camila.fernanda@seazone.com.br"
-  },
-  {
-    "id": "camila-silva-santos",
-    "name": "Camila Silva Santos",
-    "sector": "Vendas SZI",
-    "cargo": "Analista de Vendas SZI",
-    "slackUrl": "https://seazone-fund.slack.com/team/U0952S3FHKL",
-    "photoUrl": "https://avatars.slack-edge.com/2025-07-09/9173751153458_80f60fc61efd4db78afb_512.png",
-    "email": "camila.santos@seazone.com.br"
   },
   {
     "id": "camilla-mendonca-pereira-torres",
@@ -720,15 +684,6 @@ export const users: UserData[] = [
     "slackUrl": "https://seazone-fund.slack.com/team/U08CTERRSH1",
     "photoUrl": "https://avatars.slack-edge.com/2025-02-16/8446933748007_48291ce924ac46cf74bc_512.jpg",
     "email": "daniele.rocha@seazone.com.br"
-  },
-  {
-    "id": "davi-dias-millan",
-    "name": "Davi Dias Millan",
-    "sector": "Prospecção de Terrenos",
-    "cargo": "Analista de Prospecção de Terrenos Hunter",
-    "slackUrl": "https://seazone-fund.slack.com/team/U09CU63ATHS",
-    "photoUrl": "https://avatars.slack-edge.com/2025-09-22/9576453741521_1565b38f7246a429d239_512.png",
-    "email": "davi.millan@seazone.com.br"
   },
   {
     "id": "david-barbosa-soares",
@@ -1251,15 +1206,6 @@ export const users: UserData[] = [
     "slackUrl": "https://seazone-fund.slack.com/team/U09TS4BLYRY",
     "photoUrl": "https://avatars.slack-edge.com/2025-11-25/10004475874833_49e3b199c64d880708b6_512.jpg",
     "email": "gustavo.barbosa@seazone.com.br"
-  },
-  {
-    "id": "hannah-nery-campanario",
-    "name": "Hannah Nery Campanario",
-    "sector": "Contas a Pagar",
-    "cargo": "Especialista Financeiro Contas a Pagar",
-    "slackUrl": "https://seazone-fund.slack.com/team/U08AVMCUJR4",
-    "photoUrl": "https://avatars.slack-edge.com/2025-05-27/8970351064593_8a3b2ce0ad4c10d3a931_512.jpg",
-    "email": "hannah.campanario@seazone.com.br"
   },
   {
     "id": "helena-mayumi-tomokane",
@@ -1802,15 +1748,6 @@ export const users: UserData[] = [
     "email": "laura.almeida@seazone.com.br"
   },
   {
-    "id": "laura-danieli",
-    "name": "Laura Danieli",
-    "sector": "Vendas SZI",
-    "cargo": "Analista de Vendas SZI",
-    "slackUrl": "https://seazone-fund.slack.com/team/U09FMREE3JR",
-    "photoUrl": "https://avatars.slack-edge.com/2025-10-03/9637798586212_7d55c4f0a2c6c03a466d_512.jpg",
-    "email": "laura.danieli@seazone.com.br"
-  },
-  {
     "id": "laura-nunes-moraes",
     "name": "Laura Nunes Moraes",
     "sector": "Contas a Receber",
@@ -2153,15 +2090,6 @@ export const users: UserData[] = [
     "email": "maria.guarneri@seazone.com.br"
   },
   {
-    "id": "maria-rita-francielle-gomes",
-    "name": "Maria Rita Francielle Gomes",
-    "sector": "Growth",
-    "cargo": "Especialista de Growth",
-    "slackUrl": "https://seazone-fund.slack.com/team/U08TW5XG952",
-    "photoUrl": "https://avatars.slack-edge.com/2025-05-26/8946114105878_98093791ee930779b868_512.jpg",
-    "email": "maria.gomes@seazone.com.br"
-  },
-  {
     "id": "maria-rosilene-de-oliveira-silvestre",
     "name": "Maria Rosilene de Oliveira Silvestre",
     "sector": "Treinamento Franquias",
@@ -2340,15 +2268,6 @@ export const users: UserData[] = [
     "slackUrl": "https://seazone-fund.slack.com/team/U08VCAX1Z3R",
     "photoUrl": "https://avatars.slack-edge.com/2025-12-01/10030128314866_3043271b260bdb3386d3_512.jpg",
     "email": "mickael.lucena@seazone.com.br"
-  },
-  {
-    "id": "monica-caroline-mendes-reggiani-diniz",
-    "name": "Monica Caroline Mendes Reggiani Diniz",
-    "sector": "Decor",
-    "cargo": "Analista de Interiores Decor",
-    "slackUrl": "https://seazone-fund.slack.com/team/U0A8H79EL4T",
-    "photoUrl": "https://avatars.slack-edge.com/2026-02-02/10414665192819_700721522d877afa7319_512.jpg",
-    "email": "monica.reggiani@seazone.com.br"
   },
   {
     "id": "monica-medeiros-gaspar-de-souza",
@@ -2765,15 +2684,6 @@ export const users: UserData[] = [
     "email": "renato.lousan@seazone.com.br"
   },
   {
-    "id": "rhana-marcela-de-oliveira",
-    "name": "Rhana Marcela de Oliveira",
-    "sector": "Jurídico SZS",
-    "cargo": "Analista Jurídico",
-    "slackUrl": "https://seazone-fund.slack.com/team/U09CY0K911V",
-    "photoUrl": "https://avatars.slack-edge.com/2025-09-05/9493987498688_be6195f393330b917f75_512.png",
-    "email": "rhana.oliveira@seazone.com.br"
-  },
-  {
     "id": "rian-gabriel-andrade-ribeiro",
     "name": "Rian Gabriel Andrade Ribeiro",
     "sector": "Comercial Tech",
@@ -2898,15 +2808,6 @@ export const users: UserData[] = [
     "slackUrl": "https://seazone-fund.slack.com/team/U08NLPPPJ1J",
     "photoUrl": "https://avatars.slack-edge.com/2025-04-24/8799135170101_fc791d587cd05603454e_512.jpg",
     "email": "sabrina.michelin@seazone.com.br"
-  },
-  {
-    "id": "samuel-da-silva-barreto",
-    "name": "Samuel da Silva Barreto",
-    "sector": "Vendas SZS",
-    "cargo": "Analista de Vendas SZS",
-    "slackUrl": "https://seazone-fund.slack.com/team/U09CY0NKRPH",
-    "photoUrl": "https://avatars.slack-edge.com/2025-11-24/10011972945280_0fab39c8aeef4741c6e7_512.png",
-    "email": "samuel.barreto@seazone.com.br"
   },
   {
     "id": "sandd-lopes-oliveira-campos",
@@ -3089,15 +2990,6 @@ export const users: UserData[] = [
     "email": "victoria.magri@seazone.com.br"
   },
   {
-    "id": "victoria-mergulhao-de-oliveira-rosa",
-    "name": "Victória Mergulhão de Oliveira Rosa",
-    "sector": "Growth",
-    "cargo": "Analista de Marketing Digital",
-    "slackUrl": "https://seazone-fund.slack.com/team/U07MT4G4T5Y",
-    "photoUrl": "https://avatars.slack-edge.com/2024-09-17/7764960156976_3ecb306f92dd7e396dfc_512.jpg",
-    "email": null
-  },
-  {
     "id": "victoria-rodrigues-pinto",
     "name": "Victoria Rodrigues Pinto",
     "sector": "BP Ops",
@@ -3222,5 +3114,32 @@ export const users: UserData[] = [
     "slackUrl": "https://seazone-fund.slack.com/team/U06ELEKTZRB",
     "photoUrl": "https://avatars.slack-edge.com/2024-01-22/6521333155233_1c17a89405d43fc196ce_512.jpg",
     "email": "yuri.quinto@seazone.com.br"
+  },
+  {
+    "id": "andria-de-siqueira-bento",
+    "name": "Ândria de Siqueira Bento",
+    "sector": "Decor",
+    "cargo": "Sem cargo",
+    "slackUrl": null,
+    "photoUrl": null,
+    "email": "andria.siqueira@seazone.com.br"
+  },
+  {
+    "id": "bryan-neves-pinto",
+    "name": "Bryan Neves Pinto",
+    "sector": "IA Tech",
+    "cargo": "Sem cargo",
+    "slackUrl": null,
+    "photoUrl": "https://avatars.slack-edge.com/2026-03-19/10762890692752_845c8cccff02c47eb76d_512.jpg",
+    "email": "bryan.neves@seazone.com.br"
+  },
+  {
+    "id": "bruno-burghera-da-silva",
+    "name": "Bruno Burghera da Silva",
+    "sector": "Vendas Expansão Construtoras",
+    "cargo": "Sem cargo",
+    "slackUrl": null,
+    "photoUrl": "https://secure.gravatar.com/avatar/51e1f5803c69f0db21e56f212b0ab317.jpg?s=512&d=https%3A%2F%2Fa.slack-edge.com%2Fdf10d%2Fimg%2Favatars%2Fava_0024-512.png",
+    "email": "bruno.burghera@seazone.com.br"
   }
 ];
