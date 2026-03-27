@@ -311,6 +311,8 @@ export interface CalibrationAreaProgress {
   order: number;
   updatedBy: string;
   updatedAt: string;
+  date?: string; // YYYY-MM-DD — override per area (if different from global)
+  startTime?: string; // HH:mm — override per area
 }
 
 export interface CalibrationScheduleConfig {
