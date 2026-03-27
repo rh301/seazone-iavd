@@ -26,6 +26,11 @@ import {
   Percent,
   AlertCircle,
   Filter,
+  BookOpen,
+  Copy,
+  ThumbsUp,
+  Target,
+  MessageSquare,
 } from "lucide-react";
 
 type PersonResult = {
@@ -42,6 +47,62 @@ type PersonResult = {
 };
 
 const typeOrder: EvaluationType[] = ["auto", "gestor", "par", "liderado"];
+
+function generateFeedbackGuide(
+  person: PersonResult,
+  questions: { id: string; title: string; category: string }[]
+): { strengths: string[]; developments: string[]; conversation: string[]; summary: string } {
+  const scored = questions
+    .map((q) => ({ ...q, score: person.avgByQuestion[q.id] }))
+    .filter((q) => q.score !== null) as { id: string; title: string; category: string; score: number }[];
+
+  const sorted = [...scored].sort((a, b) => b.score - a.score);
+  const strengths = sorted.filter((q) => q.score >= 3.5).slice(0, 3);
+  const developments = [...scored].sort((a, b) => a.score - b.score).filter((q) => q.score < 3.5).slice(0, 3);
+
+  const gradeLabel = (s: number) => s >= 4.5 ? "A" : s >= 3.5 ? "B" : s >= 2.5 ? "C" : s >= 1.5 ? "D" : "E";
+
+  // Check auto vs gestor gap
+  const autoAvg = person.avgByType["auto"];
+  const gestorAvg = person.avgByType["gestor"];
+  const selfInflation = autoAvg && gestorAvg ? autoAvg - gestorAvg : 0;
+
+  const strengthLines = strengths.map((q) =>
+    `${q.category} (${gradeLabel(q.score)}): Reconheça o desempenho. Peça exemplos de como pode continuar evoluindo e influenciar outros.`
+  );
+
+  const devLines = developments.map((q) => {
+    if (q.score < 1.5) return `${q.category} (${gradeLabel(q.score)}): Ponto crítico. Aborde com cuidado e construa um plano de ação concreto com metas de curto prazo.`;
+    if (q.score < 2.5) return `${q.category} (${gradeLabel(q.score)}): Abaixo do esperado. Pergunte quais barreiras a pessoa percebe e ofereça suporte específico.`;
+    return `${q.category} (${gradeLabel(q.score)}): Próximo do esperado mas com espaço para crescer. Sugira comportamentos específicos para evoluir.`;
+  });
+
+  const conversation = [
+    "1. Comece reconhecendo os pontos fortes — isso cria abertura para ouvir.",
+    `2. Apresente os ${developments.length} pontos de desenvolvimento com exemplos concretos.`,
+    "3. Para cada ponto, pergunte a percepção da pessoa antes de dar sua visão.",
+    "4. Construa junto um plano com 2-3 ações práticas e prazos.",
+    "5. Encerre reforçando o que a pessoa faz bem e o que você espera nos próximos meses.",
+  ];
+
+  if (selfInflation > 0.8) {
+    conversation.push(
+      `⚠️ Atenção: a autoavaliação está ${selfInflation.toFixed(1)} pontos acima da avaliação do gestor. Aborde o gap de percepção com cuidado — pergunte como a pessoa se enxerga e traga evidências do dia a dia.`
+    );
+  }
+
+  const overall = person.overallAvg;
+  const summary = overall !== null
+    ? `${person.name.split(" ")[0]} tem conceito geral ${gradeLabel(overall)}. ${
+        overall >= 4 ? "Desempenho acima do esperado — foque em como manter e ampliar o impacto." :
+        overall >= 3 ? "Desempenho dentro do esperado — reconheça e direcione evolução nos pontos de desenvolvimento." :
+        overall >= 2 ? "Desempenho abaixo do esperado — a conversa precisa ser franca, com plano de melhoria claro." :
+        "Desempenho crítico — considere acompanhamento próximo e plano de recuperação com prazos definidos."
+      }`
+    : "";
+
+  return { strengths: strengthLines, developments: devLines, conversation, summary };
+}
 
 function getEffectiveScore(ev: Evaluation, questionId: string): number | null {
   if (ev.calibration?.entries[questionId]) {
@@ -63,6 +124,7 @@ export default function Resultados() {
   const [sectorFilter, setSectorFilter] = useState("todas");
   const [statusFilter, setStatusFilter] = useState("todas");
   const [expandedPerson, setExpandedPerson] = useState<string | null>(null);
+  const [showFeedbackFor, setShowFeedbackFor] = useState<string | null>(null);
   const [resultsAccess, setResultsAccess] = useState<Record<string, string[]>>({});
   const [accessLoaded, setAccessLoaded] = useState(false);
 
@@ -796,6 +858,109 @@ export default function Resultados() {
                           </tbody>
                         </table>
                       </div>
+
+                      {/* Feedback Guide button */}
+                      <div className="mt-4 pt-4 border-t border-gray-100">
+                        <button
+                          onClick={() => setShowFeedbackFor(showFeedbackFor === p.id ? null : p.id)}
+                          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition ${
+                            showFeedbackFor === p.id
+                              ? "bg-primary text-white"
+                              : "border border-primary/20 text-primary hover:bg-primary/5"
+                          }`}
+                        >
+                          <BookOpen className="w-4 h-4" />
+                          Manual de Feedback
+                        </button>
+                      </div>
+
+                      {/* Feedback Guide content */}
+                      {showFeedbackFor === p.id && (() => {
+                        const guide = generateFeedbackGuide(p, questions);
+                        const fullText = [
+                          `MANUAL DE FEEDBACK — ${p.name}`,
+                          `${p.cargo} · ${p.sector}`,
+                          "",
+                          `RESUMO: ${guide.summary}`,
+                          "",
+                          "PONTOS FORTES:",
+                          ...guide.strengths.map(s => `• ${s}`),
+                          "",
+                          "PONTOS DE DESENVOLVIMENTO:",
+                          ...guide.developments.map(s => `• ${s}`),
+                          "",
+                          "ROTEIRO DA CONVERSA:",
+                          ...guide.conversation,
+                        ].join("\n");
+
+                        return (
+                          <div className="mt-4 bg-gray-50 rounded-xl p-5 space-y-5">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                                <BookOpen className="w-4 h-4 text-primary" />
+                                Manual de Feedback — {p.name.split(" ")[0]}
+                              </h4>
+                              <button
+                                onClick={() => { navigator.clipboard.writeText(fullText); alert("Copiado!"); }}
+                                className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-primary transition px-3 py-1.5 border border-gray-200 rounded-lg"
+                              >
+                                <Copy className="w-3.5 h-3.5" />
+                                Copiar
+                              </button>
+                            </div>
+
+                            <p className="text-sm text-gray-600 bg-white rounded-lg p-3 border border-gray-100">
+                              {guide.summary}
+                            </p>
+
+                            {guide.strengths.length > 0 && (
+                              <div>
+                                <h5 className="text-sm font-semibold text-gray-800 flex items-center gap-1.5 mb-2">
+                                  <ThumbsUp className="w-3.5 h-3.5 text-accent" />
+                                  Pontos Fortes — Reconheça
+                                </h5>
+                                <div className="space-y-1.5">
+                                  {guide.strengths.map((s, i) => (
+                                    <div key={i} className="text-sm text-gray-600 bg-accent/5 border border-accent/10 rounded-lg p-3">
+                                      {s}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {guide.developments.length > 0 && (
+                              <div>
+                                <h5 className="text-sm font-semibold text-gray-800 flex items-center gap-1.5 mb-2">
+                                  <Target className="w-3.5 h-3.5 text-secondary" />
+                                  Pontos de Desenvolvimento — Trabalhe junto
+                                </h5>
+                                <div className="space-y-1.5">
+                                  {guide.developments.map((s, i) => (
+                                    <div key={i} className="text-sm text-gray-600 bg-secondary/5 border border-secondary/10 rounded-lg p-3">
+                                      {s}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            <div>
+                              <h5 className="text-sm font-semibold text-gray-800 flex items-center gap-1.5 mb-2">
+                                <MessageSquare className="w-3.5 h-3.5 text-primary" />
+                                Roteiro da Conversa
+                              </h5>
+                              <div className="space-y-1.5">
+                                {guide.conversation.map((s, i) => (
+                                  <div key={i} className={`text-sm p-3 rounded-lg ${s.startsWith("⚠️") ? "bg-amber-50 border border-amber-200 text-amber-800" : "bg-white border border-gray-100 text-gray-600"}`}>
+                                    {s}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
