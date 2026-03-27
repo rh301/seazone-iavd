@@ -1,4 +1,4 @@
-// Auto-generated from organograma.csv — DO NOT EDIT
+// Auto-generated from organograma — synced 2026-03-27
 export interface Sector {
   name: string;
   parentSector: string | null;
@@ -19,7 +19,7 @@ export const sectors: Sector[] = [
   {
     "name": "CFO",
     "parentSector": "Holding",
-    "responsavelName": "Gustavo Cargnin Kremer"
+    "responsavelName": "Fernando Silva Pereira"
   },
   {
     "name": "COO",
@@ -39,7 +39,7 @@ export const sectors: Sector[] = [
   {
     "name": "Expansão",
     "parentSector": "Holding",
-    "responsavelName": "Caio Pereira Panissi"
+    "responsavelName": "Matheus Alberto Ambrosi"
   },
   {
     "name": "CCO",
@@ -59,22 +59,22 @@ export const sectors: Sector[] = [
   {
     "name": "Investimentos",
     "parentSector": "Holding",
-    "responsavelName": "Matheus Alberto Ambrosi"
+    "responsavelName": "Tatiana Barros de Andrade Mello Gonçalves de Souza"
   },
   {
     "name": "Finanças",
     "parentSector": "CFO",
-    "responsavelName": "Alan Diego Pontizelli"
+    "responsavelName": "Gustavo Cargnin Kremer"
   },
   {
     "name": "People",
     "parentSector": "CFO",
-    "responsavelName": "Mario Lopes de Andrade"
+    "responsavelName": "Gustavo Cargnin Kremer"
   },
   {
     "name": "Informação e Inteligência",
     "parentSector": "COO",
-    "responsavelName": "Cesar Augusto Ramos de Carvalho"
+    "responsavelName": "Bruno Eduardo Benetti"
   },
   {
     "name": "Marketplace",
@@ -89,7 +89,7 @@ export const sectors: Sector[] = [
   {
     "name": "Decor Expansão",
     "parentSector": "Comercial",
-    "responsavelName": "Gabriela de Oliveira Costa"
+    "responsavelName": "João Pedro Sabino Coutinho"
   },
   {
     "name": "Marketing",
@@ -99,12 +99,12 @@ export const sectors: Sector[] = [
   {
     "name": "Parcerias",
     "parentSector": "COO",
-    "responsavelName": "Débora Ariel Brodt da Silva"
+    "responsavelName": "Bruno Eduardo Benetti"
   },
   {
     "name": "Operação",
     "parentSector": "COO",
-    "responsavelName": "Iara Araujo de Moraes"
+    "responsavelName": "Fernando Silva Pereira"
   },
   {
     "name": "Estruturação",
@@ -114,12 +114,12 @@ export const sectors: Sector[] = [
   {
     "name": "Obra",
     "parentSector": "Investimentos",
-    "responsavelName": "Francisco Eduardo Quilice"
+    "responsavelName": "Tatiana Barros de Andrade Mello Gonçalves de Souza"
   },
   {
     "name": "Gestão de Projetos",
     "parentSector": "Investimentos",
-    "responsavelName": "Cristiane Araújo Figueira"
+    "responsavelName": "Tatiana Barros de Andrade Mello Gonçalves de Souza"
   },
   {
     "name": "Jurídico",
@@ -129,7 +129,7 @@ export const sectors: Sector[] = [
   {
     "name": "Dados",
     "parentSector": "Tecnologia",
-    "responsavelName": "Anderson Pimentel dos Santos"
+    "responsavelName": "Bruno Eduardo Benetti"
   },
   {
     "name": "Comercial SZS",
@@ -144,7 +144,7 @@ export const sectors: Sector[] = [
   {
     "name": "Desenvolvimento Web",
     "parentSector": "Tecnologia",
-    "responsavelName": "Roberto Cavalcanti Campos Neto"
+    "responsavelName": "Bruno Eduardo Benetti"
   },
   {
     "name": "Produto",
@@ -169,7 +169,7 @@ export const sectors: Sector[] = [
   {
     "name": "Estagiários",
     "parentSector": "People",
-    "responsavelName": "Mario Lopes de Andrade"
+    "responsavelName": "Lucas Machado Azevedo"
   },
   {
     "name": "Business Operations",
@@ -179,7 +179,7 @@ export const sectors: Sector[] = [
   {
     "name": "Marketing de Ativação",
     "parentSector": "Marketing",
-    "responsavelName": "Mateus Volpato Abu Jamra"
+    "responsavelName": "Mariane Costa Resende"
   },
   {
     "name": "Criação",
@@ -194,7 +194,7 @@ export const sectors: Sector[] = [
   {
     "name": "Growth",
     "parentSector": "Marketing",
-    "responsavelName": "Priscila Borem Sfredo"
+    "responsavelName": "Mariane Costa Resende"
   },
   {
     "name": "Parcerias Prospecção e Pool",
@@ -209,7 +209,7 @@ export const sectors: Sector[] = [
   {
     "name": "Proprietários",
     "parentSector": "Operação",
-    "responsavelName": "Luiza Cechelero"
+    "responsavelName": "Iara Araujo de Moraes"
   },
   {
     "name": "Terrenos",
@@ -224,7 +224,7 @@ export const sectors: Sector[] = [
   {
     "name": "Lançamentos",
     "parentSector": "Estruturação",
-    "responsavelName": "Caroline Vieira Montedo"
+    "responsavelName": "Tatiana Barros de Andrade Mello Gonçalves de Souza"
   },
   {
     "name": "Decor",
@@ -269,7 +269,7 @@ export const sectors: Sector[] = [
   {
     "name": "Franquias",
     "parentSector": "Operação",
-    "responsavelName": "Vivianny Aguilera Ramalho"
+    "responsavelName": "Iara Araujo de Moraes"
   },
   {
     "name": "Implantação",
@@ -279,12 +279,12 @@ export const sectors: Sector[] = [
   {
     "name": "Hóspede",
     "parentSector": "Operação",
-    "responsavelName": "Carolina Espindola de Brito"
+    "responsavelName": "Iara Araujo de Moraes"
   },
   {
     "name": "Revenue Management",
     "parentSector": "COO",
-    "responsavelName": "Fábio de Biasi Garcia"
+    "responsavelName": "Bruno Eduardo Benetti"
   },
   {
     "name": "Fechamento",
@@ -309,7 +309,7 @@ export const sectors: Sector[] = [
   {
     "name": "Jurídico SZI",
     "parentSector": "Jurídico",
-    "responsavelName": "Luana de Fátima Koguta"
+    "responsavelName": "Victória Bonatto Hofmeister"
   },
   {
     "name": "Cedente",
@@ -349,7 +349,7 @@ export const sectors: Sector[] = [
   {
     "name": "Vendas Decor Expansão",
     "parentSector": "Decor Expansão",
-    "responsavelName": "Gabriela de Oliveira Costa"
+    "responsavelName": "João Pedro Sabino Coutinho"
   },
   {
     "name": "Cultura e Analytics",
@@ -384,7 +384,7 @@ export const sectors: Sector[] = [
   {
     "name": "Design",
     "parentSector": "Produto",
-    "responsavelName": "Arilo Claudio Dias Neto"
+    "responsavelName": "Liniquer Kavrokov Vieira"
   },
   {
     "name": "Hosting",
@@ -399,7 +399,7 @@ export const sectors: Sector[] = [
   {
     "name": "PM Tech",
     "parentSector": "Produto",
-    "responsavelName": "Arilo Claudio Dias Neto"
+    "responsavelName": "Liniquer Kavrokov Vieira"
   },
   {
     "name": "Quality Assurance",
@@ -464,7 +464,7 @@ export const sectors: Sector[] = [
   {
     "name": "Projetos Lançamentos",
     "parentSector": "Lançamentos",
-    "responsavelName": "Rachel Souto Hudson"
+    "responsavelName": "Caroline Vieira Montedo"
   },
   {
     "name": "Gestão de Lançamentos",
@@ -504,7 +504,7 @@ export const sectors: Sector[] = [
   {
     "name": "Franquias Backoffice",
     "parentSector": "Franquias",
-    "responsavelName": "Rayanne Raiza Alves Leite de Oliveira"
+    "responsavelName": "Priscila Borem Sfredo"
   },
   {
     "name": "Franquias Relacionamento",
@@ -514,7 +514,7 @@ export const sectors: Sector[] = [
   {
     "name": "Anúncios",
     "parentSector": "Hóspede",
-    "responsavelName": "Renato Espindola de Brito"
+    "responsavelName": "Carolina Espindola de Brito"
   },
   {
     "name": "Atendimento Operacional I",
@@ -739,7 +739,7 @@ export const sectors: Sector[] = [
   {
     "name": "Qualidade Franquias",
     "parentSector": "Franquias",
-    "responsavelName": "Vivianny Aguilera Ramalho"
+    "responsavelName": "Rayanne Raiza Alves Leite de Oliveira"
   },
   {
     "name": "Treinamento Franquias",
