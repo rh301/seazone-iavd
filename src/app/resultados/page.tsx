@@ -595,6 +595,7 @@ export default function Resultados() {
 
         {/* Filters */}
         <div className="flex gap-3 mb-6 flex-wrap">
+          {(user.id === "lara-campideli-santos" || user.id === "mario-lopes-de-andrade") && (
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -605,6 +606,7 @@ export default function Resultados() {
               className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
+          )}
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-gray-400" />
             <select
