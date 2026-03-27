@@ -55,6 +55,55 @@ function slugify(name) {
     .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+// Robust supervisor name matching — org chart has short names like "Fernando Silva Pereira"
+// IAVD has full names. Match by first name + last name, with normalization.
+function norm(s) {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+
+function findUserByOrgName(orgName) {
+  if (!orgName) return null;
+  const orgNorm = norm(orgName);
+  const orgParts = orgNorm.split(/\s+/);
+  const orgFirst = orgParts[0];
+  const orgLast = orgParts[orgParts.length - 1];
+
+  // 1. Exact match
+  for (const [name, data] of userByName) {
+    if (norm(name) === orgNorm) return [name, data];
+  }
+
+  // 2. First + last name match
+  const candidates = [];
+  for (const [name, data] of userByName) {
+    const parts = norm(name).split(/\s+/);
+    const first = parts[0];
+    const last = parts[parts.length - 1];
+    if (first === orgFirst && last === orgLast) {
+      candidates.push([name, data]);
+    }
+  }
+  if (candidates.length === 1) return candidates[0];
+
+  // 3. If multiple candidates by first+last, try matching more parts
+  if (candidates.length > 1 && orgParts.length > 2) {
+    const orgSecond = orgParts[1];
+    const better = candidates.filter(([name]) => {
+      const parts = norm(name).split(/\s+/);
+      return parts.length > 1 && parts[1] === orgSecond;
+    });
+    if (better.length === 1) return better[0];
+  }
+
+  // 4. Fallback: first name only if unique
+  const firstNameMatches = [...userByName.entries()].filter(([name]) =>
+    norm(name).split(/\s+/)[0] === orgFirst
+  );
+  if (firstNameMatches.length === 1) return firstNameMatches[0];
+
+  return null;
+}
+
 // For each sector, find who is really the supervisor in the org chart
 // A sector's responsável should be the person that employees in that sector report to
 console.log("📊 Analisando supervisores do organograma...\n");
@@ -93,28 +142,10 @@ for (const sector of sectors) {
 
   if (!topSupervisor) continue;
 
-  // Find the full name of this supervisor in IAVD users
-  const supUser = [...userByName.entries()].find(([name]) => {
-    const firstName = name.split(" ")[0].toLowerCase();
-    const supFirstName = topSupervisor.split(" ")[0].toLowerCase();
-    const lastName = name.split(" ").pop().toLowerCase();
-    const supLastName = topSupervisor.split(" ").pop()?.toLowerCase();
-    return firstName === supFirstName && (lastName === supLastName || name.includes(topSupervisor));
-  });
+  const supResult = findUserByOrgName(topSupervisor);
+  if (!supResult) continue;
 
-  if (!supUser) {
-    // Try matching just first name (for short names in Convenia)
-    const supUserPartial = [...userByName.entries()].find(([name]) => {
-      return name.split(" ")[0].toLowerCase() === topSupervisor.split(" ")[0].toLowerCase();
-    });
-    if (supUserPartial && sector.responsavelName !== supUserPartial[0]) {
-      // Ambiguous, skip
-      continue;
-    }
-    continue;
-  }
-
-  const [supFullName] = supUser;
+  const [supFullName] = supResult;
 
   if (sector.responsavelName !== supFullName) {
     sectorUpdates.push({
@@ -141,14 +172,9 @@ for (const u of users) {
   if (!orgEmp || !orgEmp.supervisor) continue;
 
   // Find supervisor in IAVD users
-  const supUser = [...userByName.entries()].find(([name]) => {
-    const firstName = name.split(" ")[0].toLowerCase();
-    const supFirstName = orgEmp.supervisor.split(" ")[0].toLowerCase();
-    return firstName === supFirstName;
-  });
-
-  if (!supUser) continue;
-  const [supFullName, supData] = supUser;
+  const supResult = findUserByOrgName(orgEmp.supervisor);
+  if (!supResult) continue;
+  const [supFullName, supData] = supResult;
 
   // Check the sector responsável after updates
   const sectorUpdate = sectorUpdates.find(su => su.sector === u.sector);
