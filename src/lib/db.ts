@@ -314,7 +314,8 @@ export interface CalibrationAreaProgress {
 }
 
 export interface CalibrationScheduleConfig {
-  startTime: string;
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:mm
   minutesPerPerson: number;
   areas: CalibrationAreaProgress[];
 }
@@ -326,11 +327,11 @@ export async function fetchCalibrationSchedule(): Promise<CalibrationScheduleCon
     .eq("key", "calibration_schedule")
     .single();
 
-  if (error || !data) return { startTime: "09:00", minutesPerPerson: 5, areas: [] };
+  if (error || !data) return { date: "", startTime: "09:00", minutesPerPerson: 5, areas: [] };
   try {
     return JSON.parse(data.value);
   } catch {
-    return { startTime: "09:00", minutesPerPerson: 5, areas: [] };
+    return { date: "", startTime: "09:00", minutesPerPerson: 5, areas: [] };
   }
 }
 

@@ -34,6 +34,7 @@ function addMinutes(time: string, minutes: number): string {
 export default function AgendaCalibracao() {
   const { user } = useAuth();
   const [schedule, setSchedule] = useState<CalibrationScheduleConfig>({
+    date: "",
     startTime: "09:00",
     minutesPerPerson: 5,
     areas: [],
@@ -284,6 +285,10 @@ export default function AgendaCalibracao() {
           <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 mb-6">
             <div className="flex gap-6 flex-wrap">
               <div>
+                <label className="text-xs text-gray-500 block mb-1">Data</label>
+                <input type="date" value={schedule.date} onChange={(e) => save({ ...schedule, date: e.target.value })} className="text-sm border border-gray-200 rounded-lg px-3 py-2" />
+              </div>
+              <div>
                 <label className="text-xs text-gray-500 block mb-1">Horário de início</label>
                 <input type="time" value={schedule.startTime} onChange={(e) => save({ ...schedule, startTime: e.target.value })} className="text-sm border border-gray-200 rounded-lg px-3 py-2" />
               </div>
@@ -304,7 +309,7 @@ export default function AgendaCalibracao() {
             <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${overallPct}%` }} />
           </div>
           <p className="text-xs text-gray-400 mt-1.5">
-            Previsão: {schedule.startTime} – {addMinutes(schedule.startTime, allPeople.length * schedule.minutesPerPerson)}
+            Previsão: {schedule.date ? new Date(schedule.date + "T12:00").toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" }) + ", " : ""}{schedule.startTime} – {addMinutes(schedule.startTime, allPeople.length * schedule.minutesPerPerson)}
           </p>
         </div>
 
