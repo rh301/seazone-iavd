@@ -175,6 +175,25 @@ export default function GestaoPage() {
     setNotesReleased(newState);
   }
 
+  // Resolve hierarchical access count
+  function countTotalVisible(userId: string, visited = new Set<string>()): number {
+    let count = 0;
+    const directList = resultsAccess[userId] || [];
+    for (const personId of directList) {
+      if (visited.has(personId)) continue;
+      visited.add(personId);
+      count++;
+      if (resultsAccess[personId]) {
+        count += countTotalVisible(personId, visited);
+      }
+    }
+    return count;
+  }
+
+  function hasTeam(personId: string): boolean {
+    return personId in resultsAccess && (resultsAccess[personId] || []).length > 0;
+  }
+
   async function handleAddAccessUser(userId: string) {
     const updated = { ...resultsAccess, [userId]: resultsAccess[userId] || [] };
     setResultsAccess(updated);
@@ -264,6 +283,8 @@ export default function GestaoPage() {
           <div>
             <p className="text-sm text-gray-500 mb-4">
               Configure quem pode acessar a aba Resultados e quais pessoas cada um pode ver.
+              O acesso é hierárquico: se você adiciona a Amanda na lista da Tatiana,
+              a Tatiana vê a Amanda + toda a equipe da Amanda automaticamente.
               C-Level e RH sempre têm acesso total.
             </p>
 
@@ -331,7 +352,12 @@ export default function GestaoPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-400">Vê {visibleIds.length} pessoa(s)</span>
+                        <span className="text-xs text-gray-400">
+                          Vê {countTotalVisible(userId)} pessoa(s)
+                          {countTotalVisible(userId) > visibleIds.length && (
+                            <span className="text-primary ml-1">(+{countTotalVisible(userId) - visibleIds.length} via equipe)</span>
+                          )}
+                        </span>
                         <button
                           onClick={() => handleRemoveAccessUser(userId)}
                           className="text-red-400 hover:text-red-600 p-1"
@@ -348,9 +374,13 @@ export default function GestaoPage() {
                         {visibleIds.map((pid) => {
                           const p = findUser(pid);
                           if (!p) return null;
+                          const teamSize = hasTeam(pid) ? (resultsAccess[pid] || []).length : 0;
                           return (
-                            <span key={pid} className="inline-flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2.5 py-1 text-xs">
+                            <span key={pid} className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs ${teamSize > 0 ? "bg-primary/5 border border-primary/20" : "bg-white border border-gray-200"}`}>
                               {p.name}
+                              {teamSize > 0 && (
+                                <span className="text-[10px] text-primary font-semibold" title={`Traz ${teamSize} pessoa(s) da equipe`}>+{teamSize}</span>
+                              )}
                               <button onClick={() => handleRemoveVisiblePerson(userId, pid)} className="text-gray-400 hover:text-red-500">
                                 <X className="w-3 h-3" />
                               </button>

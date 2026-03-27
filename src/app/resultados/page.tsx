@@ -102,16 +102,33 @@ export default function Resultados() {
 
   const questions = getQuestions();
 
+  // Resolve hierarchical access: if user has person X in their list,
+  // they also see everyone in X's list (recursively)
+  function resolveAccess(userId: string, visited = new Set<string>()): Set<string> {
+    const result = new Set<string>();
+    const directList = resultsAccess[userId] || [];
+    for (const personId of directList) {
+      if (visited.has(personId)) continue;
+      visited.add(personId);
+      result.add(personId);
+      // If this person also has an access list, include their people too
+      if (resultsAccess[personId]) {
+        for (const subId of resolveAccess(personId, visited)) {
+          result.add(subId);
+        }
+      }
+    }
+    return result;
+  }
+
   // Determine visible people
   let allPeople: ReturnType<typeof getAllUsers>;
   if (isAdmin) {
     allPeople = getAllUsers();
   } else if (hasCustomAccess) {
-    // Custom access: only see the specific people configured by RH
-    const allowedIds = new Set(resultsAccess[user.id]);
+    const allowedIds = resolveAccess(user.id);
     allPeople = getAllUsers().filter((u) => allowedIds.has(u.id));
   } else {
-    // Org leader: see subordinates
     allPeople = getVisibleUsers(user);
   }
   const completed = evaluations.filter(
