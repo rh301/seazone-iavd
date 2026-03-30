@@ -54,106 +54,157 @@ interface ChatRequest {
 
 // ── CALIBRATION RULES (shared across all types) ──
 
-const CALIBRATION_RULES = `CALIBRAGEM IMPORTANTE:
-- A MAIORIA dos colaboradores é nota 3 (Dentro do esperado). Isso é bom — significa que faz o que se espera.
-- Nota 4 e 5 são RARAS. Exigem evidências extraordinárias e consistentes.
-- Nota 1 e 2 também são significativas — exigem padrão claro de comportamento negativo.
-- NÃO infle notas. Ser "bom" é nota 3. Ser "excepcional" é nota 5.
+const CALIBRATION_RULES = `CALIBRAGEM — VISÃO DO CEO SEAZONE (calibração oficial):
 
-ESCALA DE EVIDÊNCIAS (use para calibrar CADA resposta):
-- Nota 1: Comportamento NÃO demonstrado. Passividade, transferência de responsabilidade, frustração sem ação. Sinais: "não havia o que fazer", "era problema de outro time", "ficou frustrado e parou".
-- Nota 2: Tentativa limitada. Seguiu processo padrão mas precisou de orientação constante do líder. Sinais: "tentou resolver mas precisou de ajuda", "seguiu o protocolo", "com bastante orientação da liderança".
-- Nota 3: Comportamento esperado. Identificou o problema, comunicou, agiu para minimizar impacto. Reação adequada mas REATIVA (responde ao problema, não antecipa). Sinais: "identificou o problema", "comunicou o time", "reorganizou prioridades".
-- Nota 4: Acima da média. PROATIVO — propôs alternativas antes de ser pedido, mobilizou recursos de outras áreas, buscou soluções criativas. Sinais: "propôs redistribuir tarefas", "alinhou com outras áreas", "conseguiu apoio externo".
-- Nota 5: Excepcional. LIDEROU a resolução — assumiu a frente, coordenou múltiplas áreas, estruturou plano de ação, gerou impacto mensurável (evitou prejuízo ao cliente). Sinais: "assumiu a frente", "organizou reuniões", "estruturou plano de ação", "evitou impacto no cliente".
+DISTRIBUIÇÃO ESPERADA (a IA DEVE respeitar):
+- 5% nota 1 (E) — não deveria estar na empresa, será desligado
+- 10% nota 2 (D) — abaixo, precisa de plano de ação ou saída
+- 60% nota 3 (C) — o padrão. Maioria entrega o esperado, e isso é BOM
+- 20% nota 4 (B) — acima, puxa o time pra cima
+- 5% nota 5 (A) — excepcional, raro, transforma a empresa
+Se a distribuição vier com 40% nota 4-5, ESTÁ INFLADA — questionar.
 
-DIFERENÇAS CRÍTICAS ENTRE NOTAS (a IA DEVE respeitar):
-- 2 vs 3: Se precisou do líder para conduzir → máximo 2. Se agiu sozinho → mínimo 3.
-- 3 vs 4: Se reagiu ao problema → 3. Se se antecipou ou mobilizou recursos além do time → 4.
-- 4 vs 5: Se propôs soluções → 4. Se LIDEROU a resolução com impacto mensurável → 5.
+REGRA DE NÍVEL (SEMPRE avaliar relativo ao cargo):
+- Estagiário nota 5 pode fazer o que analista nota 3 faz — e está certo
+- A régua sobe a cada nível. Cada cargo tem expectativas maiores
+- Tempo de empresa NÃO infla nota. 5 anos fazendo o básico = nota 3 ou 2
 
-SINAIS QUE REDUZEM NOTA:
-- "não havia muito o que fazer" → passividade → nota 1
-- "precisou de orientação" / "com ajuda do líder" → dependência → máximo 2
-- "seguiu o processo padrão" → sem iniciativa extra → máximo 3
-- Ausência de exemplos concretos → máximo 3
-- Resposta vaga ou genérica → máximo 3
-- "baseado na percepção", "sem números" → sem dados → nota 1 (em valores analíticos)
-- "às vezes", "em algumas situações" → inconsistente → máximo 2
-- "desanimou", "reduziu o ritmo", "aceitou" → desistência → nota 1
+AUTOAVALIAÇÃO — ceticismo saudável:
+- Autoavaliações são QUASE SEMPRE infladas
+- Sem exemplo concreto → nota máxima 3
+- Se autoavaliação é 1 ponto acima do gestor/pares → provavelmente inflada
+- Peso menor que avaliação do gestor
 
-SINAIS QUE AUMENTAM NOTA:
-- "propôs", "sugeriu alternativa" → proatividade → mínimo 3
-- "alinhou com outras áreas", "mobilizou recursos" → coordenação → mínimo 4
-- "assumiu a frente", "estruturou plano", "evitou impacto" → liderança → 5
-- "trouxe dados específicos", "mostrou indicadores" → embasamento → mínimo 4
-- "analisou dados históricos", "comparou resultados", "fez projeção" → análise estruturada → 5
+AVALIAÇÃO DE PARES — flexibilidade:
+- Pares têm visibilidade parcial. "Não tenho visibilidade" é resposta legítima — NÃO converter em nota
+- Pares tendem a ser generosos (evitam conflito) → peso menor que gestor
 
-EIXOS DE AVALIAÇÃO POR TIPO DE VALOR:
-1. Valores de AÇÃO (Sangue no Olho, Proatividade): eixo passividade → dependência → adequado → proativo → liderança
-2. Valores ANALÍTICOS — Embasamento (Foco em Fatos e Dados): eixo opinião → dados esporádicos → dados regulares → dados específicos → análise multi-fonte com projeção
-3. Valores ANALÍTICOS — Abertura (Foco em Fatos e Dados): eixo rigidez ("defende e ignora") → resistência passiva ("ouve mas mantém") → abertura reativa ("reavalia") → colaboração ativa ("ajuda a ajustar") → liderança adaptativa ("reconhece rápido e puxa o time")
-4a. Valores de EXECUÇÃO — Priorização (Priorize e Simplifique): eixo caos ("foca no errado") → dependência ("tenta mas precisa do líder") → organização ("alinha e organiza sozinho") → otimização ("usa critérios explícitos: impacto, prazo") → orquestração ("plano estruturado, redistribui recursos do time, visão estratégica")
-4b. Valores de EXECUÇÃO — Simplificação (Priorize e Simplifique): eixo complicador ("propõe soluções complexas demais") → consciente passivo ("reconhece complexidade mas não age") → simplificador pontual ("sugere ajustes") → simplificador com resultado ("revisa fluxo, reduz retrabalho") → simplificador sistêmico ("redesenha processo, adotado pelo time")
-5a. Valores de PROATIVIDADE — Antecipação: eixo reativo ("reage quando já aconteceu") → percebe mas espera ("percebe risco mas espera mandarem agir") → alerta ("identifica risco e avisa o time") → age preventivamente ("se antecipa e busca alternativas") → prevê e resolve ("identifica gargalo que ainda não se manifestou e resolve antes")
-5b. Valores de PROATIVIDADE — Proposição de melhorias: eixo passivo ("segue processo, não sugere") → contribui quando puxado ("sugere quando pedem") → propõe ("aponta melhorias espontaneamente") → analisa e propõe ("investiga causa e sugere ajuste concreto") → implementa com resultado ("investiga, implementa e gera resultado mensurável")
-6a. Valores de INOVAÇÃO — Uso de IA (AI First): eixo resistência ("não usa, tudo manual") → uso pontual ("usou em situações pontuais, fora do fluxo") → uso regular ("costuma usar para acelerar, faz parte do dia a dia") → uso estratégico ("usa para resultado específico, ganhar eficiência") → multiplicador ("usa + compartilha boas práticas + ensina colegas")
-6b. Valores de INOVAÇÃO — Disseminação de IA (AI First): eixo isolado ("não compartilha, não discute") → informal ("comenta em conversas informais") → compartilha ("comenta com colegas quando descobre algo") → ensina ("mostra para o time, explica como aplicar") → organiza e acompanha ("organiza momentos dedicados, ajuda colegas a aplicar no dia a dia")
+CRUZAMENTO ENTRE CRITÉRIOS:
+- Se esforço alto + entrega baixa = algo não bate. Questionar
+- "Pessoa ótima de trabalhar" + não faz acontecer = Colaboração alta, Entregas baixa. NÃO contaminar um com outro
 
-SINAIS ESPECÍFICOS — DISSEMINAÇÃO DE IA:
-- "não costuma compartilhar" → isolado → nota 1
-- "conversas informais", "não compartilha muito além" → informal → nota 2
-- "costuma comentar com colegas", "explicar como pode ajudar" → compartilha → nota 3
-- "mostrou para o time", "explicou como aplicar" → ensina ativamente → nota 4
-- "organizou momentos", "ajuda colegas a aplicar no dia a dia" → organiza e acompanha → nota 5
+EXPRESSÕES DE ALERTA (CEO definiu):
+- "Sempre dá o seu melhor" sem exemplo concreto → máximo 3
+- "É muito dedicado/a" → medir por resultado, não por horas
+- "Não tenho nada negativo a dizer" → avaliação superficial, pedir exemplo de melhoria
+- "Faz tudo que pedem" → nota 3, não 4 — faz o pedido mas não vai além
+- "Está sempre disponível" → disponibilidade ≠ entrega
+- "Eu acho que..." sem dado → máximo 3 em Foco em Fatos e Dados
+- "Antes era melhor" → red flag Adaptabilidade
+- "Não é minha área" → red flag Atitude de Dono e Colaboração
+- "Já tentei mas não deu" → aprofundar: tentou uma vez ou de verdade?
 
-SINAIS ESPECÍFICOS — USO DE IA:
-- "não utiliza", "forma totalmente manual" → resistência → nota 1
-- "algumas situações pontuais", "não faz parte do fluxo" → uso pontual → nota 2
-- "costuma usar", "acelerar o trabalho", "primeiras versões" → uso regular → nota 3
-- "estruturar análise", "entregar mais rapidamente", "ganhar eficiência" → uso estratégico → nota 4
-- "compartilhar boas práticas", "ajudou colegas", "ensinar" → multiplicador → nota 5
+ESCALA POR CRITÉRIO (exemplos do CEO):
 
-SINAIS ESPECÍFICOS — PROPOSIÇÃO DE MELHORIAS:
-- "apenas segue o processo", "não costuma sugerir" → passivo → nota 1
-- "às vezes contribui", "espera alguém puxar" → contribui quando puxado → nota 2
-- "costuma apontar melhorias", "discutir alternativas" → propõe → nota 3
-- "analisou o que aconteceu", "sugeriu ajustes no processo" → analisa e propõe → nota 4
-- "investigou as causas", "ajudou a implementar", "reduziu significativamente os erros" → implementa com resultado → nota 5
+1. SANGUE NO OLHO — "ir além, não aceitar bom o suficiente, garantir o resultado"
+- Nota 1: Para no primeiro obstáculo. Não comunica, não busca alternativa. Fica esperando
+- Nota 2: Faz o mínimo pedido. Comunica problema mas não propõe solução. Precisa de acompanhamento constante
+- Nota 3: Entrega com qualidade. Resolve ou escala obstáculos adequadamente. Cumpre prazos
+- Nota 4: Além de entregar, MELHORA o processo. Identifica problemas que ninguém viu e resolve proativamente
+- Nota 5: TRANSFORMA a área. Cria algo que ninguém imaginou ser possível. Ex: não-técnico que construiu sistema 3D usando IA
+- ERRO: Não confundir "muitas horas" com Sangue no Olho. Horas extras sem entrega = problema de produtividade
 
-SINAIS ESPECÍFICOS — ANTECIPAÇÃO DE PROBLEMAS:
-- "reage quando já aconteceram" → reativo → nota 1
-- "percebe possíveis problemas", "espera alguém pedir" → percebe mas espera → nota 2
-- "identificou que poderia atrasar", "avisou com antecedência" → alerta → nota 3
-- "se antecipou", "buscando alternativas para evitar impacto" → ação preventiva → nota 4
-- "identificou possível gargalo que ainda não tinha causado problemas", "evitar atrasos" → previsão + resolução antecipada → nota 5
+2. ATITUDE DE DONO — "tratar problema da empresa como se fosse seu"
+- Nota 1: Faz só o que mandam. "Mas eu fiz o que pediram". Não se sente responsável pelo resultado
+- Nota 2: Faz a parte dela mas não olha pro todo. "QA é com outro time"
+- Nota 3: Cuida do escopo e um pouco além. Percebe problema adjacente e comunica
+- Nota 4: Resolve problemas que NÃO são formalmente seus porque impactam o resultado
+- Nota 5: Muda a trajetória da empresa por agir como dona. Implementa solução sem ninguém pedir
+- ERRO: Não confundir "faz tudo sozinho" com Atitude de Dono. Centralizar e virar gargalo é o oposto
 
-SINAIS ESPECÍFICOS — SIMPLIFICAÇÃO:
-- "soluções bastante complexas", "aumentando tempo de execução" → complicador → nota 1
-- "reconhece quando está complexo", "nem sempre toma iniciativa" → consciente passivo → nota 2
-- "costuma sugerir ajustes", "mais simples" → simplificador pontual → nota 3
-- "revisou um fluxo", "reduzindo retrabalho" → simplificação com resultado → nota 4
-- "redesenhou o fluxo", "eliminou etapas", "utilizado por todo o time" → simplificação sistêmica → nota 5
+3. FOCO EM FATOS E DADOS — "decidir com base no mensurável, não no que parece"
+- Nota 1: Decide por achismo. "Eu acho". Não busca dados antes de concluir
+- Nota 2: Usa dados quando cobrado, não espontaneamente. Não sabe explicar variações nos números
+- Nota 3: Fundamenta decisões com dados consistentemente. Sabe onde buscar, apresenta com clareza
+- Nota 4: Constrói indicadores NOVOS. Automatiza coleta. Cria dashboards que substituem processos manuais
+- Nota 5: Muda a forma como a empresa toma decisão. Implementa sistema data-driven transformador
+- ERRO: "Cita números" ≠ "usa dados". Dado sem contexto é decoração. O dado influenciou a decisão ou foi enfeite?
 
-SINAIS ESPECÍFICOS — PRIORIZAÇÃO:
-- "se confundir", "foca em tarefas menos importantes" → caos → nota 1
-- "precisa de ajuda da liderança para definir" → dependência → nota 2
-- "alinha com o time", "organiza a agenda" → organização adequada → nota 3
-- "analisa impacto e prazo", "reorganiza planejamento" → critérios objetivos → nota 4
-- "estruturou plano", "redistribuiu tarefas", "impacto no cliente e prazos estratégicos" → orquestração → nota 5
+4. PRIORIZE E SIMPLIFIQUE — "fazer primeiro o que importa, do jeito mais simples que funcione"
+- Nota 1: Faz tudo ao mesmo tempo sem terminar nada. Ou complica tarefa simples
+- Nota 2: Prioriza quando cobrado, sozinho se perde. Gasta tempo em formatação quando o dado não está pronto
+- Nota 3: Entrega o essencial no prazo. Diferencia urgente de importante. Não complica
+- Nota 4: SIMPLIFICA ativamente. Elimina etapas desnecessárias com resultado mensurável
+- Nota 5: Transforma a operação. Migra processo manual para automação com IA
+- ERRO: "Faz pouco" ≠ "simplifica". Simplificar é mesmo resultado com menos esforço. "Ser rápido" sem critério ≠ priorizar
 
-SINAIS ESPECÍFICOS — ABERTURA A EVIDÊNCIAS:
-- "defende bastante", "dificilmente muda" → rigidez → nota 1
-- "mantém a posição", "só muda com insistência ou orientação do líder" → resistência → nota 2
-- "costuma reavaliar", "considera ajustes" → abertura adequada → nota 3
-- "reconsiderou a análise", "ajudou a ajustar a decisão" → colaboração ativa → nota 4
-- "rapidamente reconheceu", "revisou a estratégia", "incentivou o time" → liderança adaptativa → nota 5
+5. ESCOPO DA FUNÇÃO — "entregar no nível que o cargo exige"
+- Nota 1: Não entrega o básico. Coordenador que não coordena, analista que precisa ser lembrado toda semana
+- Nota 2: Entrega parcialmente. Gerente que gerencia tarefas mas não gerencia pessoas
+- Nota 3: Atua plenamente no escopo. Entende papel, entrega, não invade nem negligencia
+- Nota 4: Demonstra maturidade do nível ACIMA. Se preparando naturalmente para promoção
+- Nota 5: Define o padrão do que o cargo deveria ser. Já atua como se estivesse no próximo nível
+- ERRO: Não penalizar quem faz mais — pode ser potencial. Problema é quando faz o que não é dela E deixa de fazer o que é
+
+6. ENTREGAS DE VALOR — "resultado que move o ponteiro do negócio"
+- Nota 1: Não entrega ou entrega sem impacto. Reunião e e-mail não são entrega
+- Nota 2: Entrega abaixo do esperado para o nível. Time entrega mas não o suficiente
+- Nota 3: Entregas consistentes e alinhadas. Resultado mensurável para o nível
+- Nota 4: Supera expectativa. Identifica e implementa melhoria além do escopo do quarter
+- Nota 5: Redefine o padrão. Constrói algo que elimina trabalho manual e escala
+- ERRO: "Estar ocupado" ≠ entregar valor. Para gestão, a entrega é o resultado do TIME, não tarefa pessoal
+
+7. CONSISTÊNCIA — "entregar sempre, não só quando motivado"
+- Nota 1: Desempenho imprevisível. "Desaparece" em semanas. Falta em dailies sem justificativa
+- Nota 2: Oscila. Bate meta num mês, 30% no seguinte sem causa externa
+- Nota 3: Estável. Entrega no padrão de forma contínua, sem picos nem vales
+- Nota 4: Consistente E melhora gradualmente. Curva ascendente estável
+- Nota 5: Define o ritmo da área. Mantém operação perfeita durante reestruturação
+- ERRO: "Tempo de empresa" ≠ consistência. 5 anos por inércia = acomodação, não consistência
+
+8. PENSAR FORA DA CAIXA — "não aceitar que as coisas precisam ser como sempre foram"
+- Nota 1: Nunca questiona, nunca propõe alternativa. Faz do jeito que mandaram
+- Nota 2: Tenta pensar diferente mas superficialmente. "Vamos usar IA" sem proposta concreta
+- Nota 3: Traz ideias viáveis quando encontra problema. Protótipo, sugestão com teste
+- Nota 4: Implementa soluções criativas que mudam o jogo da área
+- Nota 5: Cria algo que ninguém imaginou ser possível. Inovação disruptiva com implementação
+- ERRO: "Ter ideias" ≠ pensar fora da caixa. Ideia sem execução é conversa. Criatividade sem operação é distração
+
+9. ORGANIZAÇÃO — "saber o que fazer, quando, e estar no controle"
+- Nota 1: Perde prazo, esquece tarefa. Backlog sem prioridade, sem responsável, sem prazo
+- Nota 2: Se organiza parcialmente. Algumas coisas no sistema, outras na cabeça. Perde fio na 3ª semana
+- Nota 3: Organizado de forma funcional. Sistema próprio que funciona, entregas no prazo
+- Nota 4: Organiza a si e ao entorno. Implementa sistema que o time adota
+- Nota 5: Cria infraestrutura de organização que escala. Auditoria automatizada
+- ERRO: "Muitas ferramentas" ≠ organizado. 5 apps sem saber a prioridade = desorganizado com estilo
+
+10. ADAPTABILIDADE — "adotar a nova realidade e performar nela"
+- Nota 1: Resiste ativamente. Sabota novas diretrizes. "Eu não preciso disso" (ex: recusa usar IA)
+- Nota 2: Aceita mas não se adapta de verdade. Faz o mínimo pra parecer que está aderindo
+- Nota 3: Se adapta dentro de prazo razoável. Quando diretriz muda, ajusta
+- Nota 4: Se adapta rápido E ajuda outros. Aprende sozinho, cria tutorial, vira referência
+- Nota 5: Transforma mudança em vantagem competitiva. Propõe novo modelo que a empresa adota
+- ERRO: "Não reclamar" ≠ adaptável. Aceitar calada mas não mudar comportamento = passiva, não adaptável
+
+11. COMUNICAÇÃO — "direta, clara, sem rodeio"
+- Nota 1: Não comunica. Silêncio com problema. Sabia que ia atrasar e não falou até a data
+- Nota 2: Comunica de forma confusa ou tardia. Slack de 20 linhas sem conclusão clara
+- Nota 3: Clara e no timing certo. Problema com contexto e proposta de solução
+- Nota 4: Antecipa necessidade de informação. Preview antes da reunião, pontos de atenção destacados
+- Nota 5: Transforma cultura de comunicação. Elimina reuniões com sistema assíncrono eficiente
+- ERRO: "Fala muito" ≠ comunica bem. Informalidade é OK. Silêncio sobre bloqueios = nota 1
+
+12. COLABORAÇÃO — "trabalhar pelo resultado da empresa, não da sua caixinha"
+- Nota 1: Não colabora ou sabota. Protege informação, cria feudos
+- Nota 2: Colabora quando obrigado, com má vontade. Entrega tarde e com qualidade inferior
+- Nota 3: Colabora profissionalmente. Ajuda quando pedido, não cria atrito
+- Nota 4: Colabora proativamente. Vai até o outro time ajudar sem ninguém pedir
+- Nota 5: Constrói pontes que mudam a empresa. Rituais cross-BU que reduzem retrabalho
+- ERRO: "Ser simpático" ≠ colaborar. Discordância construtiva é mais valiosa que concordância passiva
+
+13. USO DE IA — "AI-First. IA não é opcional. É critério de permanência"
+- Nota 1: Não usa. Resistência ativa. Uso zero após 3 meses com licença = deal breaker
+- Nota 2: Usa superficialmente. ChatGPT pra reescrever e-mail. "Fica curioso" sem testar
+- Nota 3: Usa como ferramenta DIÁRIA. Economiza 2-3h/dia consistentemente
+- Nota 4: CRIA com IA. Automação que substitui processo manual. Agente que roda sozinho
+- Nota 5: TRANSFORMA operação com IA. Faz em 1 dia o que TI não entregou em 2 anos
+- ERRO: "Uso ChatGPT" sem mudança real = nota 2. Perguntar: "o que MUDOU no seu processo?". Entusiasmo sem implementação = nota 2
 
 RÉGUA DE AUTONOMIA (aplique em TODA nota):
-- Faz bem MAS o líder precisa estar em cima (cobrar, organizar, lembrar) → tende a 2
-- Faz bem E é autônomo (líder não precisa se preocupar) → tende a 3
-- Faz bem, é autônomo E PROPÕE soluções → tende a 4
-- Faz bem, é autônomo, LIDERA resolução E eleva outros → tende a 5`;
+- Faz bem MAS líder precisa cobrar/lembrar → tende a 2
+- Faz bem E é autônomo → tende a 3
+- Faz bem, autônomo, E PROPÕE soluções/melhorias → tende a 4
+- Faz bem, autônomo, LIDERA resolução, E eleva outros → tende a 5`;
 
 const CROSS_CONTEXT_RULES = `CONTEXTO CRUZADO:
 - Se há respostas anteriores sobre este colaborador, USE essa informação para questionar consistência

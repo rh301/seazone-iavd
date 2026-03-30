@@ -1,0 +1,303 @@
+Calibração da IA — Avaliação de Desempenho Seazone
+Para: CEO
+Objetivo: Alinhar como a IA deve interpretar cada critério de avaliação, considerando o nível do cargo e o que significa cada nota (1 a 5) na prática da Seazone.
+Níveis de cargo: Estágio | Analista | Especialista | Coordenador | Gerente | Diretor | C-Level
+1. Sangue no Olho
+Pergunta na avaliação: "Com que frequência essa pessoa demonstra Sangue no Olho ao enfrentar obstáculos e sustentar esforço até a conclusão dos desafios?"
+1.1. O que 'Sangue no Olho' significa para você na Seazone?
+Sangue no Olho é o valor mais central da Seazone. Significa ir além do que é pedido, não aceitar o 'bom o suficiente' quando dá pra fazer melhor, e não parar até resolver. Não é trabalhar mais horas — é ter intensidade e comprometimento real com o resultado. É a pessoa que vê um problema e não espera alguém pedir pra resolver. É quem, quando o caminho trava, busca outro caminho em vez de ficar parado reclamando. Na prática, é a diferença entre 'fiz minha parte' e 'garanti que o resultado aconteceu'.
+1.2. Como esse valor se manifesta em cada nível?
+1.3. Exemplos por nota
+Nota 1 (Insuficiente): Pessoa que recebe uma tarefa, encontra o primeiro obstáculo e para. Não comunica que travou, não busca alternativa. Fica esperando alguém resolver por ela. Exemplo: recebeu um bug para investigar, olhou 5 minutos, não achou a causa e deixou parado sem avisar ninguém por 3 dias.
+Nota 2 (Abaixo do esperado): Faz o que é pedido, mas só o mínimo. Quando dá problema, comunica mas não propõe solução. Precisa de acompanhamento constante. Exemplo: entrega o relatório no prazo, mas com dados incompletos, e quando questionada diz 'não achei os dados' sem ter buscado alternativa.
+Nota 3 (Dentro do esperado): Entrega o que é pedido com qualidade. Quando encontra obstáculo, resolve ou escala de forma adequada. Cumpre prazos e mantém comunicação clara. Esse é o padrão — a maioria deveria estar aqui. Exemplo: tarefa travou por dependência de outro time, comunicou no mesmo dia, propôs workaround e seguiu com o que podia fazer enquanto esperava.
+Nota 4 (Acima do esperado): Além de entregar, melhora o processo. Identifica problemas que ninguém viu e resolve proativamente. Exemplo: além de fazer a integração pedida, percebeu que o fluxo anterior tinha uma falha que causava retrabalho e corrigiu por conta própria, documentando a mudança.
+Nota 5 (Excepcional): Nota 5 é rara. É a pessoa que transforma a área. Exemplo real anonimizado: profissional não-técnico que, usando IA, construiu sozinho um sistema 3D para clientes comprarem unidades — sem nunca ter programado na vida. Isso é sangue no olho no máximo: não aceitar limitação como desculpa e criar algo que ninguém imaginou ser possível.
+1.4. Erros comuns que a IA deve evitar nesse critério
+Não confundir 'trabalhar muitas horas' com Sangue no Olho. Pessoa que fica até tarde mas entrega pouco não tem sangue no olho — tem problema de produtividade. Também não confundir com 'ser intenso em reunião' — Sangue no Olho se mede por resultado, não por discurso. Cuidado com autoavaliações que dizem 'sempre dou meu melhor' sem exemplo concreto — isso é nota 3, no máximo.
+2. Atitude de Dono
+Pergunta na avaliação: "Com que frequência essa pessoa demonstra Atitude de Dono nas decisões e responsabilidades que lhe cabem?"
+2.1. O que 'Atitude de Dono' significa para você na Seazone?
+É tratar o problema da empresa como se fosse seu. Não é 'isso não é da minha área'. É olhar pro resultado final, não só pro pedaço que te cabe. Na Seazone, quem tem atitude de dono não espera aprovação pra agir quando a solução é óbvia, não empurra problema pra frente, e se preocupa com o custo e o impacto das suas decisões como se o dinheiro fosse do próprio bolso. Atitude de dono é incompatível com 'eu fiz a minha parte' — se o resultado não saiu, o dono não descansa.
+2.2. Como esse valor se manifesta em cada nível?
+2.3. Exemplos por nota
+Nota 1 (Insuficiente): Pessoa que faz só o que mandam e, quando dá errado, diz 'mas eu fiz o que pediram'. Não se sente responsável pelo resultado. Exemplo: vendedor que perde deal e culpa o lead ruim, sem ter feito follow-up adequado.
+Nota 2 (Abaixo do esperado): Faz a parte dela mas não olha pro todo. Se o processo quebra depois da sua entrega, não é problema dela. Exemplo: dev que entrega feature mas não testa em produção — 'QA é com outro time'.
+Nota 3 (Dentro do esperado): Cuida do seu escopo e um pouco além. Quando percebe problema adjacente, comunica. Não precisa de microgerenciamento pra entregar. Exemplo: analista que, ao preparar relatório, percebe inconsistência nos dados fonte e avisa o time de dados antes de entregar.
+Nota 4 (Acima do esperado): Resolve problemas que não são formalmente seus porque impactam o resultado. Exemplo: coordenador que percebe que o processo de onboarding de clientes está gerando churn e propõe redesenho, mesmo não sendo da área de CS.
+Nota 5 (Excepcional): Pessoa que muda a trajetória da empresa por agir como dona. Exemplo: líder que identificou que a empresa estava perdendo R$ em comissões por erro de processo, montou a solução, implementou e treinou o time — tudo sem ninguém pedir, porque 'não faz sentido perder dinheiro assim'.
+2.4. Erros comuns que a IA deve evitar nesse critério
+Não confundir 'faz tudo sozinho' com Atitude de Dono. Dono de verdade delega e confia — mas não larga. Também não confundir com 'trabalha no que quer'. Atitude de Dono é sobre responsabilidade, não sobre autonomia sem alinhamento. Cuidado com quem diz 'eu resolvo tudo' mas na prática centraliza e vira gargalo.
+3. Foco em Fatos e Dados
+Pergunta na avaliação: "Com que frequência essa pessoa utiliza Foco em Fatos e Dados para fundamentar decisões e argumentos?"
+3.1. O que 'Foco em Fatos e Dados' significa para você na Seazone?
+Significa decidir com base no que é mensurável, não no que 'parece'. Na Seazone, eu quero ver o número, não a opinião. Se alguém me diz 'tá indo bem', minha resposta é 'mostra o KPI'. Fatos e dados são a base de tudo: demissão, promoção, investimento, corte. Exemplo: demiti um CTO porque 'vi como está o uso do Claude' — dado objetivo, não impressão. Quem não mede, não gerencia. Quem não gerencia, não fica.
+3.2. Como esse valor se manifesta em cada nível?
+3.3. Exemplos por nota
+Nota 1 (Insuficiente): Toma decisão sem dado nenhum e não percebe que é um problema. Quando questionado, responde com opinião ou 'eu acho'. Exemplo: gerente que define meta do trimestre 'no feeling' sem olhar histórico.
+Nota 2 (Abaixo do esperado): Usa dados quando cobrado, mas não de forma espontânea. Exemplo: traz o relatório na reunião, mas só porque foi pedido, e não sabe explicar as variações nos números.
+Nota 3 (Dentro do esperado): Fundamenta decisões com dados de forma consistente. Sabe onde buscar, apresenta com clareza. Exemplo: analista que antes de propor mudança no funil, puxa taxa de conversão dos últimos 3 meses e mostra onde está o gargalo.
+Nota 4 (Acima do esperado): Constrói indicadores novos que a área não tinha. Automatiza coleta de dados. Exemplo: criou um dashboard que substituiu relatório manual semanal — agora o dado está sempre atualizado e acessível em tempo real.
+Nota 5 (Excepcional): Muda a forma como a empresa toma decisão. Exemplo: implementou sistema de avaliação de calls de vendas com IA que dá feedback individualizado por vendedor sem precisar ouvir cada ligação — transformou a gestão comercial baseada em opinião para gestão baseada em dados.
+3.4. Erros comuns que a IA deve evitar nesse critério
+Não confundir 'cita números' com 'usa dados'. Pessoa que joga número solto sem contexto não está usando dados — está decorando. Também cuidado com quem usa dados só para confirmar o que já decidiu (viés de confirmação). O critério é: o dado influenciou a decisão ou foi enfeite?
+4. Priorize e Simplifique
+Pergunta na avaliação: "Com que frequência essa pessoa demonstra capacidade de Priorizar e Simplificar?"
+4.1. O que 'Priorize e Simplifique' significa para você na Seazone?
+Significa fazer primeiro o que importa mais e do jeito mais simples que funcione. Eu detesto complexidade desnecessária. Se tem 10 coisas pra fazer, quero saber qual é a que move o ponteiro — faz essa primeiro. O resto entra na fila ou cai fora. Na Seazone, o lema é 'mínimo viável é um'. Entrega V1 de todos, depois V2. Não espera o perfeito. Quem complica o simples não dura aqui.
+4.2. Como esse valor se manifesta em cada nível?
+4.3. Exemplos por nota
+Nota 1 (Insuficiente): Pessoa que não consegue priorizar — faz tudo ao mesmo tempo e não termina nada. Ou complica o simples: recebe tarefa de 2 horas e transforma em projeto de 2 semanas com escopo inflado.
+Nota 2 (Abaixo do esperado): Prioriza quando cobrado, mas sozinho se perde. Exemplo: analista que gastou 3 dias formatando apresentação bonita enquanto o dado crítico não estava pronto.
+Nota 3 (Dentro do esperado): Entrega o essencial no prazo. Sabe diferenciar urgente de importante. Não complica. Exemplo: recebeu 4 demandas, alinhou com o gestor qual era prioridade, entregou a principal e comunicou prazo das demais.
+Nota 4 (Acima do esperado): Simplifica ativamente. Exemplo: coordenador que eliminou 3 etapas de um processo de aprovação que ninguém questionava — reduziu tempo de 5 dias para 1 dia sem perder controle.
+Nota 5 (Excepcional): Transforma a operação. Exemplo: líder que migrou time inteiro de processo manual com planilhas para automação com IA — o que levava uma equipe de 5 agora roda com 1 pessoa supervisionando agentes.
+4.4. Erros comuns que a IA deve evitar nesse critério
+Não confundir 'faz pouco' com 'simplifica'. Simplificar é entregar o mesmo resultado com menos esforço — não é entregar menos. Também não confundir 'ser rápido' com 'priorizar'. Pessoa que faz tudo correndo mas sem critério de prioridade é desorganizada, não é boa priorizadora.
+5. Escopo da Função
+Pergunta na avaliação: "Com que frequência essa pessoa atua de forma madura e adequada ao Escopo da Função?"
+5.1. O que 'Escopo da Função' significa para você na Seazone?
+É entender o que se espera de você no nível em que você está — e entregar nesse nível. Estagiário que quer decidir como diretor é tão problemático quanto diretor que faz trabalho de analista. Cada nível tem um escopo: operacional, tático ou estratégico. Maturidade é operar no seu nível, não abaixo nem acima sem contexto. Na Seazone, queremos que cada pessoa domine o escopo do cargo antes de querer subir.
+5.2. Como esse valor se manifesta em cada nível?
+5.3. Exemplos por nota
+Nota 1 (Insuficiente): Pessoa que não entrega o básico do cargo. Exemplo: coordenador que não coordena — fica fazendo tarefa operacional e o time fica sem direção. Ou analista que precisa ser lembrado toda semana do que deveria estar fazendo.
+Nota 2 (Abaixo do esperado): Entrega parcialmente o escopo. Exemplo: gerente que gerencia tarefas mas não gerencia pessoas — evita feedback difícil, não demite quando deveria, não desenvolve o time.
+Nota 3 (Dentro do esperado): Atua plenamente no escopo. Entende seu papel, entrega o que é esperado, não invade nem negligencia responsabilidades. Exemplo: diretor que traz KPIs na monthly, participa dos rituais, mantém Canvas atualizado, escala problemas sem esperar virar crise.
+Nota 4 (Acima do esperado): Atua no escopo e já demonstra maturidade do nível acima. Exemplo: coordenador que já pensa em orçamento e impacto de negócio, não só em entrega operacional. Está se preparando naturalmente para a próxima posição.
+Nota 5 (Excepcional): Define o padrão do que o cargo deveria ser. Exemplo: líder promovida a CEO de BU porque, antes da promoção, já atuava com atitude de dono da unidade — adoção forte de IA, domínio total da área, tomada de decisão no nível certo.
+5.4. Erros comuns que a IA deve evitar nesse critério
+Não penalizar quem 'faz mais do que o cargo pede' automaticamente — isso pode ser sinal de potencial de promoção, não de falta de escopo. O problema é quando a pessoa faz o que não é dela E deixa de fazer o que é. Também não confundir senioridade (tempo de empresa) com maturidade de escopo — são coisas diferentes.
+6. Entregas de Valor
+Pergunta na avaliação: "Com que frequência essa pessoa realiza Entregas de Valor relevantes?"
+6.1. O que 'Entregas de Valor' significa para você na Seazone?
+Entrega de valor é resultado que move o ponteiro do negócio. Não é 'fiz muita coisa' — é 'o que eu fiz gerou impacto'. Na Seazone, valor se mede em: receita gerada, custo reduzido, processo automatizado, cliente retido, velocidade de execução aumentada. Reunião não é entrega. Slide não é entrega. Planejamento não é entrega. Entrega é quando algo sai do plano e vai pra produção.
+6.2. Como esse valor se manifesta em cada nível?
+6.3. Exemplos por nota
+Nota 1 (Insuficiente): Não entrega ou entrega sem impacto. Exemplo: pessoa que participa de reuniões, faz follow-ups, manda e-mails, mas quando pergunta 'o que mudou por causa do seu trabalho?' a resposta é nada.
+Nota 2 (Abaixo do esperado): Entrega, mas abaixo do esperado para o nível. Exemplo: gerente de time que entrega tarefas individuais mas o resultado da área não evolui. O time entrega, mas não o suficiente.
+Nota 3 (Dentro do esperado): Entregas consistentes e alinhadas com o esperado. Exemplo: especialista que entregou 3 automações no trimestre que economizaram X horas/semana do time.
+Nota 4 (Acima do esperado): Entregas que superam expectativa. Exemplo: coordenador que além de entregar os projetos do quarter, identificou e implementou melhoria que reduziu churn de clientes em X%.
+Nota 5 (Excepcional): Entrega que redefine o padrão. Exemplo: profissional que construiu o sistema de governance automatizado que cruza dados de pessoas com organograma e gera alertas automáticos — eliminando horas de trabalho manual e garantindo que a informação nunca mais fica desatualizada.
+6.4. Erros comuns que a IA deve evitar nesse critério
+Não confundir 'estar ocupado' com 'entregar valor'. Volume de tarefas ≠ impacto. Também não avaliar só entregas individuais para cargos de gestão — no gerente pra cima, a entrega é o resultado do time, não a tarefa pessoal.
+7. Consistência
+Pergunta na avaliação: "Com que frequência essa pessoa mantém Consistência no desempenho ao longo do tempo?"
+7.1. O que 'Consistência' significa para você na Seazone?
+Consistência é entregar sempre, não só quando está motivado ou quando o chefe tá olhando. É manter o padrão ao longo do tempo — semana a semana, mês a mês. Na Seazone, prefiro alguém nota 3 consistente do que alguém que alterna entre 5 e 1. A empresa cresce com previsibilidade, não com picos esporádicos. Consistência é o que separa profissional de amador.
+7.2. Como esse valor se manifesta em cada nível?
+7.3. Exemplos por nota
+Nota 1 (Insuficiente): Desempenho imprevisível. Tem semanas produtivas e semanas onde 'desaparece'. Não mantém compromissos recorrentes. Exemplo: pessoa que faltou em 3 das últimas 5 dailies sem justificativa.
+Nota 2 (Abaixo do esperado): Oscila. Quando está bem, entrega bem. Quando não está, cai muito. Exemplo: vendedor que bate meta num mês e no seguinte entrega 30% — sem causa externa que justifique.
+Nota 3 (Dentro do esperado): Estável. Entrega no padrão esperado de forma contínua. Sem grandes picos nem vales. Exemplo: analista que entrega o relatório semanal toda segunda-feira, com qualidade consistente, há 6 meses.
+Nota 4 (Acima do esperado): Além de consistente, melhora gradualmente. Exemplo: coordenador que todo mês entrega o resultado E melhora um processo — curva ascendente estável, não picos.
+Nota 5 (Excepcional): Define o ritmo da área/empresa. Exemplo: líder que manteve a operação funcionando perfeitamente durante a reestruturação inteira — enquanto tudo ao redor mudava, a área dela entregou como se nada tivesse acontecido.
+7.4. Erros comuns que a IA deve evitar nesse critério
+Não confundir 'tempo de empresa' com 'consistência'. Pessoa com 5 anos que performa no padrão por inércia não é consistente — é acomodada. Consistência real é manter alta qualidade por escolha, não por automático. Também não penalizar oscilações causadas por fatores externos legítimos (reestruturação, mudança de escopo).
+8. Pensar Fora da Caixa
+Pergunta na avaliação: "Com que frequência essa pessoa demonstra capacidade de Pensar Fora da Caixa ao lidar com desafios?"
+8.1. O que 'Pensar Fora da Caixa' significa para você na Seazone?
+É não aceitar que as coisas precisam ser feitas do jeito que sempre foram. É olhar pro problema e pensar: 'tem um jeito melhor, mais rápido ou mais inteligente de fazer isso?'. Na Seazone, pensar fora da caixa está diretamente ligado a usar IA e tecnologia pra resolver o que antes parecia impossível. Exemplo: arquiteto que nunca programou construiu sistema 3D usando Claude Code. Isso é pensar fora da caixa — não aceitar a limitação como dado e buscar solução criativa.
+8.2. Como esse valor se manifesta em cada nível?
+8.3. Exemplos por nota
+Nota 1 (Insuficiente): Nunca questiona, nunca propõe alternativa. Faz do jeito que mandaram, do jeito que sempre foi. Quando o caminho trava, para e espera instrução.
+Nota 2 (Abaixo do esperado): Tenta pensar diferente mas de forma superficial. Exemplo: propõe 'vamos usar IA' sem saber como, sem testar, sem proposta concreta.
+Nota 3 (Dentro do esperado): Traz ideias viáveis quando encontra problema. Não é disruptivo, mas também não é passivo. Exemplo: analista que sugeriu trocar relatório manual por dashboard automático e apresentou protótipo.
+Nota 4 (Acima do esperado): Implementa soluções criativas que mudam o jogo da área. Exemplo: profissional que criou agente de IA que avalia transcrições de calls de vendas — substituiu processo manual de coaching por feedback automatizado e individualizado.
+Nota 5 (Excepcional): Cria algo que ninguém imaginava ser possível. Exemplo: profissional não-técnico que construiu sistema 3D para clientes comprarem unidades de empreendimento usando apenas IA como ferramenta — sem nunca ter programado na vida.
+8.4. Erros comuns que a IA deve evitar nesse critério
+Não confundir 'ter ideias' com 'pensar fora da caixa'. Ideia sem execução é conversa. Pensar fora da caixa inclui implementar. Também cuidado com quem é 'criativo' mas não entrega o básico — criatividade sem fundamento operacional é distração, não inovação.
+9. Organização
+Pergunta na avaliação: "Com que frequência essa pessoa demonstra Organização na gestão das suas atividades?"
+9.1. O que 'Organização' significa para você na Seazone?
+É saber o que precisa fazer, quando, e estar no controle disso. Na Seazone, organização é inegociável porque a velocidade que a gente opera não permite perder coisa no caminho. Tenho zero tolerância com 'esqueci', 'não sabia que era pra hoje', 'caiu no limbo'. Organização é ter sistema — seja Notion, canvas, Slack, whatever — e usar consistentemente. Se não tem sistema, não tem controle. Se não tem controle, não gerencia.
+9.2. Como esse valor se manifesta em cada nível?
+9.3. Exemplos por nota
+Nota 1 (Insuficiente): Desorganizado. Perde prazo, esquece tarefa, não sabe o que deveria estar fazendo. Exemplo: coordenador cujo backlog tem 50 itens sem prioridade, sem responsável, sem prazo — ninguém sabe o que é urgente.
+Nota 2 (Abaixo do esperado): Se organiza parcialmente. Algumas coisas estão no sistema, outras na cabeça. Exemplo: gerente que tem ritmo bom na primeira semana do mês mas na terceira semana já perdeu o fio das tarefas pendentes.
+Nota 3 (Dentro do esperado): Organizado de forma funcional. Sistema próprio que funciona, entregas no prazo, compromissos cumpridos. Exemplo: analista que usa Notion com checklist diário e raramente precisa de lembrete.
+Nota 4 (Acima do esperado): Organiza a si e ao entorno. Exemplo: coordenador que implementou sistema de backlog priorizado com status automático que todo o time adotou — reduziu reuniões de alinhamento de 3x/semana para 1x.
+Nota 5 (Excepcional): Cria infraestrutura de organização que escala. Exemplo: líder que implementou sistema automatizado de auditoria de governança — cruza organograma, Canvas e rituais e gera alertas quando algo está desatualizado, sem intervenção humana.
+9.4. Erros comuns que a IA deve evitar nesse critério
+Não confundir 'ter muitas ferramentas' com 'ser organizado'. Pessoa que usa 5 apps de produtividade mas não sabe o que é prioridade não é organizada. Também não penalizar quem tem estilo diferente de organização — o critério é: a pessoa está no controle do que precisa entregar, independente do método?
+10. Adaptabilidade
+Pergunta na avaliação: "Com que frequência essa pessoa demonstra Adaptabilidade diante de mudanças?"
+10.1. O que 'Adaptabilidade' significa para você na Seazone?
+Na Seazone de 2026, adaptabilidade é sobrevivência. A empresa passou por reestruturação massiva, troca de CTO, novo modelo de BUs, adoção forçada de IA — tudo em semanas. Quem não se adapta, sai. Simples assim. Adaptabilidade não é 'aceitar mudança com boa cara' — é adotar a nova realidade e performar nela. Diretores que não se adaptaram foram demitidos. CTO foi demitido por não se adaptar à cultura AI-First. A mensagem é clara: adaptabilidade é critério de permanência.
+10.2. Como esse valor se manifesta em cada nível?
+10.3. Exemplos por nota
+Nota 1 (Insuficiente): Resiste ativamente a mudanças. Sabota (passiva ou ativamente) novas diretrizes. Exemplo: pessoa que recebeu orientação de usar IA no dia a dia e continua fazendo tudo manual, dizendo 'eu não preciso disso'.
+Nota 2 (Abaixo do esperado): Aceita a mudança mas não se adapta de verdade. Faz o mínimo pra parecer que está aderindo. Exemplo: abre o Claude uma vez por semana pra dizer que 'está usando IA' mas não incorporou em nenhum processo real.
+Nota 3 (Dentro do esperado): Se adapta dentro de prazo razoável. Quando a diretriz muda, ajusta. Quando a ferramenta muda, aprende. Exemplo: time que recebeu novo CRM e em 2 semanas já estava usando plenamente.
+Nota 4 (Acima do esperado): Se adapta rápido e ajuda outros a se adaptarem. Exemplo: profissional que quando a empresa adotou Claude Code, aprendeu sozinho, criou tutorial pro time e virou referência interna.
+Nota 5 (Excepcional): Transforma a mudança em vantagem competitiva. Exemplo: líder que, diante da reestruturação, não só se adaptou mas propôs novo modelo de operação que a empresa inteira adotou — virou promotora a CEO de BU por isso.
+10.4. Erros comuns que a IA deve evitar nesse critério
+Não confundir 'não reclamar' com 'ser adaptável'. Pessoa que aceita calada mas não muda comportamento não é adaptável — é passiva. O critério é: mudou o comportamento real? Também não confundir 'entusiasmo vazio' com adaptação real — quem fica 'só curioso' sem testar é identificável e não merece nota acima de 2.
+11. Comunicação
+Pergunta na avaliação: "Com que frequência essa pessoa demonstra Comunicação clara e adequada ao seu contexto de atuação?"
+11.1. O que 'Comunicação' significa para você na Seazone?
+Na Seazone, comunicação boa é direta, clara e sem rodeio. Não é sobre falar bonito — é sobre ser entendido. Prefiro bad news rápida a good news tardia. Quem comunica bem traz o problema com a solução proposta, não só o problema. Também é comunicação saber quando falar e quando calar: não precisa de reunião de 1 hora quando um Slack de 3 linhas resolve. E é comunicação proativa: se travou, avisa antes de virar crise.
+11.2. Como esse valor se manifesta em cada nível?
+11.3. Exemplos por nota
+Nota 1 (Insuficiente): Não comunica. Fica em silêncio com problema. Quando perguntado, dá respostas vagas. Exemplo: pessoa que sabia que o projeto ia atrasar há 2 semanas e não falou nada até a data de entrega.
+Nota 2 (Abaixo do esperado): Comunica, mas de forma confusa ou tardia. Exemplo: manda um Slack de 20 linhas sem conclusão clara — o leitor precisa perguntar 'mas o que você precisa?'.
+Nota 3 (Dentro do esperado): Comunicação clara e no timing certo. Quando tem problema, comunica com contexto e proposta. Exemplo: 'O projeto X vai atrasar 3 dias porque dependemos do time Y. Já alinhei com eles e a nova data é quinta. Preciso de validação pra seguir.'
+Nota 4 (Acima do esperado): Comunicação excelente — antecipa necessidade de informação. Exemplo: gerente que, antes da monthly, manda preview dos resultados pro C-Level com pontos de atenção destacados, poupando surpresas na reunião.
+Nota 5 (Excepcional): Comunicação que transforma cultura. Exemplo: líder que implementou sistema de status assíncrono via Canvas/Slack que eliminou 80% das reuniões de alinhamento — time funciona com comunicação escrita e objetiva, liberando tempo pra execução.
+11.4. Erros comuns que a IA deve evitar nesse critério
+Não confundir 'fala muito' com 'comunica bem'. Verbosidade não é comunicação. Também não penalizar estilo informal — na Seazone a comunicação é sem cerimônia, o que importa é clareza, não formalidade. E não confundir 'não comunica problema' com 'não tem problema' — silêncio sobre bloqueios é nota 1.
+12. Colaboração
+Pergunta na avaliação: "Com que frequência essa pessoa demonstra Colaboração positiva?"
+12.1. O que 'Colaboração' significa para você na Seazone?
+Colaboração é trabalhar pelo resultado da empresa, não pelo resultado da sua caixinha. É ajudar outra área quando precisa sem precisar de ordem formal. É não criar feudos. Na Seazone, a gente tem BUs diferentes, mas o cliente é um só. Se o time de vendas precisa de um dado que está com operação, operação entrega — sem burocracia, sem 'abre ticket'. Colaboração também é aceitar feedback e dar feedback construtivo — não é concordar com tudo.
+12.2. Como esse valor se manifesta em cada nível?
+12.3. Exemplos por nota
+Nota 1 (Insuficiente): Não colabora ou sabota. Protege informação, não ajuda outras áreas, cria atrito. Exemplo: líder que se recusa a compartilhar dashboard com outra área porque 'é nosso'.
+Nota 2 (Abaixo do esperado): Colabora quando obrigado, com má vontade. Exemplo: entrega o que pedem de outra área, mas sempre tarde e com qualidade inferior ao que faria para o próprio time.
+Nota 3 (Dentro do esperado): Colabora de forma profissional. Ajuda quando pedido, participa de projetos cross-team, não cria atrito. Exemplo: analista que quando recebe pedido de outra área, encaixa na pauta e entrega com o mesmo padrão.
+Nota 4 (Acima do esperado): Colabora proativamente. Exemplo: especialista que percebeu que o time de vendas estava usando dado errado e foi até eles explicar e ajudar a corrigir — sem ninguém pedir.
+Nota 5 (Excepcional): Constrói pontes que mudam a empresa. Exemplo: líder que criou ritual cross-BU de compartilhamento de aprendizados que reduziu retrabalho entre áreas significativamente.
+12.4. Erros comuns que a IA deve evitar nesse critério
+Não confundir 'ser simpático' com 'colaborar'. Pessoa agradável que não ajuda de verdade não é colaborativa — é sociável. Também não penalizar quem discorda ou dá feedback duro — isso é colaboração real. Discordância construtiva é mais valiosa que concordância passiva.
+13. Uso de IA
+Pergunta na avaliação: "Com que frequência essa pessoa utiliza Inteligência Artificial para potencializar seu trabalho e resultados?"
+13.1. O que 'Uso de IA' significa para você na Seazone?
+IA não é opcional na Seazone. É AI-First. Isso quer dizer: tudo que você está fazendo no dia a dia, pare e pense em como fazer com IA. Não é 'usar ChatGPT pra reescrever e-mail' — é integrar IA no processo de trabalho, automatizar tarefas repetitivas, usar agentes, construir soluções. Quem não adotar, não permanece. Demiti um CTO por isso. Promovi duas líderes a CEO de BU por isso. A mensagem é inequívoca: uso de IA é proxy de adaptação à nova cultura. Uso do Claude Cloud é métrica objetiva que monitoro pessoalmente.
+13.2. Como esse valor se manifesta em cada nível?
+13.3. Exemplos por nota
+Nota 1 (Insuficiente): Não usa IA. Quando orientado, resiste ou ignora. Exemplo: profissional que recebeu licença de Claude, treinamento, e 3 meses depois o uso é zero. Isso é deal breaker na Seazone atual.
+Nota 2 (Abaixo do esperado): Usa de forma superficial. Abre a ferramenta às vezes, mas não integrou no trabalho. Exemplo: usa ChatGPT pra reescrever e-mail esporadicamente mas todo o trabalho real continua manual. 'Fica só curioso' sem testar de verdade.
+Nota 3 (Dentro do esperado): Usa IA como ferramenta de produtividade diária. Exemplo: analista que usa Claude para rascunhar relatórios, resumir reuniões, organizar dados — economiza 2-3h por dia consistentemente.
+Nota 4 (Acima do esperado): Cria com IA. Exemplo: profissional que construiu automação que substituiu processo manual de 5 horas/semana. Ou que criou agente que roda sozinho e entrega resultado enquanto a pessoa faz outra coisa.
+Nota 5 (Excepcional): Transforma a operação com IA. Exemplo: CEO que fez em 1 dia o dashboard que TI não entregou em 2 anos. Ou arquiteto não-técnico que construiu sistema 3D com Claude Code sem nunca ter programado. Nota 5 em IA é criar algo que muda o jogo da empresa.
+13.4. Erros comuns que a IA deve evitar nesse critério
+Não aceitar 'uso ChatGPT' como evidência de uso real. Perguntar: 'o que mudou no seu processo por causa da IA?'. Se a resposta for vaga, é nota 2. Também não confundir 'saber falar sobre IA' com 'usar IA'. Entusiasmo sem implementação é nota 2, não 3. E o inverso: pessoa quieta que automatizou metade do trabalho merece nota 4-5 mesmo sem 'evangelizar'.
+Perguntas Gerais de Calibração
+A. Distribuição esperada de notas
+Na minha visão, a distribuição deveria ser mais ou menos assim: 5% nota 1 (gente que não deveria estar aqui e vai ser desligada), 10% nota 2 (performance abaixo — precisa de plano de ação ou saída), 60% nota 3 (o padrão — maioria entrega o esperado, e isso é bom), 20% nota 4 (acima — são os que puxam o time pra cima), 5% nota 5 (excepcional — raro, é quem transforma). Se a distribuição vier com 40% nota 4 e 5, está inflada e a IA deve questionar.
+B. Diferença entre níveis de cargo
+Sim, um analista nota 4 e um coordenador nota 3 podem ter comportamentos parecidos — e isso é esperado. O analista nota 4 está demonstrando potencial para o próximo nível. O coordenador nota 3 está entregando o que o nível exige. A IA deve avaliar SEMPRE relativo ao nível do cargo, nunca em absoluto. Um estagiário nota 5 pode estar fazendo o que um analista nota 3 faz — e está certo assim. O que muda é a régua: cada nível tem expectativas maiores.
+C. Antiguidade vs. desempenho
+Tempo de empresa não é mérito. Pessoa com 5 anos que 'faz o básico' é nota 3, não mais. Senioridade pode agravar: se tem 5 anos e faz o básico sem evoluir, talvez seja nota 2 — porque a expectativa é que tempo gere domínio. A IA não deve dar 'bônus de antiguidade'. O que importa é: o que a pessoa entrega hoje, comparado com o que o cargo exige. Tempo pode explicar contexto, mas não infla nota.
+D. Autoavaliação
+Autoavaliações são quase sempre infladas. A IA deve aplicar ceticismo saudável: se alguém se dá nota 5 em tudo, questionar com 'pode dar um exemplo concreto?' para cada item. Sem exemplo concreto, nota máxima é 3. Padrão de desconto: se a autoavaliação é 1 ponto acima do que os pares e gestor dizem, a autoavaliação provavelmente está inflada. A IA deve ponderar autoavaliação como um input, não como verdade — peso menor que avaliação do gestor.
+E. Avaliação de pares
+Sim, a IA deve ser mais flexível com pares. Pares têm visibilidade parcial — não veem o trabalho inteiro, não acompanham 1:1, não sabem de contextos de bastidores. Quando um par diz 'não tenho visibilidade sobre isso', a IA deve aceitar como resposta legítima e NÃO converter em nota — simplesmente desconsiderar aquele critério para aquele avaliador. Pares tendem a ser mais generosos (não querem conflito), então a IA deve dar peso levemente menor que avaliação de gestor.
+F. Situações ambíguas
+Sim. A mais comum: pessoa que é 'muito esforçada' mas não entrega resultado. Parece nota 4 em Sangue no Olho ('trabalha muito, fica até tarde') mas na real é nota 2-3 em Entregas de Valor. A IA deve cruzar critérios: se alguém é nota alta em esforço mas baixa em entrega, algo não bate. Outra ambiguidade: 'pessoa ótima de trabalhar junto' que todo mundo gosta mas não faz acontecer — é nota alta em Colaboração mas pode ser nota baixa em Entregas de Valor. Não deixar um critério contaminar outro.
+G. Palavras ou expressões de alerta
+Expressões que devem acender alerta na IA:
+
+• 'Sempre dá o seu melhor' → sem exemplo concreto = nota máxima 3
+• 'É muito dedicado/a' → medir dedicação por resultado, não por horas
+• 'Não tenho nada negativo a dizer' → avaliação provavelmente superficial, pedir exemplo de melhoria
+• 'Faz tudo que pedem' → sinal de nota 3, não 4 — faz o pedido, mas não vai além
+• 'Está sempre disponível' → disponibilidade ≠ entrega. Confirmar se traduz em resultado
+• 'Eu acho que...' sem dado → nota máxima 3 em Foco em Fatos e Dados
+• 'Antes era melhor' → red flag para Adaptabilidade
+• 'Não é minha área' → red flag para Atitude de Dono e Colaboração
+• 'Já tentei mas não deu' → aprofundar: tentou uma vez ou de verdade? Diferença entre nota 2 e nota 3
+Obrigado por preencher! Suas respostas serão usadas para calibrar a IA da plataforma IAVD, garantindo que as notas reflitam a cultura e os padrões da Seazone.
+Nível | O que você espera ver nesse nível?
+Estágio | Mostra disposição. Não fica esperando tarefa — pergunta, busca, se oferece. Quando recebe feedback, implementa rápido. Não reclama de tarefa operacional.
+Analista | Resolve problemas dentro do escopo sem precisar de mão. Se o dado não bate, investiga. Se o processo trava, escala rápido em vez de deixar quieto. Traz solução junto com o problema.
+Especialista | Domina a área e puxa a régua técnica. Não aceita entrega meia-boca de si mesmo. Documenta, melhora processos, ensina quem está abaixo. É referência de qualidade.
+Coordenador | Garante que o time entrega, não só a própria tarefa. Quando um membro do time trava, entra junto pra destravar. Não usa 'o time não fez' como desculpa — assume responsabilidade pelo resultado coletivo.
+Gerente | Antecipa problemas antes de virarem crise. Cobra resultado com dados, não com pressão vazia. Constrói rituais que mantêm o time no trilho. Quando a meta aperta, reorganiza prioridades em vez de pedir mais prazo.
+Diretor | Puxa transformações que ninguém pediu mas que a empresa precisa. Toma decisões impopulares quando necessário. Não protege a própria área em detrimento do resultado da empresa. Lidera pelo exemplo — se cobra IA, usa IA mais que todo mundo.
+C-Level | Define o padrão de intensidade da empresa. Se o C-Level não tem sangue no olho, ninguém abaixo vai ter. Exemplo: CEO que fez em 1 dia o dashboard que TI não entregou em 2 anos. Sangue no olho no C-Level é resolver, não delegar infinitamente.
+Nível | O que você espera ver nesse nível?
+Estágio | Cuida do que recebe como se fosse seu. Não desperdiça recurso, não deixa tarefa pela metade. Se vê algo errado fora do escopo, avisa.
+Analista | Resolve problemas sem esperar que mandem. Se percebe que o processo tá gerando retrabalho, levanta a mão e propõe melhoria. Não joga a bola pro colega quando a responsabilidade é compartilhada.
+Especialista | Age como guardião da qualidade da área. Se algo vai sair errado, barra — mesmo que o prazo aperte. Pensa em custo e eficiência, não só em entrega.
+Coordenador | Assume resultado do time, não só o próprio. Se alguém do time errou, não culpa — corrige e previne. Toma decisões operacionais sem precisar escalar tudo.
+Gerente | Pensa no P&L da área. Não pede recurso sem justificativa de retorno. Demite quando precisa, promove com critério. Age como se fosse o CEO daquela área.
+Diretor | Toma decisão impopular quando é o certo pro negócio. Exemplo: cortar orçamento pela metade porque a meta mudou — sem drama, como fato consumado. Coloca resultado da empresa acima do conforto da própria diretoria.
+C-Level | É literalmente dono ou age como tal. Cuida do caixa, do custo, da reputação. Não terceiriza decisão difícil. Quando a governança tá quebrada, reseta — sem esperar que alguém peça.
+Nível | O que você espera ver nesse nível?
+Estágio | Quando questionado, traz o dado. Não inventa número. Se não sabe, diz que não sabe e vai buscar.
+Analista | Fundamenta toda recomendação com dados. Não traz opinião sem evidência. Sabe onde buscar os dados da área.
+Especialista | Questiona dados inconsistentes. Constrói e mantém dashboards da área. Detecta quando o dado não bate com a realidade operacional.
+Coordenador | Time usa dados no dia a dia por influência dele. Rituais da equipe incluem revisão de métricas. Decisões do time são rastreáveis por dados.
+Gerente | KPIs da área estão sempre atualizados e acessíveis. Quando apresenta resultado na monthly, traz planilha com números, orçamento, vagas, projetos — sem 'achismo'. Usa dados para antecipar problemas, não só para reportar passado.
+Diretor | Define quais métricas importam para a empresa. Consegue olhar um dashboard e em segundos saber se está on-track ou não. Exemplo: Mission Control do CEO — dados reais do Pipedrive via Nekt, atualizados a cada 2h.
+C-Level | Toma decisões de milhões com base em dados. Usa IA para cruzar informações e detectar inconsistências. Exemplo: cruzar planilha de promoções/desligamentos com organograma via agente de IA para gerar flags de defasagem automaticamente.
+Nível | O que você espera ver nesse nível?
+Estágio | Entende o que é urgente vs. importante quando explicado. Não fica preso em tarefa de baixo impacto sem perguntar se deveria estar fazendo outra coisa.
+Analista | Organiza a própria pauta por impacto. Quando tem 5 demandas, sabe qual atacar primeiro. Entrega o essencial sem overengineering.
+Especialista | Simplifica processos que herdou. Não aceita 'sempre foi assim' como justificativa. Reduz etapas desnecessárias.
+Coordenador | Prioriza o backlog do time com critério claro. Sabe dizer não para demandas que não movem o ponteiro. Protege o time de interrupções desnecessárias.
+Gerente | Corta projetos que não entregam resultado. Não mantém 10 frentes abertas — fecha 3 e faz bem feito. Simplifica rituais: se a daily virou reunião de 1 hora, reformula.
+Diretor | Define P0 (prioridade zero) para a empresa. Exemplo: transição de Scrum para Kanban porque sprints ficaram artificiais com IA acelerando o ritmo. Simplificou o processo inteiro.
+C-Level | Corta pela metade quando necessário. Exemplo: meta de abril cortada de 'cento e tantas' para 65 vendas — priorização baseada em realidade, não em desejo. Decide descontinuar ferramentas (N8N, Make) porque complicam mais do que resolvem.
+Nível | O que você espera ver nesse nível?
+Estágio | Foca em aprender e executar. Não tenta decidir o que não entende. Pergunta antes de agir quando não tem certeza. Aceita feedback sem defensividade.
+Analista | Executa com autonomia dentro do escopo. Sabe quando escalar. Não fica esperando aprovação pra tudo, mas também não toma decisões que não são suas.
+Especialista | Referência técnica. Influencia decisões pela expertise, não pela hierarquia. Sabe que seu papel é recomendar, não decidir por cima do gestor.
+Coordenador | Gestão de pessoas começa aqui. Sabe que agora o resultado é do time, não só dele. Não volta a fazer trabalho operacional — coordena, desobstrui, orienta.
+Gerente | Pensa tático e começa a pensar estratégico. Entrega resultado da área, gerencia orçamento, toma decisões de pessoas. Não precisa do diretor pra resolver 80% dos problemas.
+Diretor | Visão estratégica. Decide sobre estrutura, headcount, investimento da área. Participa de decisões cross-empresa. Prepara Canvas, KPIs, apresenta na monthly. Não pode 'ficar na dele' sem escalar problemas.
+C-Level | Dono da estratégia. Responde pelo P&L. Toma decisões de empresa, não só de área. Contrata, demite, reestrutura. Age com velocidade — 'ouve, decide, delega, segue'.
+Nível | O que você espera ver nesse nível?
+Estágio | Entrega tarefas operacionais com qualidade e prazo. Valor aqui é: liberar o tempo do time para coisas mais complexas.
+Analista | Entrega análises e outputs que informam decisões. Relatórios que geram ação, não que ficam na gaveta.
+Especialista | Entrega soluções técnicas que resolvem problemas reais. Automações, integrações, processos novos que funcionam.
+Coordenador | Entrega resultado do time. KPIs da equipe melhorando. Projetos entregues no prazo. Pessoas desenvolvidas.
+Gerente | Entrega resultado da área. P&L da área melhorando. Projetos estratégicos concluídos. Pessoas certas nos lugares certos.
+Diretor | Entrega transformações. Reestruturações, novos modelos, economias significativas. Exemplo: migrar de 360 para 150 funcionários mantendo ou aumentando output — isso é entrega de valor no nível de diretor.
+C-Level | Entrega o futuro da empresa. Novos mercados, novas linhas de receita, cultura que escala. Exemplo: implementar AI-First como cultura operacional — não como projeto, como DNA da empresa.
+Nível | O que você espera ver nesse nível?
+Estágio | Chega no horário, entrega no prazo, mantém qualidade padrão. Não tem semana incrível seguida de semana fantasma.
+Analista | Output estável. Relatórios saem com a mesma qualidade toda semana. Não precisa de cobrança para entregar o recorrente.
+Especialista | Referência estável. Time sabe que pode contar com essa pessoa. Qualidade técnica é a mesma no dia 1 e no dia 30 do mês.
+Coordenador | Time entrega de forma previsível. Rituais acontecem sempre. Indicadores são atualizados sem falha.
+Gerente | Área performa de forma estável. Não tem mês excepcional seguido de mês catastrófico. KPIs têm tendência, não montanha-russa.
+Diretor | Sustenta resultados trimestre após trimestre. Mantém rituais de governança funcionando. Canvas atualizado, weeklies funcionando, monthly com dados prontos.
+C-Level | Mantém a cadência da empresa. Exemplos: daily acontece todo dia, monthly todo mês, talks na segunda quarta-feira. Se o C-Level não é consistente, a empresa oscila.
+Nível | O que você espera ver nesse nível?
+Estágio | Questiona 'por que faz assim?' de forma construtiva. Traz ideias de como seria mais eficiente, mesmo que nem todas sejam viáveis.
+Analista | Propõe abordagens alternativas quando o caminho padrão não funciona. Usa ferramentas novas por conta própria. Testa soluções que o time não tinha considerado.
+Especialista | Traz inovação técnica para a área. Introduz nova ferramenta, novo framework, nova abordagem. Não repete a solução do ano passado se o contexto mudou.
+Coordenador | Cria ambiente onde o time se sente seguro pra propor ideias diferentes. Implementa as boas ideias do time, não só as próprias.
+Gerente | Reestrutura processos. Questiona rituais que existem por inércia. Exemplo: substituir Scrum por Kanban porque o contexto mudou com IA — não manter algo só porque 'é o que a gente faz'.
+Diretor | Propõe modelos de negócio ou operação novos. Exemplo: reorganizar BUs por linhas de receita em vez de por personas — mudança estrutural que ninguém tinha proposto.
+C-Level | Redefine o que a empresa é. Exemplo: transformar a empresa de 'gestora de imóveis com TI' para 'empresa AI-First onde conhecimento do negócio + IA > equipe de TI tradicional'.
+Nível | O que você espera ver nesse nível?
+Estágio | Mantém lista de tarefas atualizada. Não esquece compromissos. Sabe o que tem pra fazer hoje e amanhã.
+Analista | Gerencia próprio tempo com autonomia. Entrega no prazo sem precisar de lembrete. Documenta o que faz de forma rastreável.
+Especialista | Além de se organizar, organiza informação da área. Documentação atualizada, processos mapeados, conhecimento compartilhado.
+Coordenador | Time organizado. Backlog limpo, rituais rodando, nada no limbo. Se algo trava, aparece no sistema antes de virar problema.
+Gerente | Área com governança clara. Canvas da área atualizado, KPIs acessíveis, projetos rastreáveis. Não tem 'furo de informação' — tudo está documentado em algum lugar.
+Diretor | Governança cross-área. Rituais entre diretorias funcionando. Informação flui entre áreas sem depender de pergunta — o sistema entrega.
+C-Level | Organização da empresa. Exemplo: sistema de Canvas obrigatório por liderança, dailies padronizadas, weeklies gravadas, monthly com template. Se algo desalinha, reseta com prazo — 'tudo atualizado até sexta'.
+Nível | O que você espera ver nesse nível?
+Estágio | Aceita mudança sem drama. Se o processo muda, aprende o novo. Se a ferramenta muda, treina sozinho. Não reclama 'antes era melhor'.
+Analista | Adapta o próprio trabalho a novos contextos rapidamente. Se a prioridade muda na quarta, até sexta já reorientou a pauta.
+Especialista | Quando a área muda de direção, traz as melhores práticas do novo contexto. Não fica preso no que dominava — aprende o novo com a mesma profundidade.
+Coordenador | Guia o time na transição. Quando a empresa muda de Scrum pra Kanban, implementa no time sem que a produtividade caia.
+Gerente | Reestrutura a área quando necessário. Se a BU muda de formato, reorganiza time, processos e metas sem esperar instrução detalhada. Age com o que tem.
+Diretor | Lidera mudanças. Não espera que a mudança 'desça' — é quem faz a mudança acontecer. Exemplo: aceitar que IA vai reduzir headcount da área e proativamente propor o novo modelo.
+C-Level | Define a mudança. Exemplo: decretar AI-First como cultura, descontinuar ferramentas, reestruturar toda a empresa de 360 pra 150 — e executar em semanas, não meses.
+Nível | O que você espera ver nesse nível?
+Estágio | Comunica status quando pedido. Avisa quando trava. Não fica 3 dias em silêncio com tarefa parada.
+Analista | Comunica proativamente. Quando termina, avisa. Quando trava, escala. Relatórios são claros e objetivos.
+Especialista | Comunica para público técnico e não-técnico com a mesma eficácia. Sabe adaptar a mensagem ao interlocutor.
+Coordenador | Garante que a comunicação do time funcione. Status claros, bloqueios visíveis, decisões documentadas. Não deixa 'informação na cabeça de alguém'.
+Gerente | Comunica pra cima e pra baixo com fluidez. Sabe resumir a situação da área em 3 minutos pro C-Level. Sabe desdobrar a estratégia pro time de forma que todo mundo entenda o 'porquê'.
+Diretor | Comunicação como ferramenta de alinhamento. Usa rituais (monthly, talks) para garantir que a mensagem chega. Quando precisa dar feedback difícil, é direto sem ser desnecessariamente duro.
+C-Level | Define o tom de comunicação da empresa. Exemplo: comunicar reestruturação em 6 fases — individual → equipe → geral — com mensagem clara em cada etapa. Comunicação é ação, não cerimônia.
+Nível | O que você espera ver nesse nível?
+Estágio | Ajuda colegas quando pode. Não protege informação. Participa ativamente de projetos em grupo.
+Analista | Colabora entre áreas quando solicitado. Compartilha conhecimento sem resistência. Responde perguntas de outras áreas sem 'isso não é comigo'.
+Especialista | É procurado por outras áreas como referência. Contribui para projetos cross-team. Ensina sem arrogância.
+Coordenador | Facilita colaboração entre times. Quando duas áreas precisam trabalhar juntas, coordena a interface. Não cria silos.
+Gerente | Colabora com outros gerentes proativamente. Exemplo: se o resultado de outra área impacta a sua, conversa direto com o par, não escala pro diretor.
+Diretor | Prioriza resultado da empresa sobre resultado da área. Cede recurso quando outra diretoria precisa mais. Participa de comitês cross-empresa com postura construtiva, não defensiva.
+C-Level | Colaboração é parte do modelo mental. Exemplo: debate aberto entre CEO e CTO onde ambos discordam, mas o resultado é melhor do que qualquer um teria sozinho. Promove cultura onde discordar é saudável e concordar é alinhamento real.
+Nível | O que você espera ver nesse nível?
+Estágio | Usa IA para todas as tarefas onde faz sentido: rascunhar textos, organizar dados, pesquisar. Não faz manual o que pode fazer com IA.
+Analista | Integra IA no fluxo de trabalho diário. Usa para análise de dados, geração de relatórios, automação de tarefas repetitivas. Sabe qual ferramenta usar para cada caso.
+Especialista | Constrói com IA. Cria automações, agentes, prompts especializados. É referência de uso na área. Compartilha descobertas com o time.
+Coordenador | Time inteiro usa IA por influência e exigência dele. Cria padrões de uso, compartilha melhores práticas. Monitora adoção e cobra quem não adota.
+Gerente | IA está integrada nos processos da área. Não é ferramenta individual — é infraestrutura. Exemplo: avaliação de calls de vendas automatizada, dashboards que se atualizam sozinhos, relatórios gerados por agentes.
+Diretor | Define estratégia de IA para a diretoria. Sabe onde IA substitui headcount, onde potencializa, onde não faz sentido. Propõe investimento ou corte baseado em ROI de IA.
+C-Level | IA é parte do DNA estratégico. Exemplo: CEO que dá plano Max de Claude para todos, monitora uso como KPI, demite quem não adota, e pessoalmente constrói automações que governam a empresa.
